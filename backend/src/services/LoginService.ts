@@ -1,0 +1,93 @@
+import { IAuthRepository } from '../interfaces/repository-interfaces/IUserRepository';
+import { ILoginService } from '../interfaces/service-interfaces/ILoginService';
+import { passwordService } from '../utils/passwordService';
+import { TokenService } from '../utils/token/token.service';
+import { ICacheService } from '../interfaces/service-interfaces/ICacheService';
+import { REDIS_KEYS } from '../constants/redisKeys';
+import { REFRESH_TOKEN_EXPIRY } from '../constants/token.constants';
+import { parseExpiryToSeconds } from '../utils/expiry.util';
+import { verifyRefreshToken } from '../utils/token/refresh-token';
+import { AppError } from '../utils/AppError';
+import { STATUS_CODES } from '../constants/status';
+import { AUTH_MESSAGES } from '../constants/messages';
+import { logger } from '../utils/Logger';
+
+import { LoginDTO } from '../dtos/LoginDTO';
+import { AuthTokensDTO } from '../dtos/AuthResponseDTO';
+import { RefreshTokenDTO } from '../dtos/RefreshTokenDTO';
+
+
+export class LoginService implements ILoginService {
+  constructor(
+    private userRepo: IAuthRepository,
+    private cacheService: ICacheService,
+  ) {}
+
+  async login(input: LoginDTO): Promise<AuthTokensDTO> {
+    const { email, password } = input;
+
+
+    const user = await this.userRepo.findByEmail(email);
+    if (!user) throw new AppError(AUTH_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
+    if (user.isBlocked) throw new AppError(AUTH_MESSAGES.USER_BLOCKED, STATUS_CODES.FORBIDDEN);
+    if (!user.password) throw new AppError(AUTH_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
+
+    const isValid = await passwordService.compare(password, user.password);
+    if (!isValid) throw new AppError(AUTH_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
+
+    user.lastActiveDate = new Date();
+    await user.save();
+
+    const { accessToken, refreshToken, refreshTokenId } = TokenService.generateAuthTokens({
+      id: user.id,
+      role: user.role,
+    });
+
+    const refreshTTL = parseExpiryToSeconds(REFRESH_TOKEN_EXPIRY);
+    await this.cacheService.set(REDIS_KEYS.REFRESH_TOKEN(refreshTokenId), user.id, refreshTTL);
+
+    logger.info(`User logged in: ${email}`);
+    return { accessToken, refreshToken };
+  }
+
+  async refresh(input: RefreshTokenDTO): Promise<AuthTokensDTO> {
+    const { refreshToken } = input;
+    const payload = verifyRefreshToken(refreshToken);
+
+    const oldRefreshKey = REDIS_KEYS.REFRESH_TOKEN(payload.tokenId);
+    const storedUserId = await this.cacheService.get<string>(oldRefreshKey);
+
+    if (!storedUserId || storedUserId !== payload.sub) {
+      throw new AppError(AUTH_MESSAGES.UNAUTHORIZED, STATUS_CODES.UNAUTHORIZED);
+    }
+
+    const user = await this.userRepo.findById(payload.sub);
+    if (!user || user.isBlocked) throw new AppError(AUTH_MESSAGES.UNAUTHORIZED, STATUS_CODES.UNAUTHORIZED);
+
+    // Rotate: invalidate old token, issue new pair
+    await this.cacheService.del(oldRefreshKey);
+
+    user.lastActiveDate = new Date();
+    await user.save();
+
+    const { accessToken, refreshToken: newRefreshToken, refreshTokenId } = TokenService.generateAuthTokens({
+      id: user.id,
+      role: user.role,
+    });
+
+    const refreshTTL = parseExpiryToSeconds(REFRESH_TOKEN_EXPIRY);
+    await this.cacheService.set(REDIS_KEYS.REFRESH_TOKEN(refreshTokenId), user.id, refreshTTL);
+
+    return { accessToken, refreshToken: newRefreshToken };
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+    try {
+      const payload = verifyRefreshToken(refreshToken);
+      await this.cacheService.del(REDIS_KEYS.REFRESH_TOKEN(payload.tokenId));
+    } catch (error) {
+      logger.warn("Logout failed or token already invalid", error);
+    }
+  }
+}
+
