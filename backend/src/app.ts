@@ -4,15 +4,16 @@ import cookieParser from 'cookie-parser';
 import passport from './config/passport';
 
 import { errorMiddleware } from './middlewares/error.middleware';
-import authRoutes from './routes/auth.routes';
+import authRoutes from './modules/auth/routes/auth.routes';
 import { appConfig } from './config/appConfig';
 
 export const app = express();
 
 app.use(cors({
-  origin: [process.env.FRONTEND_URL || 'http://localhost:5173'],
+  origin: [appConfig.frontendUrl],
   credentials: true,
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
@@ -25,5 +26,5 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', env: appConfig.nodeEnv });
 });
 
-// Error handler — must be last
+
 app.use(errorMiddleware);

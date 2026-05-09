@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRole } from '../constants/roles';
-import { AppError } from '../utils/AppError';
-import { STATUS_CODES } from '../constants/status';
-import { AUTH_MESSAGES } from '../constants/messages';
-
+import { UserRole } from '../shared/constants/roles';
+import { AppError } from '../shared/utils/AppError';
+import { STATUS_CODES } from '../shared/constants/status';
+import { AUTH_MESSAGES } from '../modules/auth/constants/auth.messages';
 
 export const roleGuard =
   (...allowedRoles: UserRole[]) =>
