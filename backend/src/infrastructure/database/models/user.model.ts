@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { UserRole } from '../constants/roles';
-
+import { UserRole } from "../../../shared/constants/roles";
 
 export interface IUser extends Document {
      id: string;
@@ -80,9 +79,8 @@ const userSchema = new Schema<IUser>(
           },
           expertise: {
                type: [String],
-               default: undefined, // Prevent schema pollution for non-mentors
+               default: undefined,
           },
-
           experienceLevel: {
                type: String,
                enum: ['junior', 'mid', 'senior'],

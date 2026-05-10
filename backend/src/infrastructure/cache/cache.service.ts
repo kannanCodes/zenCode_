@@ -1,5 +1,5 @@
-import { redisClient } from "../config/redis";
-import { ICacheService } from "../interfaces/service-interfaces/auth/ICacheService";
+import { redisClient } from "./redis";
+import { ICacheService } from "../../interfaces/service-interfaces/auth/ICacheService";
 
 export class CacheService implements ICacheService {
   async set(key: string, value: unknown, ttlSeconds?: number): Promise<void> {

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import passport from '../../config/passport';
-import { authController } from '../../di/auth.container';
-import { cacheService } from '../../di/shared.container';
+import { authController } from "../../shared/di/auth.container";
+import { cacheService } from "../../shared/di/shared.container";
 import { validateRequest } from '../../middlewares/validate.middleware';
 import { rateLimiter } from '../../middlewares/rateLimit.middleware';
 

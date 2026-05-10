@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyAccessToken } from '../utils/token/access-token';
-import { AppError } from '../utils/AppError';
-import { STATUS_CODES } from '../constants/status';
-import { AUTH_MESSAGES } from '../constants/messages';
-import { authRepository } from '../di/auth.container';
+import { AppError } from "../shared/utils/AppError";
+import { STATUS_CODES } from "../shared/constants/status";
+import { AUTH_MESSAGES } from "../constants/messages";
+import { authRepository } from "../shared/di/auth.container";
+import { tokenService } from "../shared/di/shared.container";
 
 export const authMiddleware = async (
   req: Request,
@@ -21,7 +21,7 @@ export const authMiddleware = async (
 
     let payload;
     try {
-      payload = verifyAccessToken(token);
+      payload = tokenService.verifyAccessToken(token);
     } catch {
       throw new AppError(AUTH_MESSAGES.UNAUTHORIZED, STATUS_CODES.UNAUTHORIZED);
     }

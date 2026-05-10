@@ -1,8 +1,8 @@
-import { EmailService } from '../utils/email';
-import { ICacheService } from '../interfaces/service-interfaces/auth/ICacheService';
-import { CacheService } from '../utils/cache';
-import { InMemoryCacheService } from '../utils/InMemoryCacheService';
-import { TokenService } from '../services/shared/TokenService';
+import { ICacheService } from '../../interfaces/service-interfaces/auth/ICacheService';
+import { CacheService } from '../../infrastructure/cache/cache.service';
+import { InMemoryCacheService } from '../../infrastructure/cache/in-memory-cache.service';
+import { EmailService } from '../../infrastructure/email/email.service';
+import { TokenService } from '../../services/shared/TokenService';
 
 // ── Shared utilities ───────────────────────────────────────────────────────────
 export const cacheService: ICacheService = process.env.NODE_ENV === 'test'

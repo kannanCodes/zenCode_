@@ -2,11 +2,11 @@ import { IOTPService } from '../../interfaces/service-interfaces/auth/IOTPServic
 import { IOTPRepository } from '../../interfaces/repository-interfaces/auth/IOTPRepository';
 import { IEmailService } from '../../interfaces/service-interfaces/auth/IEmailService';
 import { RegistrationCacheDTO } from '../../dtos/auth/register.dto';
-import { AppError } from '../../utils/AppError';
-import { STATUS_CODES } from '../../constants/status';
-import { AUTH_MESSAGES } from '../../constants/messages';
+import { AppError } from "../../shared/utils/AppError";
+import { STATUS_CODES } from "../../shared/constants/status";
+import { AUTH_MESSAGES } from "../../constants/messages";
 import { OTP_LIMITS } from '../../constants/otp.constants';
-import { logger } from '../../utils/Logger';
+import { logger } from "../../shared/utils/Logger";
 
 import { IResendOTPService } from '../../interfaces/service-interfaces/auth/IResendOTPService';
 

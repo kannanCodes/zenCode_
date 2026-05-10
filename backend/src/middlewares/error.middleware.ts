@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { AppError } from "../utils/AppError";
-import { sendError } from "../utils/response";
-import { logger } from "../utils/Logger";
-import { STATUS_CODES } from "../constants/status";
+import { AppError } from "../shared/utils/AppError";
+import { sendError } from '../shared/http/response';
+import { logger } from "../shared/utils/Logger";
+import { STATUS_CODES } from "../shared/constants/status";
 import { GLOBAL_MESSAGES } from "../constants/messages";
-
 
 export const errorMiddleware = (
   err: unknown,
@@ -20,6 +19,5 @@ export const errorMiddleware = (
      }
 
      return sendError(res, GLOBAL_MESSAGES.INTERNAL_SERVER_ERROR, STATUS_CODES.INTERNAL_SERVER_ERROR);
-
 
 };

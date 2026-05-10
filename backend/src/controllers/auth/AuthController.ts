@@ -6,11 +6,11 @@ import { IGoogleAuthService, GoogleProfile } from '../../interfaces/service-inte
 
 import { IResendOTPService } from '../../interfaces/service-interfaces/auth/IResendOTPService';
 
-import { sendSuccess } from '../../utils/response';
-import { AppError } from '../../utils/AppError';
-import { STATUS_CODES } from '../../constants/status';
-import { AUTH_MESSAGES } from '../../constants/messages';
-import { logger } from '../../utils/Logger';
+import { sendSuccess } from "../../shared/http/response";
+import { AppError } from "../../shared/utils/AppError";
+import { STATUS_CODES } from "../../shared/constants/status";
+import { AUTH_MESSAGES } from "../../constants/messages";
+import { logger } from "../../shared/utils/Logger";
 import { StartRegistrationDTO, VerifyRegistrationDTO } from '../../dtos/auth/register.dto';
 import { LoginDTO } from '../../dtos/auth/login.dto';
 import { ResetPasswordDTO } from '../../dtos/auth/password.dto';
@@ -19,7 +19,7 @@ import { RefreshTokenDTO } from '../../dtos/auth/refresh-token.dto';
 import { setRefreshTokenCookie } from '../../utils/cookies/set-auth-cookie';
 import { clearRefreshTokenCookie } from '../../utils/cookies/clear-auth-cookie';
 import { appConfig } from '../../config/appConfig';
-import { FRONTEND_ROUTES } from '../../constants/routes';
+import { FRONTEND_ROUTES } from "../../shared/constants/frontend-routes";
 
 
 
@@ -35,7 +35,6 @@ export class AuthController {
     private googleAuthService: IGoogleAuthService,
   ) { }
 
-  // POST /api/auth/register
   async startRegistration(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const input: StartRegistrationDTO = req.body;
@@ -46,7 +45,6 @@ export class AuthController {
     }
   }
 
-  // POST /api/auth/verify-otp
   async verifyRegistration(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const input: VerifyRegistrationDTO = req.body;
@@ -57,7 +55,6 @@ export class AuthController {
     }
   }
 
-  // POST /api/auth/resend-otp
   async resendOTP(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       await this.resendOTPService.resend(req.body.email);
@@ -67,7 +64,6 @@ export class AuthController {
     }
   }
 
-  // POST /api/auth/login
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const input: LoginDTO = req.body;
@@ -85,7 +81,6 @@ export class AuthController {
     }
   }
 
-  // POST /api/auth/refresh
   async refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const refreshToken = req.cookies?.refreshToken;
@@ -107,7 +102,6 @@ export class AuthController {
     }
   }
 
-  // POST /api/auth/logout
   async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const refreshToken = req.cookies?.refreshToken;
@@ -121,15 +115,12 @@ export class AuthController {
     }
   }
 
-  // GET /api/auth/google — handled by Passport middleware
   googleAuth(_req: Request, _res: Response, _next: NextFunction): void { }
 
-  // GET /api/auth/google/callback
   async googleCallback(req: Request, res: Response, _next: NextFunction): Promise<void> {
     const frontendUrl = appConfig.frontendUrl;
     try {
       const profile = req.user as GoogleProfile;
-
 
       const { accessToken, refreshToken } =
         await this.googleAuthService.authenticateGoogleUser(profile);
@@ -147,7 +138,6 @@ export class AuthController {
     }
   }
 
-  // POST /api/auth/forgot-password
   async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email }: ForgotPasswordDTO = req.body;
@@ -161,7 +151,6 @@ export class AuthController {
     }
   }
 
-  // POST /api/auth/reset-password
   async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const input: ResetPasswordDTO = req.body;
@@ -175,7 +164,6 @@ export class AuthController {
     }
   }
 
-  // GET /api/auth/reset-password/validate
   async validateResetToken(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { token } = req.query;

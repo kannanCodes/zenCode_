@@ -30,9 +30,6 @@ export const AUTH_MESSAGES = {
   TOKEN_REQUIRED: 'Authentication token is required',
 };
 
-
-
-
 export const USER_MESSAGES = {
   PROFILE_UPDATED: 'Profile updated successfully',
   PROFILE_NOT_FOUND: 'Profile not found',
@@ -53,4 +50,3 @@ export const ADMIN_MESSAGES = {
 export const GLOBAL_MESSAGES = {
   INTERNAL_SERVER_ERROR: 'Internal Server Error',
 };
-
