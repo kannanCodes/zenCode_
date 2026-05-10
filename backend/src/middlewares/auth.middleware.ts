@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-
-import { AppError } from '../shared/utils/AppError';
-import { STATUS_CODES } from '../shared/constants/status';
-import { AUTH_MESSAGES } from '../modules/auth/constants/auth.messages';
-
-import { authRepository, tokenService } from '../shared/di/container';
+import { AppError } from "../shared/utils/AppError";
+import { STATUS_CODES } from "../shared/constants/status";
+import { AUTH_MESSAGES } from "../constants/messages";
+import { authRepository } from "../shared/di/auth.container";
+import { tokenService } from "../shared/di/shared.container";
 
 export const authMiddleware = async (
   req: Request,

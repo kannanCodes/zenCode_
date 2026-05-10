@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { UserRole } from '../../../shared/constants/roles';
+import { UserRole } from "../../../shared/constants/roles";
 
 export interface IUser extends Document {
      id: string;

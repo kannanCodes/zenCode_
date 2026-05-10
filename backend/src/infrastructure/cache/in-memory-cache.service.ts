@@ -1,4 +1,4 @@
-import { ICacheService } from "../../shared/interfaces/cache-service.interface";
+import { ICacheService } from "../../interfaces/service-interfaces/auth/ICacheService";
 
 export class InMemoryCacheService implements ICacheService {
   private cache = new Map<string, { value: unknown; expiry: number | null }>();

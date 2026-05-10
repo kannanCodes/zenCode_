@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { ICacheService } from "../shared/interfaces/cache-service.interface";
+import { ICacheService } from "../interfaces/service-interfaces/auth/ICacheService";
 import { AppError } from "../shared/utils/AppError";
 import { STATUS_CODES } from "../shared/constants/status";
-import { AUTH_MESSAGES } from "../modules/auth/constants/auth.messages";
+import { AUTH_MESSAGES } from "../constants/messages";
+
 
 export const rateLimiter =
   (cache: ICacheService, limit: number, windowSeconds: number) =>

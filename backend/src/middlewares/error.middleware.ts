@@ -3,7 +3,7 @@ import { AppError } from "../shared/utils/AppError";
 import { sendError } from '../shared/http/response';
 import { logger } from "../shared/utils/Logger";
 import { STATUS_CODES } from "../shared/constants/status";
-import { GLOBAL_MESSAGES } from "../modules/auth/constants/auth.messages";
+import { GLOBAL_MESSAGES } from "../constants/messages";
 
 export const errorMiddleware = (
   err: unknown,

@@ -1,9 +1,9 @@
 import nodemailer, { Transporter } from 'nodemailer';
-import { IEmailService } from '../../shared/interfaces/email-service.interface';
-import { AppError } from '../../shared/utils/AppError';
-import { STATUS_CODES } from '../../shared/constants/status';
-import { AUTH_MESSAGES } from '../../modules/auth/constants/auth.messages';
-import { EXPIRY_TIMES } from '../../shared/utils/expiry.util';
+import { IEmailService } from "../../interfaces/service-interfaces/auth/IEmailService";
+import { AppError } from "../../shared/utils/AppError";
+import { STATUS_CODES } from "../../shared/constants/status";
+import { AUTH_MESSAGES } from "../../constants/messages";
+import { EXPIRY_TIMES } from "../../shared/utils/expiry.util";
 
 export class EmailService implements IEmailService {
   private _transporter: Transporter;
