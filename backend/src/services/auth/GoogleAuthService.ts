@@ -4,12 +4,12 @@ import { ITokenService } from '../../interfaces/service-interfaces/auth/ITokenSe
 import { ICacheService } from '../../interfaces/service-interfaces/auth/ICacheService';
 import { REDIS_KEYS } from '../../constants/redisKeys';
 import { REFRESH_TOKEN_EXPIRY } from '../../constants/token.constants';
-import { parseExpiryToSeconds } from '../../utils/expiry.util';
-import { UserRole } from '../../constants/roles';
-import { AppError } from '../../utils/AppError';
-import { STATUS_CODES } from '../../constants/status';
-import { AUTH_MESSAGES } from '../../constants/messages';
-import { logger } from '../../utils/Logger';
+import { parseExpiryToSeconds } from "../../shared/utils/expiry.util";
+import { UserRole } from "../../shared/constants/roles";
+import { AppError } from "../../shared/utils/AppError";
+import { STATUS_CODES } from "../../shared/constants/status";
+import { AUTH_MESSAGES } from "../../constants/messages";
+import { logger } from "../../shared/utils/Logger";
 
 import { AuthTokensDTO } from '../../dtos/auth/auth-response.dto';
 

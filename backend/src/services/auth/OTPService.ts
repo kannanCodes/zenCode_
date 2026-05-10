@@ -3,16 +3,15 @@
 import { IOTPService } from '../../interfaces/service-interfaces/auth/IOTPService';
 import { ICacheService } from '../../interfaces/service-interfaces/auth/ICacheService';
 import { REDIS_KEYS } from '../../constants/redisKeys';
-import { AppError } from '../../utils/AppError';
-import { AUTH_MESSAGES } from '../../constants/messages';
-import { STATUS_CODES } from '../../constants/status';
+import { AppError } from "../../shared/utils/AppError";
+import { AUTH_MESSAGES } from "../../constants/messages";
+import { STATUS_CODES } from "../../shared/constants/status";
 import { appConfig } from '../../config/appConfig';
 
 
 
 export class OTPService implements IOTPService {
      constructor(private cacheService: ICacheService) { }
-
 
      generateOTP(): string {
           const min = Number(appConfig.otp.min);
@@ -32,7 +31,6 @@ export class OTPService implements IOTPService {
                throw new AppError(AUTH_MESSAGES.TOO_MANY_ATTEMPTS, STATUS_CODES.TOO_MANY_REQUESTS);
           }
 
-
           const stored = await this.cacheService.get<string>(REDIS_KEYS.OTP(email));
 
           if (!stored || stored !== otp) {
@@ -44,7 +42,6 @@ export class OTPService implements IOTPService {
           await this.cacheService.del(attemptKey);
           return true;
      }
-
 
      async storeRegistrationData<T>(email: string, data: T): Promise<void> {
           await this.cacheService.set(REDIS_KEYS.REGISTRATION(email), data, 300);

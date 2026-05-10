@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { Server } from './server';
-import { redisClient } from '../config/redis';
-import { logger } from '../utils/Logger';
+import { redisClient } from '../infrastructure/cache/redis';
+import { logger } from "../shared/utils/Logger";
 
 export const registerGracefulShutdown = (server: Server) => {
   const gracefulShutdown = async (signal: string) => {

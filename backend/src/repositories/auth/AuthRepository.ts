@@ -1,4 +1,4 @@
-import User, { IUser } from '../../models/UserModel';
+import User, { IUser } from '../../infrastructure/database/models/user.model';
 import { IAuthRepository } from '../../interfaces/repository-interfaces/auth/IUserRepository';
 import { BaseRepository } from '../base/BaseRepository';
 

@@ -1,12 +1,12 @@
-import { AuthRepository } from '../repositories/auth/AuthRepository';
-import { OTPRepository } from '../repositories/auth/OTPRepository';
-import { OTPService } from '../services/auth/OTPService';
-import { RegistrationService } from '../services/auth/RegistrationService';
-import { ResendOTPService } from '../services/auth/ResendOTPService';
-import { LoginService } from '../services/auth/LoginService';
-import { GoogleAuthService } from '../services/auth/GoogleAuthService';
-import { PasswordResetService } from '../services/auth/PasswordResetService';
-import { AuthController } from '../controllers/auth/AuthController';
+import { AuthRepository } from '../../repositories/auth/AuthRepository';
+import { OTPRepository } from '../../repositories/auth/OTPRepository';
+import { OTPService } from '../../services/auth/OTPService';
+import { RegistrationService } from '../../services/auth/RegistrationService';
+import { ResendOTPService } from '../../services/auth/ResendOTPService';
+import { LoginService } from '../../services/auth/LoginService';
+import { GoogleAuthService } from '../../services/auth/GoogleAuthService';
+import { PasswordResetService } from '../../services/auth/PasswordResetService';
+import { AuthController } from '../../controllers/auth/AuthController';
 import { cacheService, emailService, tokenService } from './shared.container';
 
 

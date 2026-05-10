@@ -1,14 +1,14 @@
 import { IAuthRepository as IUserRepository } from '../../interfaces/repository-interfaces/auth/IUserRepository';
 import { IOTPService } from '../../interfaces/service-interfaces/auth/IOTPService';
 import { IEmailService } from '../../interfaces/service-interfaces/auth/IEmailService';
-import { passwordService } from '../../utils/passwordService';
-import { UserRole } from '../../constants/roles';
+import { passwordService } from '../../infrastructure/security/password.service';
+import { UserRole } from "../../shared/constants/roles";
 import { StartRegistrationDTO, VerifyRegistrationDTO } from '../../dtos/auth/register.dto';
 import { RegistrationCacheDTO } from '../../dtos/auth/register.dto';
-import { AppError } from '../../utils/AppError';
-import { STATUS_CODES } from '../../constants/status';
-import { AUTH_MESSAGES } from '../../constants/messages';
-import { logger } from '../../utils/Logger';
+import { AppError } from "../../shared/utils/AppError";
+import { STATUS_CODES } from "../../shared/constants/status";
+import { AUTH_MESSAGES } from "../../constants/messages";
+import { logger } from "../../shared/utils/Logger";
 
 import { IRegistrationService } from '../../interfaces/service-interfaces/auth/IRegistrationService';
 

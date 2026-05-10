@@ -10,4 +10,3 @@ export const STATUS_CODES = {
   REQUEST_TIMEOUT: 408,
   TOO_MANY_REQUESTS: 429,
 };
-

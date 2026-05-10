@@ -2,18 +2,18 @@ import crypto from 'crypto';
 import { IAuthRepository } from '../../interfaces/repository-interfaces/auth/IUserRepository';
 import { IEmailService } from '../../interfaces/service-interfaces/auth/IEmailService';
 import { IPasswordResetService } from '../../interfaces/service-interfaces/auth/IPasswordResetService';
-import { passwordService } from '../../utils/passwordService';
+import { passwordService } from '../../infrastructure/security/password.service';
 import { ICacheService } from '../../interfaces/service-interfaces/auth/ICacheService';
 import { REDIS_KEYS } from '../../constants/redisKeys';
-import { EXPIRY_TIMES } from '../../constants/expiry';
-import { AppError } from '../../utils/AppError';
-import { STATUS_CODES } from '../../constants/status';
-import { AUTH_MESSAGES } from '../../constants/messages';
-import { logger } from '../../utils/Logger';
+import { EXPIRY_TIMES } from "../../shared/utils/expiry.util";
+import { AppError } from "../../shared/utils/AppError";
+import { STATUS_CODES } from "../../shared/constants/status";
+import { AUTH_MESSAGES } from "../../constants/messages";
+import { logger } from "../../shared/utils/Logger";
 
 import { ResetPasswordDTO } from '../../dtos/auth/password.dto';
 import { appConfig } from '../../config/appConfig';
-import { FRONTEND_ROUTES } from '../../constants/routes';
+import { FRONTEND_ROUTES } from "../../shared/constants/frontend-routes";
 
 export class PasswordResetService implements IPasswordResetService {
   constructor(
@@ -25,7 +25,6 @@ export class PasswordResetService implements IPasswordResetService {
   async forgotPassword(email: string): Promise<void> {
     const user = await this.userRepo.findByEmail(email);
 
-    // Silently return even if user not found — avoids email enumeration
     if (!user || user.isBlocked) return;
 
     const rawToken = crypto.randomBytes(32).toString('hex');
@@ -47,7 +46,6 @@ export class PasswordResetService implements IPasswordResetService {
     const { token, newPassword } = input;
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     const userId = await this.cacheService.get<string>(REDIS_KEYS.RESET_PASSWORD(hashedToken));
-
 
     if (!userId) throw new AppError(AUTH_MESSAGES.INVALID_TOKEN, STATUS_CODES.BAD_REQUEST);
 

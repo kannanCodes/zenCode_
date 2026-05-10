@@ -13,6 +13,7 @@ app.use(cors({
   origin: [appConfig.frontendUrl],
   credentials: true,
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());

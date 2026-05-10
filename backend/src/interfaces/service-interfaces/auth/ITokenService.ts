@@ -1,5 +1,3 @@
-import { UserRole } from '../../../constants/roles';
-import { AccessTokenPayload, RefreshTokenPayload } from '../../../utils/token/token.types';
 
 export interface AuthTokens {
   accessToken: string;
@@ -7,8 +5,14 @@ export interface AuthTokens {
   refreshTokenId: string;
 }
 
+export interface TokenPayload {
+  sub: string;
+  role: string;
+  tokenId?: string;
+}
+
 export interface ITokenService {
-  generateAuthTokens(user: { id: string; role: UserRole }): AuthTokens;
-  verifyAccessToken(token: string): AccessTokenPayload;
-  verifyRefreshToken(token: string): RefreshTokenPayload;
+  generateAuthTokens(user: { id: string; role: string }): AuthTokens;
+  verifyAccessToken(token: string): TokenPayload;
+  verifyRefreshToken(token: string): TokenPayload;
 }

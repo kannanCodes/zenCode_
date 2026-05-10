@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ICacheService } from "../interfaces/service-interfaces/auth/ICacheService";
-import { AppError } from "../utils/AppError";
-import { STATUS_CODES } from "../constants/status";
+import { AppError } from "../shared/utils/AppError";
+import { STATUS_CODES } from "../shared/constants/status";
 import { AUTH_MESSAGES } from "../constants/messages";
 
 
@@ -15,7 +15,6 @@ export const rateLimiter =
         if (current && current >= limit) {
           throw new AppError(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED, STATUS_CODES.TOO_MANY_REQUESTS);
         }
-
 
         const newValue = (current || 0) + 1;
         await cache.set(key, newValue, windowSeconds);
