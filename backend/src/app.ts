@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import passport from './config/passport';
 
 import { errorMiddleware } from './middlewares/error.middleware';
-import authRoutes from './modules/auth/routes/auth.routes';
+import authRoutes from './routes/auth/auth.routes';
 import { appConfig } from './config/appConfig';
 
 export const app = express();
