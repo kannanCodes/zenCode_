@@ -1,30 +1,29 @@
 import { Request, Response, NextFunction } from 'express';
-import { IRegistrationService } from '../interfaces/service-interfaces/IRegistrationService';
-import { ILoginService } from '../interfaces/service-interfaces/ILoginService';
-import { IPasswordResetService } from '../interfaces/service-interfaces/IPasswordResetService';
-import { IGoogleAuthService, GoogleProfile } from '../interfaces/service-interfaces/IGoogleAuthService';
+import { IRegistrationService } from '../../interfaces/service-interfaces/auth/IRegistrationService';
+import { ILoginService } from '../../interfaces/service-interfaces/auth/ILoginService';
+import { IPasswordResetService } from '../../interfaces/service-interfaces/auth/IPasswordResetService';
+import { IGoogleAuthService, GoogleProfile } from '../../interfaces/service-interfaces/auth/IGoogleAuthService';
 
-import { IResendOTPService } from '../interfaces/service-interfaces/IResendOTPService';
+import { IResendOTPService } from '../../interfaces/service-interfaces/auth/IResendOTPService';
 
-import { sendSuccess } from '../utils/response';
-import { AppError } from '../utils/AppError';
-import { STATUS_CODES } from '../constants/status';
-import { AUTH_MESSAGES } from '../constants/messages';
-import { logger } from '../utils/Logger';
-import { StartRegistrationDTO, VerifyRegistrationDTO } from '../dtos/AuthDTO';
-import { LoginDTO } from '../dtos/LoginDTO';
-import { ResetPasswordDTO } from '../dtos/ResetPasswordDTO';
-import { ForgotPasswordDTO } from '../dtos/ForgotPasswordDTO';
-import { RefreshTokenDTO } from '../dtos/RefreshTokenDTO';
+import { sendSuccess } from '../../utils/response';
+import { AppError } from '../../utils/AppError';
+import { STATUS_CODES } from '../../constants/status';
+import { AUTH_MESSAGES } from '../../constants/messages';
+import { logger } from '../../utils/Logger';
+import { StartRegistrationDTO, VerifyRegistrationDTO } from '../../dtos/auth/register.dto';
+import { LoginDTO } from '../../dtos/auth/login.dto';
+import { ResetPasswordDTO } from '../../dtos/auth/password.dto';
+import { ForgotPasswordDTO } from '../../dtos/auth/password.dto';
+import { RefreshTokenDTO } from '../../dtos/auth/refresh-token.dto';
+import { setRefreshTokenCookie } from '../../utils/cookies/set-auth-cookie';
+import { clearRefreshTokenCookie } from '../../utils/cookies/clear-auth-cookie';
+import { appConfig } from '../../config/appConfig';
+import { FRONTEND_ROUTES } from '../../constants/routes';
 
 
 
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-};
+
 
 export class AuthController {
   constructor(
@@ -74,7 +73,7 @@ export class AuthController {
       const input: LoginDTO = req.body;
       const { accessToken, refreshToken } = await this.loginService.login(input);
 
-      res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
+      setRefreshTokenCookie(res, refreshToken);
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
@@ -95,11 +94,12 @@ export class AuthController {
         throw new AppError(AUTH_MESSAGES.UNAUTHORIZED, STATUS_CODES.UNAUTHORIZED);
       }
 
+      const input: RefreshTokenDTO = { refreshToken };
       const { accessToken, refreshToken: newRefreshToken } =
-        await this.loginService.refresh({ refreshToken });
+        await this.loginService.refresh(input);
 
 
-      res.cookie('refreshToken', newRefreshToken, COOKIE_OPTIONS);
+      setRefreshTokenCookie(res, newRefreshToken);
 
       sendSuccess(res, { statusCode: STATUS_CODES.OK, data: { accessToken } });
     } catch (error) {
@@ -113,11 +113,7 @@ export class AuthController {
       const refreshToken = req.cookies?.refreshToken;
       if (refreshToken) await this.loginService.logout(refreshToken);
 
-      res.clearCookie('refreshToken', {
-        httpOnly: true,
-        sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'production',
-      });
+      clearRefreshTokenCookie(res);
 
       sendSuccess(res, { statusCode: STATUS_CODES.OK, message: AUTH_MESSAGES.LOGOUT_SUCCESS });
     } catch (error) {
@@ -130,7 +126,7 @@ export class AuthController {
 
   // GET /api/auth/google/callback
   async googleCallback(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = appConfig.frontendUrl;
     try {
       const profile = req.user as GoogleProfile;
 
@@ -138,16 +134,16 @@ export class AuthController {
       const { accessToken, refreshToken } =
         await this.googleAuthService.authenticateGoogleUser(profile);
 
-      res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
-      res.redirect(`${frontendUrl}/auth/google/success?token=${accessToken}`);
+      setRefreshTokenCookie(res, refreshToken);
+      res.redirect(`${frontendUrl}${FRONTEND_ROUTES.GOOGLE_SUCCESS}?token=${accessToken}`);
     } catch (error: unknown) {
       logger.error('[GoogleCallback] Error', error);
 
       if (error instanceof AppError && error.message === AUTH_MESSAGES.USER_BLOCKED) {
-        res.redirect(`${frontendUrl}/login?error=account_blocked`);
+        res.redirect(`${frontendUrl}${FRONTEND_ROUTES.LOGIN}?error=account_blocked`);
         return;
       }
-      res.redirect(`${frontendUrl}/login?error=google_auth_failed`);
+      res.redirect(`${frontendUrl}${FRONTEND_ROUTES.LOGIN}?error=google_auth_failed`);
     }
   }
 

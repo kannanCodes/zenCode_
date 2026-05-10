@@ -1,9 +1,9 @@
-import { IOTPRepository, OTPMeta } from "../interfaces/repository-interfaces/IOTPRepository";
-import { ICacheService } from "../interfaces/service-interfaces/ICacheService";
-import { REDIS_KEYS } from "../constants/redisKeys";
+import { IOTPRepository, OTPMeta } from "../../interfaces/repository-interfaces/auth/IOTPRepository";
+import { ICacheService } from "../../interfaces/service-interfaces/auth/ICacheService";
+import { REDIS_KEYS } from "../../constants/redisKeys";
 
 export class OTPRepository implements IOTPRepository {
-  constructor(private cacheService: ICacheService) {}
+  constructor(private cacheService: ICacheService) { }
 
 
   async getMeta(email: string): Promise<OTPMeta | null> {

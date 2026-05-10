@@ -1,4 +1,4 @@
-import { IUser } from '../../models/UserModel';
+import { IUser } from '../../../models/UserModel';
 
 export interface IAuthRepository {
   findByEmail(email: string): Promise<IUser | null>;

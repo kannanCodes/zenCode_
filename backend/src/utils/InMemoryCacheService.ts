@@ -1,7 +1,7 @@
-import { ICacheService } from "../interfaces/service-interfaces/ICacheService";
+import { ICacheService } from "../interfaces/service-interfaces/auth/ICacheService";
 
 export class InMemoryCacheService implements ICacheService {
-  private cache = new Map<string, { value: any; expiry: number | null }>();
+  private cache = new Map<string, { value: unknown; expiry: number | null }>();
 
   async set(key: string, value: unknown, ttlSeconds?: number): Promise<void> {
     const expiry = ttlSeconds ? Date.now() + ttlSeconds * 1000 : null;

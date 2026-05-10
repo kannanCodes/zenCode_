@@ -1,21 +1,22 @@
 // services/OTPService.ts
 
-import { IOTPService } from "../interfaces/service-interfaces/IOTPService";
-import { ICacheService } from "../interfaces/service-interfaces/ICacheService";
-import { REDIS_KEYS } from "../constants/redisKeys";
-import { AppError } from "../utils/AppError";
-import { AUTH_MESSAGES } from "../constants/messages";
-import { STATUS_CODES } from "../constants/status";
+import { IOTPService } from '../../interfaces/service-interfaces/auth/IOTPService';
+import { ICacheService } from '../../interfaces/service-interfaces/auth/ICacheService';
+import { REDIS_KEYS } from '../../constants/redisKeys';
+import { AppError } from '../../utils/AppError';
+import { AUTH_MESSAGES } from '../../constants/messages';
+import { STATUS_CODES } from '../../constants/status';
+import { appConfig } from '../../config/appConfig';
 
 
 
 export class OTPService implements IOTPService {
-  constructor(private cacheService: ICacheService) {}
+     constructor(private cacheService: ICacheService) { }
 
 
      generateOTP(): string {
-          const min = 100000;
-          const max = 999999;
+          const min = Number(appConfig.otp.min);
+          const max = Number(appConfig.otp.max);
           return Math.floor(min + Math.random() * (max - min)).toString();
      }
 
@@ -57,3 +58,4 @@ export class OTPService implements IOTPService {
           await this.cacheService.del(REDIS_KEYS.REGISTRATION(email));
      }
 }
+

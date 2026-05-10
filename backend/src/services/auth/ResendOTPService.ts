@@ -1,14 +1,14 @@
-import { IOTPService } from '../interfaces/service-interfaces/IOTPService';
-import { IOTPRepository } from '../interfaces/repository-interfaces/IOTPRepository';
-import { IEmailService } from '../interfaces/service-interfaces/IEmailService';
-import { RegistrationCacheDTO } from '../dtos/RegistrationCacheDTO';
-import { AppError } from '../utils/AppError';
-import { STATUS_CODES } from '../constants/status';
-import { AUTH_MESSAGES } from '../constants/messages';
-import { OTP_LIMITS } from '../constants/otp.constants';
-import { logger } from '../utils/Logger';
+import { IOTPService } from '../../interfaces/service-interfaces/auth/IOTPService';
+import { IOTPRepository } from '../../interfaces/repository-interfaces/auth/IOTPRepository';
+import { IEmailService } from '../../interfaces/service-interfaces/auth/IEmailService';
+import { RegistrationCacheDTO } from '../../dtos/auth/register.dto';
+import { AppError } from '../../utils/AppError';
+import { STATUS_CODES } from '../../constants/status';
+import { AUTH_MESSAGES } from '../../constants/messages';
+import { OTP_LIMITS } from '../../constants/otp.constants';
+import { logger } from '../../utils/Logger';
 
-import { IResendOTPService } from '../interfaces/service-interfaces/IResendOTPService';
+import { IResendOTPService } from '../../interfaces/service-interfaces/auth/IResendOTPService';
 
 export class ResendOTPService implements IResendOTPService {
 
@@ -16,7 +16,7 @@ export class ResendOTPService implements IResendOTPService {
     private otpService: IOTPService,
     private otpRepo: IOTPRepository,
     private emailService: IEmailService,
-  ) {}
+  ) { }
 
   async resend(email: string): Promise<void> {
     const data = await this.otpService.getRegistrationData<RegistrationCacheDTO>(email);

@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import passport from '../config/passport';
-import { authController, cacheService } from '../di/container';
-import { validateRequest } from '../middlewares/validate.middleware';
-import { rateLimiter } from '../middlewares/rateLimit.middleware';
+import passport from '../../config/passport';
+import { authController } from '../../di/auth.container';
+import { cacheService } from '../../di/shared.container';
+import { validateRequest } from '../../middlewares/validate.middleware';
+import { rateLimiter } from '../../middlewares/rateLimit.middleware';
 
 import {
   registerSchema,
@@ -11,7 +12,7 @@ import {
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
-} from '../validators/auth.validator';
+} from '../../validators/auth.validator';
 
 const router = Router();
 

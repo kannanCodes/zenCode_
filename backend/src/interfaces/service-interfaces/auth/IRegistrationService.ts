@@ -1,4 +1,4 @@
-import { StartRegistrationDTO, VerifyRegistrationDTO } from '../../dtos/AuthDTO';
+import { StartRegistrationDTO, VerifyRegistrationDTO } from '../../../dtos/auth/register.dto';
 
 export interface IRegistrationService {
   startRegistration(input: StartRegistrationDTO): Promise<void>;

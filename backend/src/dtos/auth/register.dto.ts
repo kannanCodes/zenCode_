@@ -9,3 +9,8 @@ export interface VerifyRegistrationDTO {
   email: string;
   otp: string;
 }
+export interface RegistrationCacheDTO {
+     fullName: string;
+     email: string;
+     password: string;
+}
