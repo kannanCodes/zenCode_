@@ -1,23 +1,24 @@
-import { IAuthRepository } from '../interfaces/repository-interfaces/IUserRepository';
-import { IGoogleAuthService, GoogleProfile } from '../interfaces/service-interfaces/IGoogleAuthService';
-import { TokenService } from '../utils/token/token.service';
-import { ICacheService } from '../interfaces/service-interfaces/ICacheService';
-import { REDIS_KEYS } from '../constants/redisKeys';
-import { REFRESH_TOKEN_EXPIRY } from '../constants/token.constants';
-import { parseExpiryToSeconds } from '../utils/expiry.util';
-import { UserRole } from '../constants/roles';
-import { AppError } from '../utils/AppError';
-import { STATUS_CODES } from '../constants/status';
-import { AUTH_MESSAGES } from '../constants/messages';
-import { logger } from '../utils/Logger';
+import { IAuthRepository } from '../../interfaces/repository-interfaces/auth/IUserRepository';
+import { IGoogleAuthService, GoogleProfile } from '../../interfaces/service-interfaces/auth/IGoogleAuthService';
+import { ITokenService } from '../../interfaces/service-interfaces/auth/ITokenService';
+import { ICacheService } from '../../interfaces/service-interfaces/auth/ICacheService';
+import { REDIS_KEYS } from '../../constants/redisKeys';
+import { REFRESH_TOKEN_EXPIRY } from '../../constants/token.constants';
+import { parseExpiryToSeconds } from '../../utils/expiry.util';
+import { UserRole } from '../../constants/roles';
+import { AppError } from '../../utils/AppError';
+import { STATUS_CODES } from '../../constants/status';
+import { AUTH_MESSAGES } from '../../constants/messages';
+import { logger } from '../../utils/Logger';
 
-import { AuthTokensDTO } from '../dtos/AuthResponseDTO';
+import { AuthTokensDTO } from '../../dtos/auth/auth-response.dto';
 
 export class GoogleAuthService implements IGoogleAuthService {
   constructor(
     private userRepo: IAuthRepository,
     private cacheService: ICacheService,
-  ) {}
+    private tokenService: ITokenService,
+  ) { }
 
   async authenticateGoogleUser(
     profile: GoogleProfile,
@@ -52,7 +53,7 @@ export class GoogleAuthService implements IGoogleAuthService {
     user.lastActiveDate = new Date();
     await user.save();
 
-    const { accessToken, refreshToken, refreshTokenId } = TokenService.generateAuthTokens({
+    const { accessToken, refreshToken, refreshTokenId } = this.tokenService.generateAuthTokens({
       id: user.id,
       role: user.role,
     });

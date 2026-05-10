@@ -1,27 +1,28 @@
-import { IAuthRepository } from '../interfaces/repository-interfaces/IUserRepository';
-import { ILoginService } from '../interfaces/service-interfaces/ILoginService';
-import { passwordService } from '../utils/passwordService';
-import { TokenService } from '../utils/token/token.service';
-import { ICacheService } from '../interfaces/service-interfaces/ICacheService';
-import { REDIS_KEYS } from '../constants/redisKeys';
-import { REFRESH_TOKEN_EXPIRY } from '../constants/token.constants';
-import { parseExpiryToSeconds } from '../utils/expiry.util';
-import { verifyRefreshToken } from '../utils/token/refresh-token';
-import { AppError } from '../utils/AppError';
-import { STATUS_CODES } from '../constants/status';
-import { AUTH_MESSAGES } from '../constants/messages';
-import { logger } from '../utils/Logger';
+import { IAuthRepository } from '../../interfaces/repository-interfaces/auth/IUserRepository';
+import { ILoginService } from '../../interfaces/service-interfaces/auth/ILoginService';
+import { passwordService } from '../../utils/passwordService';
+import { ITokenService } from '../../interfaces/service-interfaces/auth/ITokenService';
+import { ICacheService } from '../../interfaces/service-interfaces/auth/ICacheService';
+import { REDIS_KEYS } from '../../constants/redisKeys';
+import { REFRESH_TOKEN_EXPIRY } from '../../constants/token.constants';
+import { parseExpiryToSeconds } from '../../utils/expiry.util';
 
-import { LoginDTO } from '../dtos/LoginDTO';
-import { AuthTokensDTO } from '../dtos/AuthResponseDTO';
-import { RefreshTokenDTO } from '../dtos/RefreshTokenDTO';
+import { AppError } from '../../utils/AppError';
+import { STATUS_CODES } from '../../constants/status';
+import { AUTH_MESSAGES } from '../../constants/messages';
+import { logger } from '../../utils/Logger';
+
+import { LoginDTO } from '../../dtos/auth/login.dto';
+import { AuthTokensDTO } from '../../dtos/auth/auth-response.dto';
+import { RefreshTokenDTO } from '../../dtos/auth/refresh-token.dto';
 
 
 export class LoginService implements ILoginService {
   constructor(
     private userRepo: IAuthRepository,
     private cacheService: ICacheService,
-  ) {}
+    private tokenService: ITokenService,
+  ) { }
 
   async login(input: LoginDTO): Promise<AuthTokensDTO> {
     const { email, password } = input;
@@ -38,7 +39,7 @@ export class LoginService implements ILoginService {
     user.lastActiveDate = new Date();
     await user.save();
 
-    const { accessToken, refreshToken, refreshTokenId } = TokenService.generateAuthTokens({
+    const { accessToken, refreshToken, refreshTokenId } = this.tokenService.generateAuthTokens({
       id: user.id,
       role: user.role,
     });
@@ -52,7 +53,7 @@ export class LoginService implements ILoginService {
 
   async refresh(input: RefreshTokenDTO): Promise<AuthTokensDTO> {
     const { refreshToken } = input;
-    const payload = verifyRefreshToken(refreshToken);
+    const payload = this.tokenService.verifyRefreshToken(refreshToken);
 
     const oldRefreshKey = REDIS_KEYS.REFRESH_TOKEN(payload.tokenId);
     const storedUserId = await this.cacheService.get<string>(oldRefreshKey);
@@ -70,7 +71,7 @@ export class LoginService implements ILoginService {
     user.lastActiveDate = new Date();
     await user.save();
 
-    const { accessToken, refreshToken: newRefreshToken, refreshTokenId } = TokenService.generateAuthTokens({
+    const { accessToken, refreshToken: newRefreshToken, refreshTokenId } = this.tokenService.generateAuthTokens({
       id: user.id,
       role: user.role,
     });
@@ -83,7 +84,7 @@ export class LoginService implements ILoginService {
 
   async logout(refreshToken: string): Promise<void> {
     try {
-      const payload = verifyRefreshToken(refreshToken);
+      const payload = this.tokenService.verifyRefreshToken(refreshToken);
       await this.cacheService.del(REDIS_KEYS.REFRESH_TOKEN(payload.tokenId));
     } catch (error) {
       logger.warn("Logout failed or token already invalid", error);

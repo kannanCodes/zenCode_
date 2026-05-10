@@ -1,4 +1,4 @@
-import { ResetPasswordDTO } from '../../dtos/ResetPasswordDTO';
+import { ResetPasswordDTO } from '../../../dtos/auth/password.dto';
 
 export interface IPasswordResetService {
   forgotPassword(email: string): Promise<void>;

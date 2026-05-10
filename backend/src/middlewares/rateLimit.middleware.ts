@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { ICacheService } from "../interfaces/service-interfaces/ICacheService";
+import { ICacheService } from "../interfaces/service-interfaces/auth/ICacheService";
 import { AppError } from "../utils/AppError";
 import { STATUS_CODES } from "../constants/status";
 import { AUTH_MESSAGES } from "../constants/messages";

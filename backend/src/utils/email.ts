@@ -1,5 +1,5 @@
 import nodemailer, { Transporter } from 'nodemailer';
-import { IEmailService } from '../interfaces/service-interfaces/IEmailService';
+import { IEmailService } from '../interfaces/service-interfaces/auth/IEmailService';
 import { AppError } from './AppError';
 import { STATUS_CODES } from '../constants/status';
 import { AUTH_MESSAGES } from '../constants/messages';

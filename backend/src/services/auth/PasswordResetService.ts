@@ -1,24 +1,26 @@
 import crypto from 'crypto';
-import { IAuthRepository } from '../interfaces/repository-interfaces/IUserRepository';
-import { IEmailService } from '../interfaces/service-interfaces/IEmailService';
-import { IPasswordResetService } from '../interfaces/service-interfaces/IPasswordResetService';
-import { passwordService } from '../utils/passwordService';
-import { ICacheService } from '../interfaces/service-interfaces/ICacheService';
-import { REDIS_KEYS } from '../constants/redisKeys';
-import { EXPIRY_TIMES } from '../constants/expiry';
-import { AppError } from '../utils/AppError';
-import { STATUS_CODES } from '../constants/status';
-import { AUTH_MESSAGES } from '../constants/messages';
-import { logger } from '../utils/Logger';
+import { IAuthRepository } from '../../interfaces/repository-interfaces/auth/IUserRepository';
+import { IEmailService } from '../../interfaces/service-interfaces/auth/IEmailService';
+import { IPasswordResetService } from '../../interfaces/service-interfaces/auth/IPasswordResetService';
+import { passwordService } from '../../utils/passwordService';
+import { ICacheService } from '../../interfaces/service-interfaces/auth/ICacheService';
+import { REDIS_KEYS } from '../../constants/redisKeys';
+import { EXPIRY_TIMES } from '../../constants/expiry';
+import { AppError } from '../../utils/AppError';
+import { STATUS_CODES } from '../../constants/status';
+import { AUTH_MESSAGES } from '../../constants/messages';
+import { logger } from '../../utils/Logger';
 
-import { ResetPasswordDTO } from '../dtos/ResetPasswordDTO';
+import { ResetPasswordDTO } from '../../dtos/auth/password.dto';
+import { appConfig } from '../../config/appConfig';
+import { FRONTEND_ROUTES } from '../../constants/routes';
 
 export class PasswordResetService implements IPasswordResetService {
   constructor(
     private userRepo: IAuthRepository,
     private emailService: IEmailService,
     private cacheService: ICacheService,
-  ) {}
+  ) { }
 
   async forgotPassword(email: string): Promise<void> {
     const user = await this.userRepo.findByEmail(email);
@@ -35,7 +37,7 @@ export class PasswordResetService implements IPasswordResetService {
       EXPIRY_TIMES.PASSWORD_RESET.SECONDS,
     );
 
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`;
+    const resetLink = `${appConfig.frontendUrl}${FRONTEND_ROUTES.RESET_PASSWORD}?token=${rawToken}`;
     await this.emailService.sendPasswordResetLink(user.email, resetLink);
 
     logger.info(`Password reset link sent to: ${email}`);

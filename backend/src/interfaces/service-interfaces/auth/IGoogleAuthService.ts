@@ -1,4 +1,4 @@
-import { AuthTokensDTO } from '../../dtos/AuthResponseDTO';
+import { AuthTokensDTO } from '../../../dtos/auth/auth-response.dto';
 
 export interface GoogleProfile {
   id: string;

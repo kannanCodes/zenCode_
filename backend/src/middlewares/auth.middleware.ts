@@ -3,7 +3,7 @@ import { verifyAccessToken } from '../utils/token/access-token';
 import { AppError } from '../utils/AppError';
 import { STATUS_CODES } from '../constants/status';
 import { AUTH_MESSAGES } from '../constants/messages';
-import { authRepository } from '../di/container';
+import { authRepository } from '../di/auth.container';
 
 export const authMiddleware = async (
   req: Request,

@@ -1,0 +1,21 @@
+import { Server as HttpServer } from 'http';
+import { app } from '../app';
+import { connectDB } from '../config/dbConfig';
+import { appConfig } from '../config/appConfig';
+import { logger } from '../utils/Logger';
+
+export class Server {
+  private httpServer?: HttpServer;
+
+  async start(): Promise<void> {
+    await connectDB();
+
+    this.httpServer = app.listen(appConfig.port, () => {
+      logger.info(`Server running on http://localhost:${appConfig.port}`);
+    });
+  }
+
+  getHttpServer(): HttpServer | undefined {
+    return this.httpServer;
+  }
+}
