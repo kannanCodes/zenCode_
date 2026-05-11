@@ -16,8 +16,7 @@ import { LoginDTO } from '../../dtos/auth/login.dto';
 import { ResetPasswordDTO } from '../../dtos/auth/password.dto';
 import { ForgotPasswordDTO } from '../../dtos/auth/password.dto';
 import { RefreshTokenDTO } from '../../dtos/auth/refresh-token.dto';
-import { setRefreshTokenCookie } from "../../shared/utils/cookies/set-auth-cookie";
-import { clearRefreshTokenCookie } from "../../shared/utils/cookies/clear-auth-cookie";
+import { setRefreshTokenCookie, clearRefreshTokenCookie } from "../../shared/utils/cookies";
 import { appConfig } from '../../config/appConfig';
 import { FRONTEND_ROUTES } from "../../shared/constants/frontend-routes";
 

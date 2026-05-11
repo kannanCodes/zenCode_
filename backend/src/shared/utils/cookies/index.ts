@@ -1,5 +1,12 @@
 import { Response } from "express";
-import { refreshCookieOptions } from "./cookie-options";
+import { appConfig } from "../../../config/appConfig";
+
+export const refreshCookieOptions = {
+  httpOnly: appConfig.cookies.httpOnly,
+  secure: appConfig.cookies.secure,
+  sameSite: appConfig.cookies.sameSite,
+  maxAge: appConfig.cookies.maxAge,
+};
 
 export const setRefreshTokenCookie = (res: Response, token: string): void => {
   res.cookie("refreshToken", token, refreshCookieOptions);
