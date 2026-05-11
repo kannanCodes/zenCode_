@@ -12,7 +12,7 @@ import {
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
-} from '../../validators/auth.validator';
+} from '../../validators/auth/auth.validator';
 
 const router = Router();
 
