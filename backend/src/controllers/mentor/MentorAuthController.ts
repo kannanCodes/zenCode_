@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { IMentorAuthService } from "../../interfaces/service-interfaces/mentor/IMentorAuthService";
 import { sendSuccess } from "../../shared/http/response";
 import { STATUS_CODES } from "../../shared/constants/status";
-import { AUTH_MESSAGES } from "../../constants/messages";
+import { AUTH_MESSAGES, MENTOR_MESSAGES } from "../../constants/messages";
 import { AppError } from "../../shared/utils/AppError";
 import { setRefreshTokenCookie, clearRefreshTokenCookie } from "../../shared/utils/cookies";
 
@@ -14,7 +14,7 @@ export class MentorAuthController {
       await this._mentorAuthService.activateMentor(req.body);
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: 'Mentor account activated successfully',
+        message: MENTOR_MESSAGES.ACTIVATED,
       });
     } catch (error) {
       next(error);
@@ -29,7 +29,7 @@ export class MentorAuthController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: 'Mentor login successful',
+        message: MENTOR_MESSAGES.LOGIN_SUCCESS,
         data: { accessToken },
       });
     } catch (error) {

@@ -1,16 +1,17 @@
 import User, { IUser } from "../../infrastructure/database/models/user.model";
 import { UserRole } from "../../shared/constants/roles";
 import { IMentorAuthRepository } from "../../interfaces/repository-interfaces/mentor/IMentorAuthRepository";
+import { BaseRepository } from "../base/BaseRepository";
 
-export class MentorAuthRepository implements IMentorAuthRepository {
-  async findMentorByEmail(email: string): Promise<IUser | null> {
-    return User.findOne({
-      email,
-      role: UserRole.MENTOR,
-    }).exec();
+export class MentorAuthRepository extends BaseRepository<IUser> implements IMentorAuthRepository {
+  constructor() {
+    super(User);
   }
 
-  async findById(id: string): Promise<IUser | null> {
-    return User.findById(id).exec();
+  async findMentorByEmail(email: string): Promise<IUser | null> {
+    return this.findOne({
+      email,
+      role: UserRole.MENTOR,
+    });
   }
 }

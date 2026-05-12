@@ -24,7 +24,7 @@ export class CompilerController {
 
   getResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const result = await this.compilerService.getExecutionResult(req.params.token);
+      const result = await this.compilerService.getExecutionResult(req.params.token as string);
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,

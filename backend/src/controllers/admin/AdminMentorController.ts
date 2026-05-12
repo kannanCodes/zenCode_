@@ -4,6 +4,7 @@ import { sendSuccess } from "../../shared/http/response";
 import { STATUS_CODES } from "../../shared/constants/status";
 import { ListMentorsQuery } from "../../dtos/admin/admin-mentor.dto";
 import { UserRole } from "../../shared/constants/roles";
+import { ADMIN_MESSAGES } from "../../constants/messages";
 
 export interface AuthenticatedRequest extends Request {
   user: {
@@ -25,7 +26,7 @@ export class AdminMentorController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.CREATED,
-        message: 'Mentor invite sent successfully',
+        message: ADMIN_MESSAGES.MENTOR_INVITE_SENT,
       });
     } catch (error) {
       next(error);
@@ -43,7 +44,7 @@ export class AdminMentorController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: 'Mentor status updated',
+        message: ADMIN_MESSAGES.MENTOR_STATUS_UPDATED,
       });
     } catch (error) {
       next(error);
@@ -72,7 +73,7 @@ export class AdminMentorController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: 'Mentor invite resent successfully',
+        message: ADMIN_MESSAGES.MENTOR_INVITE_RESENT,
       });
     } catch (error) {
       next(error);

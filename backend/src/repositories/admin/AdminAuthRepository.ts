@@ -1,15 +1,17 @@
 import User, { IUser } from "../../infrastructure/database/models/user.model";
 import { UserRole } from "../../shared/constants/roles";
+import { BaseRepository } from "../base/BaseRepository";
+import { IAdminAuthRepository } from "../../interfaces/repository-interfaces/admin/IAdminAuthRepository";
 
-export class AdminAuthRepository {
-  async findAdminByEmail(email: string): Promise<IUser | null> {
-    return User.findOne({
-      email,
-      role: UserRole.ADMIN,
-    }).exec();
+export class AdminAuthRepository extends BaseRepository<IUser> implements IAdminAuthRepository {
+  constructor() {
+    super(User);
   }
 
-  async findById(id: string): Promise<IUser | null> {
-    return User.findById(id).exec();
+  async findAdminByEmail(email: string): Promise<IUser | null> {
+    return this.findOne({
+      email,
+      role: UserRole.ADMIN,
+    });
   }
 }

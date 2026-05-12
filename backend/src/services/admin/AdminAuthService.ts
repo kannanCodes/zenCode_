@@ -1,4 +1,5 @@
-import { AdminAuthRepository } from "../../repositories/admin/AdminAuthRepository";
+import { IAdminAuthRepository } from "../../interfaces/repository-interfaces/admin/IAdminAuthRepository";
+import { IAdminAuthService } from "../../interfaces/service-interfaces/admin/IAdminAuthService";
 import { AdminLoginInput } from "../../dtos/admin/admin-auth.dto";
 import { AppError } from "../../shared/utils/AppError";
 import { STATUS_CODES } from "../../shared/constants/status";
@@ -10,9 +11,9 @@ import { REDIS_KEYS } from "../../constants/redisKeys";
 import { parseExpiryToSeconds } from "../../shared/utils/expiry.util";
 import { REFRESH_TOKEN_EXPIRY } from "../../constants/token.constants";
 
-export class AdminAuthService {
+export class AdminAuthService implements IAdminAuthService {
   constructor(
-    private readonly _adminAuthRepository: AdminAuthRepository,
+    private readonly _adminAuthRepository: IAdminAuthRepository,
     private readonly _cacheService: ICacheService,
     private readonly _tokenService: ITokenService
   ) { }

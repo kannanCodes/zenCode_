@@ -34,8 +34,7 @@ export class LoginService implements ILoginService {
     const isValid = await passwordService.compare(password, user.password);
     if (!isValid) throw new AppError(AUTH_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
 
-    user.lastActiveDate = new Date();
-    await user.save();
+    await this.userRepo.updateLastActive(user.id);
 
     const { accessToken, refreshToken, refreshTokenId } = this.tokenService.generateAuthTokens({
       id: user.id,
@@ -69,8 +68,7 @@ export class LoginService implements ILoginService {
 
     await this.cacheService.del(oldRefreshKey);
 
-    user.lastActiveDate = new Date();
-    await user.save();
+    await this.userRepo.updateLastActive(user.id);
 
     const { accessToken, refreshToken: newRefreshToken, refreshTokenId } = this.tokenService.generateAuthTokens({
       id: user.id,
