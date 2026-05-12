@@ -10,6 +10,7 @@ import adminUserRoutes from './routes/admin/admin-user.routes';
 import adminMentorRoutes from './routes/admin/admin-mentor.routes';
 import mentorAuthRoutes from './routes/mentor/mentor-auth.routes';
 import problemRoutes from './routes/problem/problem.routes';
+import compilerRoutes from './routes/compiler/compiler.routes';
 import { appConfig } from './config/appConfig';
 
 export const app = express();
@@ -30,6 +31,7 @@ app.use('/api/admin', adminUserRoutes);
 app.use('/api/admin', adminMentorRoutes);
 app.use('/api/mentor/auth', mentorAuthRoutes);
 app.use('/api/problems', problemRoutes);
+app.use('/api/compiler', compilerRoutes);
 
 // Health check
 app.get('/health', (_req, res) => {
