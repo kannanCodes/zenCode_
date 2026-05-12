@@ -6,7 +6,7 @@ import { ITokenService } from "../../interfaces/service-interfaces/auth/ITokenSe
 import { ActivateMentorInput, MentorLoginInput } from "../../dtos/mentor/mentor-auth.dto";
 import { AppError } from "../../shared/utils/AppError";
 import { STATUS_CODES } from "../../shared/constants/status";
-import { AUTH_MESSAGES } from "../../constants/messages";
+import { AUTH_MESSAGES, MENTOR_MESSAGES } from "../../constants/messages";
 import { passwordService } from "../../infrastructure/security/password.service";
 import { REDIS_KEYS } from "../../constants/redisKeys";
 import { parseExpiryToSeconds } from "../../shared/utils/expiry.util";
@@ -25,38 +25,38 @@ export class MentorAuthService implements IMentorAuthService {
     const { token, password, confirmPassword } = input;
 
     if (password !== confirmPassword) {
-      throw new AppError('Passwords do not match', STATUS_CODES.BAD_REQUEST);
+      throw new AppError(AUTH_MESSAGES.PASSWORDS_DO_NOT_MATCH, STATUS_CODES.BAD_REQUEST);
     }
 
     if (password.length < 8) {
-      throw new AppError('Password must be at least 8 characters', STATUS_CODES.BAD_REQUEST);
+      throw new AppError(MENTOR_MESSAGES.PASSWORDS_MIN_LENGTH, STATUS_CODES.BAD_REQUEST);
     }
 
     const email = await this._cacheService.get<string>(REDIS_KEYS.MENTOR_INVITE(token));
     if (!email) {
-      throw new AppError('Invalid or Expired Invite Link', STATUS_CODES.UNAUTHORIZED);
+      throw new AppError(MENTOR_MESSAGES.INVALID_INVITE, STATUS_CODES.UNAUTHORIZED);
     }
 
     const latestTokenForEmail = await this._cacheService.get<string>(REDIS_KEYS.MENTOR_INVITE_BY_EMAIL(email));
     if (!latestTokenForEmail || latestTokenForEmail !== token) {
-      throw new AppError('Invalid or Expired Invite Link', STATUS_CODES.UNAUTHORIZED);
+      throw new AppError(MENTOR_MESSAGES.INVALID_INVITE, STATUS_CODES.UNAUTHORIZED);
     }
 
     const mentor = await this._adminMentorRepository.findUserByEmail(email);
     if (!mentor) {
-      throw new AppError('Mentor Account not Found', STATUS_CODES.NOT_FOUND);
+      throw new AppError(MENTOR_MESSAGES.ACCOUNT_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
     if (mentor.role !== UserRole.MENTOR) {
-      throw new AppError('Invalid mentor operation', STATUS_CODES.BAD_REQUEST);
+      throw new AppError(MENTOR_MESSAGES.INVALID_OPERATION, STATUS_CODES.BAD_REQUEST);
     }
 
     if (mentor.mentorStatus === 'DISABLED') {
-      throw new AppError('Mentor disabled by admin', STATUS_CODES.FORBIDDEN);
+      throw new AppError(MENTOR_MESSAGES.DISABLED_BY_ADMIN, STATUS_CODES.FORBIDDEN);
     }
 
     if (mentor.mentorStatus !== 'INVITED') {
-      throw new AppError('Invalid mentor state', STATUS_CODES.CONFLICT);
+      throw new AppError(MENTOR_MESSAGES.INVALID_STATE, STATUS_CODES.CONFLICT);
     }
 
     const hashedPassword = await passwordService.hash(password);
@@ -79,11 +79,11 @@ export class MentorAuthService implements IMentorAuthService {
     }
 
     if (!mentor.isEmailVerified) {
-      throw new AppError('Mentor account not activated', STATUS_CODES.FORBIDDEN);
+      throw new AppError(MENTOR_MESSAGES.NOT_ACTIVATED, STATUS_CODES.FORBIDDEN);
     }
 
     if (mentor.mentorStatus !== 'ACTIVE') {
-      throw new AppError('Account disabled. Contact admin.', STATUS_CODES.FORBIDDEN);
+      throw new AppError(MENTOR_MESSAGES.ACCOUNT_DISABLED, STATUS_CODES.FORBIDDEN);
     }
 
     if (!mentor.password) {

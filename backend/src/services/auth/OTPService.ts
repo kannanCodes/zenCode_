@@ -7,6 +7,8 @@ import { AppError } from "../../shared/utils/AppError";
 import { AUTH_MESSAGES } from "../../constants/messages";
 import { STATUS_CODES } from "../../shared/constants/status";
 import { appConfig } from '../../config/appConfig';
+import { EXPIRY_TIMES } from '../../shared/utils/expiry.util';
+import { OTP_LIMITS } from '../../constants/otp.constants';
 
 
 
@@ -20,21 +22,21 @@ export class OTPService implements IOTPService {
      }
 
      async storeOTP(email: string, otp: string): Promise<void> {
-          await this.cacheService.set(REDIS_KEYS.OTP(email), otp, 300);
+          await this.cacheService.set(REDIS_KEYS.OTP(email), otp, EXPIRY_TIMES.OTP.SECONDS);
      }
 
      async verifyOTP(email: string, otp: string): Promise<boolean> {
-          const attemptKey = `otp-attempt:${email}`;
+          const attemptKey = REDIS_KEYS.OTP_ATTEMPT(email);
           const attempts = await this.cacheService.get<number>(attemptKey) || 0;
 
-          if (attempts >= 5) {
+          if (attempts >= OTP_LIMITS.MAX_VERIFY_ATTEMPTS) {
                throw new AppError(AUTH_MESSAGES.TOO_MANY_ATTEMPTS, STATUS_CODES.TOO_MANY_REQUESTS);
           }
 
           const stored = await this.cacheService.get<string>(REDIS_KEYS.OTP(email));
 
           if (!stored || stored !== otp) {
-               await this.cacheService.set(attemptKey, attempts + 1, 300); // 5 min block/tracking
+               await this.cacheService.set(attemptKey, attempts + 1, EXPIRY_TIMES.OTP.SECONDS);
                return false;
           }
 
@@ -44,7 +46,7 @@ export class OTPService implements IOTPService {
      }
 
      async storeRegistrationData<T>(email: string, data: T): Promise<void> {
-          await this.cacheService.set(REDIS_KEYS.REGISTRATION(email), data, 300);
+          await this.cacheService.set(REDIS_KEYS.REGISTRATION(email), data, EXPIRY_TIMES.OTP.SECONDS);
      }
 
      async getRegistrationData<T>(email: string): Promise<T | null> {

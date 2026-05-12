@@ -40,9 +40,7 @@ export class GoogleAuthService implements IGoogleAuthService {
       logger.info(`New Google user created: ${email}`);
     } else {
       if (!user.googleId) {
-        user.googleId = googleId;
-        user.isEmailVerified = true;
-        await user.save();
+        await this.userRepo.linkGoogleAccount(user.id, googleId);
       }
 
       if (user.isBlocked) {
@@ -50,8 +48,7 @@ export class GoogleAuthService implements IGoogleAuthService {
       }
     }
 
-    user.lastActiveDate = new Date();
-    await user.save();
+    await this.userRepo.updateLastActive(user.id);
 
     const { accessToken, refreshToken, refreshTokenId } = this.tokenService.generateAuthTokens({
       id: user.id,

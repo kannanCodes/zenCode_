@@ -1,3 +1,5 @@
+import { IUser } from "../../infrastructure/database/models/user.model";
+
 export interface CreateMentorInput {
   fullName: string;
   email: string;
@@ -18,7 +20,7 @@ export interface ListMentorsQuery {
 }
 
 export interface PaginatedMentorsResponse {
-  data: unknown[]; // Will be IUser[]
+  data: IUser[];
   meta: {
     page: number;
     limit: number;

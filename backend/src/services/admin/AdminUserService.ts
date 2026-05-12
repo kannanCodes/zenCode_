@@ -3,6 +3,7 @@ import { IAdminUserRepository } from "../../interfaces/repository-interfaces/adm
 import { ListUsersQuery, PaginatedUsersResponse } from "../../dtos/admin/admin-user.dto";
 import { AppError } from "../../shared/utils/AppError";
 import { STATUS_CODES } from "../../shared/constants/status";
+import { ADMIN_MESSAGES } from "../../constants/messages";
 import { UserRole } from "../../shared/constants/roles";
 
 export class AdminUserService implements IAdminUserService {
@@ -16,7 +17,7 @@ export class AdminUserService implements IAdminUserService {
     const user = await this._adminUserRepository.findById(userId);
 
     if (!user || user.role !== UserRole.CANDIDATE) {
-      throw new AppError('Candidate not found', STATUS_CODES.NOT_FOUND);
+      throw new AppError(ADMIN_MESSAGES.CANDIDATE_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
     if (user.isBlocked) return;
@@ -28,7 +29,7 @@ export class AdminUserService implements IAdminUserService {
     const user = await this._adminUserRepository.findById(userId);
 
     if (!user || user.role !== UserRole.CANDIDATE) {
-      throw new AppError('Candidate not found', STATUS_CODES.NOT_FOUND);
+      throw new AppError(ADMIN_MESSAGES.CANDIDATE_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
     if (!user.isBlocked) return;

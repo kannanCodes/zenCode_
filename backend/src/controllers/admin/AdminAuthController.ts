@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from "express";
-import { AdminAuthService } from "../../services/admin/AdminAuthService";
+import { IAdminAuthService } from "../../interfaces/service-interfaces/admin/IAdminAuthService";
 import { sendSuccess } from "../../shared/http/response";
 import { STATUS_CODES } from "../../shared/constants/status";
 import { AppError } from "../../shared/utils/AppError";
-import { AUTH_MESSAGES } from "../../constants/messages";
+import { AUTH_MESSAGES, ADMIN_MESSAGES } from "../../constants/messages";
 import { setRefreshTokenCookie, clearRefreshTokenCookie } from "../../shared/utils/cookies";
 
 export class AdminAuthController {
-  constructor(private readonly _adminAuthService: AdminAuthService) {}
+  constructor(private readonly _adminAuthService: IAdminAuthService) {}
 
   async login(req: Request, res: Response, next: NextFunction) {
     try {
@@ -17,7 +17,7 @@ export class AdminAuthController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: 'Admin login successful',
+        message: ADMIN_MESSAGES.LOGIN_SUCCESS,
         data: { accessToken },
       });
     } catch (error) {

@@ -9,13 +9,15 @@ import { AdminMentorService } from "../../services/admin/AdminMentorService";
 import { AdminMentorController } from "../../controllers/admin/AdminMentorController";
 import { cacheService, tokenService, emailService } from "./shared.container";
 
+import { IAdminAuthService } from "../../interfaces/service-interfaces/admin/IAdminAuthService";
+
 // ── Repositories ───────────────────────────────────────────────────────────────
 export const adminAuthRepository = new AdminAuthRepository();
 export const adminUserRepository = new AdminUserRepository();
 export const adminMentorRepository = new AdminMentorRepository();
 
 // ── Domain Services ────────────────────────────────────────────────────────────
-export const adminAuthService = new AdminAuthService(
+export const adminAuthService: IAdminAuthService = new AdminAuthService(
   adminAuthRepository,
   cacheService,
   tokenService

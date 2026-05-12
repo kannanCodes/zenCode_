@@ -9,6 +9,8 @@ import { STATUS_CODES } from "../../shared/constants/status";
 import { REDIS_KEYS } from "../../constants/redisKeys";
 import { EXPIRY_TIMES } from "../../shared/utils/expiry.util";
 import { UserRole } from "../../shared/constants/roles";
+import { appConfig } from "../../config/appConfig";
+import { ADMIN_MESSAGES } from "../../constants/messages";
 
 export class AdminMentorService implements IAdminMentorService {
   constructor(
@@ -40,7 +42,7 @@ export class AdminMentorService implements IAdminMentorService {
       EXPIRY_TIMES.MENTOR_INVITE.SECONDS
     );
 
-    const inviteLink = `${process.env.FRONTEND_URL}/mentor/activate?token=${inviteToken}`;
+    const inviteLink = `${appConfig.frontendUrl}/mentor/activate?token=${inviteToken}`;
 
     await this._emailService.sendMentorSetupLink({
       email,
@@ -52,7 +54,7 @@ export class AdminMentorService implements IAdminMentorService {
   async createMentor(adminId: string, data: CreateMentorInput): Promise<void> {
     const existingUser = await this._adminMentorRepository.findUserByEmail(data.email);
     if (existingUser) {
-      throw new AppError('User Already Exists', STATUS_CODES.CONFLICT);
+      throw new AppError(ADMIN_MESSAGES.USER_ALREADY_EXISTS, STATUS_CODES.CONFLICT);
     }
 
     await this._adminMentorRepository.createMentor(data, adminId);
@@ -67,25 +69,25 @@ export class AdminMentorService implements IAdminMentorService {
     const mentor = await this._adminMentorRepository.findById(mentorId);
 
     if (!mentor) {
-      throw new AppError('Mentor not found', STATUS_CODES.NOT_FOUND);
+      throw new AppError(ADMIN_MESSAGES.MENTOR_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
     if (mentor.role !== UserRole.MENTOR) {
-      throw new AppError('Invalid mentor operation', STATUS_CODES.BAD_REQUEST);
+      throw new AppError(ADMIN_MESSAGES.MENTOR_INVALID_OPERATION, STATUS_CODES.BAD_REQUEST);
     }
 
     if (!mentor.mentorStatus) {
-      throw new AppError('Mentor not found', STATUS_CODES.NOT_FOUND);
+      throw new AppError(ADMIN_MESSAGES.MENTOR_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
     if (!['ACTIVE', 'DISABLED'].includes(status)) {
-      throw new AppError('Invalid status value', STATUS_CODES.BAD_REQUEST);
+      throw new AppError(ADMIN_MESSAGES.INVALID_STATUS_VALUE, STATUS_CODES.BAD_REQUEST);
     }
 
     const currentStatus = mentor.mentorStatus;
 
     if (currentStatus === 'INVITED' && status === 'DISABLED') {
-      throw new AppError('Cannot disable invited mentor', STATUS_CODES.BAD_REQUEST);
+      throw new AppError(ADMIN_MESSAGES.CANNOT_DISABLE_INVITED, STATUS_CODES.BAD_REQUEST);
     }
 
     if (currentStatus === 'ACTIVE' && status === 'ACTIVE') return;
@@ -103,23 +105,23 @@ export class AdminMentorService implements IAdminMentorService {
     const mentor = await this._adminMentorRepository.findById(mentorId);
 
     if (!mentor) {
-      throw new AppError('Mentor not found', STATUS_CODES.NOT_FOUND);
+      throw new AppError(ADMIN_MESSAGES.MENTOR_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
     if (mentor.role !== UserRole.MENTOR) {
-      throw new AppError('Invalid mentor operation', STATUS_CODES.BAD_REQUEST);
+      throw new AppError(ADMIN_MESSAGES.MENTOR_INVALID_OPERATION, STATUS_CODES.BAD_REQUEST);
     }
 
     if (!mentor.mentorStatus) {
-      throw new AppError('Mentor not found', STATUS_CODES.NOT_FOUND);
+      throw new AppError(ADMIN_MESSAGES.MENTOR_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
     if (mentor.mentorStatus === 'ACTIVE') {
-      throw new AppError('Cannot resend invite for active mentor', STATUS_CODES.BAD_REQUEST);
+      throw new AppError(ADMIN_MESSAGES.CANNOT_RESEND_ACTIVE, STATUS_CODES.BAD_REQUEST);
     }
 
     if (mentor.mentorStatus === 'DISABLED') {
-      throw new AppError('Mentor disabled by admin', STATUS_CODES.BAD_REQUEST);
+      throw new AppError(ADMIN_MESSAGES.MENTOR_DISABLED_CANNOT_RESEND, STATUS_CODES.BAD_REQUEST);
     }
 
     await this._issueInviteForEmail({

@@ -18,4 +18,16 @@ export class AuthRepository extends BaseRepository<IUser> implements IAuthReposi
   updateByEmail(email: string, update: Partial<IUser>): Promise<IUser | null> {
     return this.updateOne({ email }, { $set: update });
   }
+
+  async updateLastActive(userId: string): Promise<void> {
+    await this.updateOne({ _id: userId }, { $set: { lastActiveDate: new Date() } });
+  }
+
+  async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+    await this.updateOne({ _id: userId }, { $set: { password: hashedPassword } });
+  }
+
+  async linkGoogleAccount(userId: string, googleId: string): Promise<void> {
+    await this.updateOne({ _id: userId }, { $set: { googleId, isEmailVerified: true } });
+  }
 }

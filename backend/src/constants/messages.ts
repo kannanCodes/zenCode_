@@ -39,12 +39,46 @@ export const MENTOR_MESSAGES = {
   CREATED_SUCCESS: 'Mentor account created. Temporary password sent to email.',
   PASSWORD_CHANGED: 'Password changed successfully. Please login.',
   TEMP_PASSWORD_SENT: 'Temporary password sent to email',
+  ACTIVATED: 'Mentor account activated successfully',
+  LOGIN_SUCCESS: 'Mentor login successful',
+  NOT_ACTIVATED: 'Mentor account not activated',
+  ACCOUNT_DISABLED: 'Account disabled. Contact admin.',
+  PASSWORDS_MIN_LENGTH: 'Password must be at least 8 characters',
+  INVALID_STATE: 'Invalid mentor state',
+  NOT_FOUND: 'Mentor not found',
+  INVALID_OPERATION: 'Invalid mentor operation',
+  DISABLED_BY_ADMIN: 'Mentor disabled by admin',
+  INVALID_INVITE: 'Invalid or Expired Invite Link',
+  ACCOUNT_NOT_FOUND: 'Mentor Account not Found',
 };
 
 export const ADMIN_MESSAGES = {
   USER_BLOCKED: 'User blocked successfully',
   USER_UNBLOCKED: 'User unblocked successfully',
   MENTOR_DELETED: 'Mentor account deleted',
+  LOGIN_SUCCESS: 'Admin login successful',
+  MENTOR_INVITE_SENT: 'Mentor invite sent successfully',
+  MENTOR_STATUS_UPDATED: 'Mentor status updated',
+  MENTOR_INVITE_RESENT: 'Mentor invite resent successfully',
+  CANDIDATE_NOT_FOUND: 'Candidate not found',
+  USER_ALREADY_EXISTS: 'User Already Exists',
+  MENTOR_NOT_FOUND: 'Mentor not found',
+  MENTOR_INVALID_OPERATION: 'Invalid mentor operation',
+  INVALID_STATUS_VALUE: 'Invalid status value',
+  CANNOT_DISABLE_INVITED: 'Cannot disable invited mentor',
+  CANNOT_RESEND_ACTIVE: 'Cannot resend invite for active mentor',
+  MENTOR_DISABLED_CANNOT_RESEND: 'Mentor disabled by admin',
+};
+
+export const PROBLEM_MESSAGES = {
+  TITLE_EXISTS: 'Problem with this title already exists',
+  NOT_FOUND: 'Problem not found',
+  CREATED: 'Problem created successfully',
+  UPDATED: 'Problem updated successfully',
+  DELETED: 'Problem deleted successfully',
+  FETCHED: 'Problems fetched successfully',
+  TAGS_FETCHED: 'Tags fetched successfully',
+  COMPANY_TAGS_FETCHED: 'Company tags fetched successfully',
 };
 
 export const GLOBAL_MESSAGES = {

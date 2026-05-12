@@ -4,6 +4,7 @@ import { CreateProblemInput, UpdateProblemInput, ListProblemsQuery, PaginatedPro
 import { IProblem, ITestCase } from "../../infrastructure/database/models/problem.model";
 import { AppError } from "../../shared/utils/AppError";
 import { STATUS_CODES } from "../../shared/constants/status";
+import { PROBLEM_MESSAGES } from "../../constants/messages";
 
 export class ProblemService implements IProblemService {
   constructor(private readonly _problemRepository: IProblemRepository) {}
@@ -11,7 +12,7 @@ export class ProblemService implements IProblemService {
   async createProblem(adminId: string, data: CreateProblemInput): Promise<IProblem> {
     const existingProblem = await this._problemRepository.findByTitle(data.title);
     if (existingProblem) {
-      throw new AppError('Problem with this title already exists', STATUS_CODES.CONFLICT);
+      throw new AppError(PROBLEM_MESSAGES.TITLE_EXISTS, STATUS_CODES.CONFLICT);
     }
     return this._problemRepository.createProblem({
       ...data,
@@ -69,7 +70,7 @@ export class ProblemService implements IProblemService {
   async getProblemById(problemId: string): Promise<IProblem> {
     const problem = await this._problemRepository.findById(problemId);
     if (!problem) {
-      throw new AppError("Problem not found", STATUS_CODES.NOT_FOUND);
+      throw new AppError(PROBLEM_MESSAGES.NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
     return problem;
   }
@@ -77,7 +78,7 @@ export class ProblemService implements IProblemService {
   async updateProblem(problemId: string, data: UpdateProblemInput): Promise<IProblem> {
     const problem = await this._problemRepository.updateById(problemId, data);
     if (!problem) {
-      throw new AppError("Problem not found", STATUS_CODES.NOT_FOUND);
+      throw new AppError(PROBLEM_MESSAGES.NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
     return problem;
   }
@@ -93,7 +94,7 @@ export class ProblemService implements IProblemService {
   async deleteProblem(problemId: string): Promise<IProblem> {
     const problem = await this._problemRepository.softDeleteById(problemId);
     if (!problem) {
-      throw new AppError("Problem not found", STATUS_CODES.NOT_FOUND);
+      throw new AppError(PROBLEM_MESSAGES.NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
     return problem;
   }
@@ -146,7 +147,7 @@ export class ProblemService implements IProblemService {
   async getCandidateProblem(problemId: string): Promise<Partial<IProblem>> {
     const problem = await this._problemRepository.findById(problemId);
     if (!problem || !problem.isActive) {
-      throw new AppError("Problem not found", STATUS_CODES.NOT_FOUND);
+      throw new AppError(PROBLEM_MESSAGES.NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
     const problemObj = problem.toObject();

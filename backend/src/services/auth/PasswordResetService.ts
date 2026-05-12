@@ -52,8 +52,8 @@ export class PasswordResetService implements IPasswordResetService {
     const user = await this.userRepo.findById(userId);
     if (!user) throw new AppError(AUTH_MESSAGES.INVALID_TOKEN, STATUS_CODES.BAD_REQUEST);
 
-    user.password = await passwordService.hash(newPassword);
-    await user.save();
+    const hashedPassword = await passwordService.hash(newPassword);
+    await this.userRepo.updatePassword(userId, hashedPassword);
 
     await this.cacheService.del(REDIS_KEYS.RESET_PASSWORD(hashedToken));
     logger.info(`Password reset successful for userId: ${userId}`);

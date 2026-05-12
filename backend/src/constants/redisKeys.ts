@@ -1,5 +1,6 @@
 export const REDIS_KEYS = {
   OTP: (email: string) => `otp:${email}`,
+  OTP_ATTEMPT: (email: string) => `otp-attempt:${email}`,
   REGISTRATION: (email: string) => `registration:${email}`,
   OTP_META: (email: string) => `otp-meta:${email}`,
   REFRESH_TOKEN: (tokenId: string) => `refresh:${tokenId}`,
