@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import User, { IUser } from "../../infrastructure/database/models/user.model";
-import { BaseRepository } from "../base/BaseRepository";
+import { BaseRepository } from "../../infrastructure/database/repositories/base/base.repository";
 import { IAdminMentorRepository } from "../../interfaces/repository-interfaces/admin/IAdminMentorRepository";
 import { CreateMentorInput, ListMentorsQuery, PaginatedMentorsResponse } from "../../dtos/admin/admin-mentor.dto";
 import { UserRole } from "../../shared/constants/roles";

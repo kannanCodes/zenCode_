@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { IAuthRepository } from '../../interfaces/repository-interfaces/auth/IUserRepository';
 import { IEmailService } from '../../interfaces/service-interfaces/auth/IEmailService';
 import { IPasswordResetService } from '../../interfaces/service-interfaces/auth/IPasswordResetService';
-import { passwordService } from '../../infrastructure/security/password.service';
+import { IPasswordService } from '../../interfaces/infrastructure-interfaces/security/IPasswordService';
 import { ICacheService } from '../../interfaces/service-interfaces/auth/ICacheService';
 import { REDIS_KEYS } from '../../constants/redisKeys';
 import { EXPIRY_TIMES } from "../../shared/utils/expiry.util";
@@ -20,6 +20,7 @@ export class PasswordResetService implements IPasswordResetService {
     private userRepo: IAuthRepository,
     private emailService: IEmailService,
     private cacheService: ICacheService,
+    private passwordService: IPasswordService,
   ) { }
 
   async forgotPassword(email: string): Promise<void> {
@@ -52,7 +53,7 @@ export class PasswordResetService implements IPasswordResetService {
     const user = await this.userRepo.findById(userId);
     if (!user) throw new AppError(AUTH_MESSAGES.INVALID_TOKEN, STATUS_CODES.BAD_REQUEST);
 
-    const hashedPassword = await passwordService.hash(newPassword);
+    const hashedPassword = await this.passwordService.hash(newPassword);
     await this.userRepo.updatePassword(userId, hashedPassword);
 
     await this.cacheService.del(REDIS_KEYS.RESET_PASSWORD(hashedToken));

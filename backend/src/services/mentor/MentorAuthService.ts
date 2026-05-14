@@ -7,7 +7,7 @@ import { ActivateMentorInput, MentorLoginInput } from "../../dtos/mentor/mentor-
 import { AppError } from "../../shared/utils/AppError";
 import { STATUS_CODES } from "../../shared/constants/status";
 import { AUTH_MESSAGES, MENTOR_MESSAGES } from "../../constants/messages";
-import { passwordService } from "../../infrastructure/security/password.service";
+import { IPasswordService } from "../../interfaces/infrastructure-interfaces/security/IPasswordService";
 import { REDIS_KEYS } from "../../constants/redisKeys";
 import { parseExpiryToSeconds } from "../../shared/utils/expiry.util";
 import { REFRESH_TOKEN_EXPIRY } from "../../constants/token.constants";
@@ -18,7 +18,8 @@ export class MentorAuthService implements IMentorAuthService {
     private readonly _mentorAuthRepository: IMentorAuthRepository,
     private readonly _adminMentorRepository: IAdminMentorRepository,
     private readonly _cacheService: ICacheService,
-    private readonly _tokenService: ITokenService
+    private readonly _tokenService: ITokenService,
+    private readonly _passwordService: IPasswordService
   ) {}
 
   async activateMentor(input: ActivateMentorInput): Promise<void> {
@@ -59,7 +60,7 @@ export class MentorAuthService implements IMentorAuthService {
       throw new AppError(MENTOR_MESSAGES.INVALID_STATE, STATUS_CODES.CONFLICT);
     }
 
-    const hashedPassword = await passwordService.hash(password);
+    const hashedPassword = await this._passwordService.hash(password);
     await this._adminMentorRepository.activateMentor(mentor.id, hashedPassword);
 
     await this._cacheService.del(REDIS_KEYS.MENTOR_INVITE(token));
@@ -90,7 +91,7 @@ export class MentorAuthService implements IMentorAuthService {
       throw new AppError(AUTH_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
     }
 
-    const isMatch = await passwordService.compare(password, mentor.password);
+    const isMatch = await this._passwordService.compare(password, mentor.password);
     if (!isMatch) {
       throw new AppError(AUTH_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
     }

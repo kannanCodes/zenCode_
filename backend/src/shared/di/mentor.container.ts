@@ -2,7 +2,7 @@ import { MentorAuthRepository } from "../../repositories/mentor/MentorAuthReposi
 import { MentorAuthService } from "../../services/mentor/MentorAuthService";
 import { MentorAuthController } from "../../controllers/mentor/MentorAuthController";
 import { adminMentorRepository } from "./admin.container";
-import { cacheService, tokenService } from "./shared.container";
+import { cacheService, tokenService, passwordService } from "./shared.container";
 
 // ── Repositories ───────────────────────────────────────────────────────────────
 export const mentorAuthRepository = new MentorAuthRepository();
@@ -12,7 +12,8 @@ export const mentorAuthService = new MentorAuthService(
   mentorAuthRepository,
   adminMentorRepository,
   cacheService,
-  tokenService
+  tokenService,
+  passwordService
 );
 
 // ── Controller ─────────────────────────────────────────────────────────────────

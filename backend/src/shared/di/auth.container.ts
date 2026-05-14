@@ -7,7 +7,7 @@ import { LoginService } from '../../services/auth/LoginService';
 import { GoogleAuthService } from '../../services/auth/GoogleAuthService';
 import { PasswordResetService } from '../../services/auth/PasswordResetService';
 import { AuthController } from '../../controllers/auth/AuthController';
-import { cacheService, emailService, tokenService } from './shared.container';
+import { cacheService, emailService, tokenService, passwordService } from './shared.container';
 
 
 // ── Repositories ───────────────────────────────────────────────────────────────
@@ -16,11 +16,11 @@ const otpRepo = new OTPRepository(cacheService);
 
 // ── Domain Services ────────────────────────────────────────────────────────────
 const otpService = new OTPService(cacheService);
-const registrationService = new RegistrationService(authRepository, otpService, emailService);
+const registrationService = new RegistrationService(authRepository, otpService, emailService, passwordService);
 const resendOTPService    = new ResendOTPService(otpService, otpRepo, emailService);
-const loginService        = new LoginService(authRepository, cacheService, tokenService);
+const loginService        = new LoginService(authRepository, cacheService, tokenService, passwordService);
 const googleAuthService   = new GoogleAuthService(authRepository, cacheService, tokenService);
-const passwordResetService = new PasswordResetService(authRepository, emailService, cacheService);
+const passwordResetService = new PasswordResetService(authRepository, emailService, cacheService, passwordService);
 
 // ── Controller ─────────────────────────────────────────────────────────────────
 export const authController = new AuthController(

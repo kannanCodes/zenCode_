@@ -1,7 +1,7 @@
 import { IAuthRepository as IUserRepository } from '../../interfaces/repository-interfaces/auth/IUserRepository';
 import { IOTPService } from '../../interfaces/service-interfaces/auth/IOTPService';
 import { IEmailService } from '../../interfaces/service-interfaces/auth/IEmailService';
-import { passwordService } from '../../infrastructure/security/password.service';
+import { IPasswordService } from '../../interfaces/infrastructure-interfaces/security/IPasswordService';
 import { UserRole } from "../../shared/constants/roles";
 import { StartRegistrationDTO, VerifyRegistrationDTO } from '../../dtos/auth/register.dto';
 import { RegistrationCacheDTO } from '../../dtos/auth/register.dto';
@@ -18,6 +18,7 @@ export class RegistrationService implements IRegistrationService {
     private userRepo: IUserRepository,
     private otpService: IOTPService,
     private emailService: IEmailService,
+    private passwordService: IPasswordService,
   ) { }
 
   async startRegistration(input: StartRegistrationDTO): Promise<void> {
@@ -57,7 +58,7 @@ export class RegistrationService implements IRegistrationService {
       throw new AppError(AUTH_MESSAGES.REGISTRATION_DATA_EXPIRED, STATUS_CODES.BAD_REQUEST);
     }
 
-    const hashed = await passwordService.hash(data.password);
+    const hashed = await this.passwordService.hash(data.password);
 
     await this.userRepo.createUser({
       fullName: data.fullName,
