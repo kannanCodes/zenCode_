@@ -1,3 +1,5 @@
+import { IProblem } from "../../infrastructure/database/models/problem.model";
+
 export interface ExampleInput {
   input: string;
   output: string;
@@ -77,7 +79,7 @@ export interface ListProblemsQuery {
 }
 
 export interface PaginatedProblemsResponse {
-  data: unknown[]; // Will be IProblem[] or partial
+  data: Partial<IProblem>[];
   meta: {
     page: number;
     limit: number;

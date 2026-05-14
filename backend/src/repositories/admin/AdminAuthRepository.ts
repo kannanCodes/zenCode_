@@ -1,6 +1,6 @@
 import User, { IUser } from "../../infrastructure/database/models/user.model";
 import { UserRole } from "../../shared/constants/roles";
-import { BaseRepository } from "../base/BaseRepository";
+import { BaseRepository } from "../../infrastructure/database/repositories/base/base.repository";
 import { IAdminAuthRepository } from "../../interfaces/repository-interfaces/admin/IAdminAuthRepository";
 
 export class AdminAuthRepository extends BaseRepository<IUser> implements IAdminAuthRepository {

@@ -7,8 +7,10 @@ import { AdminUserController } from "../../controllers/admin/AdminUserController
 import { AdminMentorRepository } from "../../repositories/admin/AdminMentorRepository";
 import { AdminMentorService } from "../../services/admin/AdminMentorService";
 import { AdminMentorController } from "../../controllers/admin/AdminMentorController";
-import { cacheService, tokenService, emailService } from "./shared.container";
-
+import { cacheService, tokenService, emailService, passwordService } from "./shared.container";
+import { stripeService, planRepository } from "./payment.container";
+import { PlanService } from "../../services/admin/PlanService";
+import { AdminPlanController } from "../../controllers/admin/AdminPlanController";
 import { IAdminAuthService } from "../../interfaces/service-interfaces/admin/IAdminAuthService";
 
 // ── Repositories ───────────────────────────────────────────────────────────────
@@ -20,7 +22,8 @@ export const adminMentorRepository = new AdminMentorRepository();
 export const adminAuthService: IAdminAuthService = new AdminAuthService(
   adminAuthRepository,
   cacheService,
-  tokenService
+  tokenService,
+  passwordService
 );
 
 export const adminUserService = new AdminUserService(adminUserRepository);
@@ -31,7 +34,13 @@ export const adminMentorService = new AdminMentorService(
   cacheService
 );
 
+export const planService = new PlanService(
+  planRepository,
+  stripeService
+);
+
 // ── Controller ─────────────────────────────────────────────────────────────────
 export const adminAuthController = new AdminAuthController(adminAuthService);
 export const adminUserController = new AdminUserController(adminUserService);
 export const adminMentorController = new AdminMentorController(adminMentorService);
+export const adminPlanController = new AdminPlanController(planService);
