@@ -23,7 +23,7 @@ export abstract class BaseRepository<T extends Document> {
     update: UpdateQuery
   ): Promise<T | null> {
     return this.model
-      .findOneAndUpdate(filter, update, { new: true })
+      .findOneAndUpdate(filter, update, { returnDocument: 'after' })
       .exec();
   }
 

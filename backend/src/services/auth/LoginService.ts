@@ -1,6 +1,6 @@
 import { IAuthRepository } from '../../interfaces/repository-interfaces/auth/IUserRepository';
 import { ILoginService } from '../../interfaces/service-interfaces/auth/ILoginService';
-import { passwordService } from '../../infrastructure/security/password.service';
+import { IPasswordService } from '../../interfaces/infrastructure-interfaces/security/IPasswordService';
 import { ITokenService } from '../../interfaces/service-interfaces/auth/ITokenService';
 import { ICacheService } from '../../interfaces/service-interfaces/auth/ICacheService';
 import { REDIS_KEYS } from '../../constants/redisKeys';
@@ -21,6 +21,7 @@ export class LoginService implements ILoginService {
     private userRepo: IAuthRepository,
     private cacheService: ICacheService,
     private tokenService: ITokenService,
+    private passwordService: IPasswordService,
   ) { }
 
   async login(input: LoginDTO): Promise<AuthTokensDTO> {
@@ -31,7 +32,7 @@ export class LoginService implements ILoginService {
     if (user.isBlocked) throw new AppError(AUTH_MESSAGES.USER_BLOCKED, STATUS_CODES.FORBIDDEN);
     if (!user.password) throw new AppError(AUTH_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
 
-    const isValid = await passwordService.compare(password, user.password);
+    const isValid = await this.passwordService.compare(password, user.password);
     if (!isValid) throw new AppError(AUTH_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
 
     await this.userRepo.updateLastActive(user.id);

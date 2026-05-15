@@ -4,7 +4,7 @@ import { AdminLoginInput } from "../../dtos/admin/admin-auth.dto";
 import { AppError } from "../../shared/utils/AppError";
 import { STATUS_CODES } from "../../shared/constants/status";
 import { AUTH_MESSAGES } from "../../constants/messages";
-import { passwordService } from "../../infrastructure/security/password.service";
+import { IPasswordService } from "../../interfaces/infrastructure-interfaces/security/IPasswordService";
 import { ITokenService } from "../../interfaces/service-interfaces/auth/ITokenService";
 import { ICacheService } from "../../interfaces/service-interfaces/auth/ICacheService";
 import { REDIS_KEYS } from "../../constants/redisKeys";
@@ -15,7 +15,8 @@ export class AdminAuthService implements IAdminAuthService {
   constructor(
     private readonly _adminAuthRepository: IAdminAuthRepository,
     private readonly _cacheService: ICacheService,
-    private readonly _tokenService: ITokenService
+    private readonly _tokenService: ITokenService,
+    private readonly _passwordService: IPasswordService
   ) { }
 
   async login(input: AdminLoginInput) {
@@ -32,7 +33,7 @@ export class AdminAuthService implements IAdminAuthService {
     if (!admin.password) {
       throw new AppError(AUTH_MESSAGES.USER_NOT_FOUND, STATUS_CODES.UNAUTHORIZED);
     }
-    const isMatch = await passwordService.compare(password, admin.password);
+    const isMatch = await this._passwordService.compare(password, admin.password);
     if (!isMatch) {
       throw new AppError(AUTH_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
     }

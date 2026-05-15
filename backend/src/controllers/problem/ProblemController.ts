@@ -3,6 +3,7 @@ import { IProblemService } from "../../interfaces/service-interfaces/problem/IPr
 import { sendSuccess } from "../../shared/http/response";
 import { STATUS_CODES } from "../../shared/constants/status";
 import { UserRole } from "../../shared/constants/roles";
+import { PROBLEM_MESSAGES } from "../../constants/messages";
 import { ListProblemsQuery } from "../../dtos/problem/problem.dto";
 
 export interface AuthenticatedRequest extends Request {
@@ -24,7 +25,7 @@ export class ProblemController {
       
       sendSuccess(res, {
         statusCode: STATUS_CODES.CREATED,
-        message: "Problem created successfully",
+        message: PROBLEM_MESSAGES.CREATED,
         data: problem,
       });
     } catch (error) {
@@ -39,7 +40,7 @@ export class ProblemController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: "Problems fetched successfully",
+        message: PROBLEM_MESSAGES.FETCHED,
         data: result,
       });
     } catch (error) {
@@ -52,7 +53,7 @@ export class ProblemController {
       const tags = await this._problemService.getDistinctTags();
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: "Tags fetched successfully",
+        message: PROBLEM_MESSAGES.TAGS_FETCHED,
         data: tags,
       });
     } catch (error) {
@@ -65,7 +66,7 @@ export class ProblemController {
       const companyTags = await this._problemService.getDistinctCompanyTags();
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: "Company tags fetched successfully",
+        message: PROBLEM_MESSAGES.COMPANY_TAGS_FETCHED,
         data: companyTags,
       });
     } catch (error) {
@@ -88,7 +89,7 @@ export class ProblemController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: "Problem fetched successfully",
+        message: PROBLEM_MESSAGES.FETCHED,
         data: problem,
       });
     } catch (error) {
@@ -103,7 +104,7 @@ export class ProblemController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: "Problem updated successfully",
+        message: PROBLEM_MESSAGES.UPDATED,
         data: problem,
       });
     } catch (error) {
@@ -118,7 +119,7 @@ export class ProblemController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: "Problem deleted successfully",
+        message: PROBLEM_MESSAGES.DELETED,
       });
     } catch (error) {
       next(error);
@@ -132,7 +133,7 @@ export class ProblemController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: "Problems fetched successfully",
+        message: PROBLEM_MESSAGES.FETCHED,
         data: result,
       });
     } catch (error) {
@@ -147,7 +148,7 @@ export class ProblemController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: "Problem fetched successfully",
+        message: PROBLEM_MESSAGES.FETCHED,
         data: problem,
       });
     } catch (error) {
