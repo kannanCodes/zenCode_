@@ -152,4 +152,12 @@ export class StripeService implements IStripeService {
       );
     }
   }
+  async archiveProduct(productId: string): Promise<void> {
+    try {
+      await this.stripe.products.update(productId, { active: false });
+    } catch (error) {
+      // Log error but don't throw, as this is often used in rollback
+      console.error(`Failed to archive Stripe product ${productId}:`, error);
+    }
+  }
 }

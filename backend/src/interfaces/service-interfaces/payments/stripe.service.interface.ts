@@ -18,4 +18,5 @@ export interface IStripeService {
   retrieveCheckoutSession(sessionId: string): Promise<StripeCheckoutSession>;
   cancelStripeSubscription(stripeSubscriptionId: string): Promise<StripeSubscription>;
   upgradeSubscription(stripeSubscriptionId: string, newPriceId: string): Promise<StripeSubscription>;
+  archiveProduct(productId: string): Promise<void>;
 }

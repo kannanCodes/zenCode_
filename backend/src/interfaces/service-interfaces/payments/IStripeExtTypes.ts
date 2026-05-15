@@ -1,14 +1,12 @@
 import { Stripe } from 'stripe';
 
-export type StripeEvent = ReturnType<Stripe['webhooks']['constructEvent']>;
-export type StripeCheckoutSession = Awaited<ReturnType<Stripe['checkout']['sessions']['retrieve']>>;
-export type StripeSubscription = Awaited<ReturnType<Stripe['subscriptions']['retrieve']>>;
-export type StripeInvoice = Awaited<ReturnType<Stripe['invoices']['retrieve']>> & {
-  subscription?: string | null;
-};
-export type StripeProduct = Awaited<ReturnType<Stripe['products']['retrieve']>>;
-export type StripePrice = Awaited<ReturnType<Stripe['prices']['retrieve']>>;
-export type StripeDeletedSubscription = Awaited<ReturnType<Stripe['subscriptions']['cancel']>>;
+export type StripeEvent = any;
+export type StripeCheckoutSession = Stripe['checkout']['sessions']['retrieve'] extends (...args: any) => Promise<infer T> ? T : any;
+export type StripeSubscription = Stripe['subscriptions']['retrieve'] extends (...args: any) => Promise<infer T> ? T : any;
+export type StripeInvoice = Stripe['invoices']['retrieve'] extends (...args: any) => Promise<infer T> ? T : any;
+export type StripeProduct = Stripe['products']['retrieve'] extends (...args: any) => Promise<infer T> ? T : any;
+export type StripePrice = Stripe['prices']['retrieve'] extends (...args: any) => Promise<infer T> ? T : any;
+export type StripeDeletedSubscription = Stripe['subscriptions']['cancel'] extends (...args: any) => Promise<infer T> ? T : any;
 
 // Specific event types for type safety in switch cases
 export type StripeCheckoutSessionCompletedEvent = StripeEvent & {
@@ -22,6 +20,27 @@ export type StripeCustomerSubscriptionDeletedEvent = StripeEvent & {
   type: 'customer.subscription.deleted';
   data: {
     object: StripeSubscription;
+  };
+}
+
+export type StripeCustomerSubscriptionUpdatedEvent = StripeEvent & {
+  type: 'customer.subscription.updated';
+  data: {
+    object: StripeSubscription;
+  };
+}
+
+export type StripeInvoicePaymentFailedEvent = StripeEvent & {
+  type: 'invoice.payment_failed';
+  data: {
+    object: StripeInvoice;
+  };
+}
+
+export type StripeInvoicePaidEvent = StripeEvent & {
+  type: 'invoice.paid';
+  data: {
+    object: StripeInvoice;
   };
 }
 

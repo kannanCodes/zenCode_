@@ -15,7 +15,7 @@ export class SubscriptionRepository extends BaseRepository<ISubscriptionDocument
   async findActiveByUser(userId: string): Promise<ISubscriptionDocument | null> {
     return this.model.findOne({
       userId,
-      status: 'active',
+      status: { $in: ['active', 'cancelled'] },
     }).populate('planId').exec();
   }
 
@@ -40,7 +40,7 @@ export class SubscriptionRepository extends BaseRepository<ISubscriptionDocument
   }
 
   async updateById(id: string, data: Partial<{ status: string; planId: string; endDate: Date }>): Promise<ISubscriptionDocument | null> {
-    return this.model.findByIdAndUpdate(id, data, { new: true }).exec();
+    return this.model.findByIdAndUpdate(id, data, { returnDocument: 'after' }).exec();
   }
 
   async renewSubscription(stripeSubId: string, newEndDate: Date): Promise<ISubscriptionDocument | null> {
@@ -50,9 +50,16 @@ export class SubscriptionRepository extends BaseRepository<ISubscriptionDocument
     );
   }
 
+  async updateByStripeId(stripeSubId: string, data: Record<string, any>): Promise<ISubscriptionDocument | null> {
+    return this.updateOne(
+      { stripeSubscriptionId: stripeSubId },
+      data
+    );
+  }
+
   async expireOldSubscriptions(): Promise<void> {
     await this.model.updateMany(
-      { status: 'active', endDate: { $lt: new Date() } },
+      { status: { $in: ['active', 'cancelled'] }, endDate: { $lt: new Date() } },
       { status: 'expired' }
     ).exec();
   }
