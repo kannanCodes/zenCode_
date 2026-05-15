@@ -1,5 +1,5 @@
 import ProblemModel, { IProblem } from "../../infrastructure/database/models/problem.model";
-import { BaseRepository } from "../base/BaseRepository";
+import { BaseRepository } from "../../infrastructure/database/repositories/base/base.repository";
 import { IProblemRepository } from "../../interfaces/repository-interfaces/problem/IProblemRepository";
 import { CreateProblemInput, UpdateProblemInput } from "../../dtos/problem/problem.dto";
 

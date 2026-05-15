@@ -81,6 +81,52 @@ export const PROBLEM_MESSAGES = {
   COMPANY_TAGS_FETCHED: 'Company tags fetched successfully',
 };
 
+export const PLAN_MESSAGES = {
+  CREATED: 'Plan created successfully',
+  UPDATED: 'Plan updated successfully',
+  FETCHED: 'Plans fetched successfully',
+  NOT_FOUND: 'Plan not found',
+  ALREADY_EXISTS: 'Plan with this name already exists',
+  STATUS_UPDATED: 'Plan status updated successfully',
+};
+
 export const GLOBAL_MESSAGES = {
   INTERNAL_SERVER_ERROR: 'Internal Server Error',
+};
+
+export const PAYMENT_MESSAGES = {
+  CHECKOUT_CREATED: 'Checkout session created',
+  SESSION_VERIFIED_WEBHOOK: 'Session verified successfully (processed by webhook)',
+  SESSION_VERIFIED_SYNC: 'Session verified and subscription created synchronously',
+  SESSION_REQUIRED: 'Session ID is required',
+  UNAUTHORIZED_SESSION: 'Unauthorized session',
+  PAYMENT_NOT_COMPLETED: 'Payment not completed',
+  NO_SUBSCRIPTION_IN_SESSION: 'No subscription ID found in session',
+  FAILED_TO_RETRIEVE_SUBSCRIPTION: 'Failed to retrieve subscription details from Stripe',
+  PLAN_NOT_FOUND_FOR_SUBSCRIPTION: 'Plan associated with this subscription not found',
+  MISSING_SIGNATURE: 'Missing stripe-signature header',
+  INVALID_SIGNATURE: 'Invalid signature',
+  WEBHOOK_FAILED: 'Webhook handler failed',
+};
+
+export const SUBSCRIPTION_MESSAGES = {
+  FETCHED: 'Subscription fetched',
+  NOT_FOUND: 'No subscription found',
+  WILL_CANCEL: 'Subscription will be cancelled at the end of the current billing period',
+  PLAN_CHANGED: 'Plan changed successfully',
+  ACTIVE_EXISTS: 'You already have an active subscription. Use plan change to switch plans.',
+  ACTIVE_NOT_FOUND: 'No active subscription found',
+  PLAN_NOT_CONFIGURED: 'Plan not found or not configured on Stripe',
+  REQUIRED: 'You need an active subscription to access this feature',
+  EXPIRED: 'Your subscription has expired. Please renew to continue.',
+  FEATURE_DENIED: 'Your current plan does not include access to this feature',
+  WEBHOOK_HANDLED: 'Webhook handled',
+  WEBHOOK_ERROR: 'Webhook error',
+};
+
+export const SUBMISSION_MESSAGES = {
+  EXECUTED: 'Submission executed successfully',
+  FETCHED: 'Submission fetched successfully',
+  NOT_FOUND: 'Submission not found',
+  TIMEOUT: 'Execution timeout',
 };
