@@ -10,7 +10,11 @@ import {
   StripeEvent, 
   StripeCheckoutSessionCompletedEvent, 
   StripeCustomerSubscriptionDeletedEvent, 
-  StripeInvoicePaymentSucceededEvent 
+  StripeCustomerSubscriptionUpdatedEvent,
+  StripeInvoicePaymentSucceededEvent,
+  StripeInvoicePaymentFailedEvent,
+  StripeInvoicePaidEvent,
+  StripeSubscription
 } from '../../interfaces/service-interfaces/payments/IStripeExtTypes';
 
 export class WebhookController {
@@ -94,6 +98,53 @@ export class WebhookController {
           const subscription = subscriptionEvent.data.object;
           await this.subscriptionService.cancelSubscription(subscription.id);
           logger.info(`✅ Subscription cancelled: ${subscription.id}`);
+          break;
+        }
+
+        case 'customer.subscription.updated': {
+          const subscriptionEvent = event as StripeCustomerSubscriptionUpdatedEvent;
+          const subscription = subscriptionEvent.data.object;
+          
+          if (subscription.status !== 'deleted') {
+            const sub = subscription as any; // Cast to any to access current_period_end safely
+            const priceId = sub.items.data[0].price.id;
+            const plan = await this.planRepo.findByStripePriceId(priceId);
+            
+            if (plan) {
+              await this.subscriptionService.handleStripeUpdate(subscription.id, {
+                status: subscription.status,
+                planId: plan._id.toString(),
+                endDate: new Date(sub.current_period_end * 1000),
+              });
+              logger.info(`✅ Subscription updated: ${subscription.id}`);
+            }
+          }
+          break;
+        }
+
+        case 'invoice.payment_failed': {
+          const invoiceEvent = event as StripeInvoicePaymentFailedEvent;
+          const invoice = invoiceEvent.data.object;
+          if (invoice.subscription) {
+            await this.subscriptionService.updateSubscriptionStatus(
+              invoice.subscription as string,
+              'past_due'
+            );
+            logger.warn(`⚠️ Payment failed for subscription: ${invoice.subscription}`);
+          }
+          break;
+        }
+
+        case 'invoice.paid': {
+          const invoiceEvent = event as StripeInvoicePaidEvent;
+          const invoice = invoiceEvent.data.object;
+          if (invoice.subscription) {
+            await this.subscriptionService.updateSubscriptionStatus(
+              invoice.subscription as string,
+              'active'
+            );
+            logger.info(`✅ Invoice paid for subscription: ${invoice.subscription}`);
+          }
           break;
         }
 

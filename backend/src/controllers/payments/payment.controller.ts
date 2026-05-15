@@ -34,6 +34,10 @@ export class PaymentController {
         throw new AppError(PLAN_MESSAGES.NOT_FOUND, STATUS_CODES.NOT_FOUND);
       }
 
+      if (!plan.isActive || plan.isArchived) {
+        throw new AppError(PLAN_MESSAGES.NOT_FOUND, STATUS_CODES.NOT_FOUND);
+      }
+
       if (!plan.stripePriceId) {
         throw new AppError(SUBSCRIPTION_MESSAGES.PLAN_NOT_CONFIGURED, STATUS_CODES.INTERNAL_SERVER_ERROR);
       }

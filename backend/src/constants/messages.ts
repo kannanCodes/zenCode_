@@ -123,3 +123,10 @@ export const SUBSCRIPTION_MESSAGES = {
   WEBHOOK_HANDLED: 'Webhook handled',
   WEBHOOK_ERROR: 'Webhook error',
 };
+
+export const SUBMISSION_MESSAGES = {
+  EXECUTED: 'Submission executed successfully',
+  FETCHED: 'Submission fetched successfully',
+  NOT_FOUND: 'Submission not found',
+  TIMEOUT: 'Execution timeout',
+};

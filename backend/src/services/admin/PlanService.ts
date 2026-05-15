@@ -28,15 +28,21 @@ export class PlanService implements IPlanService {
       intervalCount: data.intervalCount || 1,
     });
 
-    const unitDays = data.billingCycle === 'monthly' ? 30 : 365;
-    const durationInDays = unitDays * (data.intervalCount || 1);
+    try {
+      const unitDays = data.billingCycle === 'monthly' ? 30 : 365;
+      const durationInDays = unitDays * (data.intervalCount || 1);
 
-    return this.planRepo.createPlan({
-      ...data,
-      durationInDays,
-      stripeProductId: stripeData.productId,
-      stripePriceId: stripeData.priceId,
-    });
+      return await this.planRepo.createPlan({
+        ...data,
+        durationInDays,
+        stripeProductId: stripeData.productId,
+        stripePriceId: stripeData.priceId,
+      });
+    } catch (error) {
+      // Rollback: archive the product in Stripe if DB creation fails
+      await this.stripeService.archiveProduct(stripeData.productId);
+      throw error;
+    }
   }
 
   async updatePlan(planId: string, data: UpdatePlanInput): Promise<IPlanDocument> {

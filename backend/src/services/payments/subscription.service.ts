@@ -40,7 +40,7 @@ export class SubscriptionService implements ISubscriptionService {
 
     return {
       ...sub.toObject(),
-      isActive: sub.status === 'active' && new Date(sub.endDate) > new Date(),
+      isActive: (sub.status === 'active' || sub.status === 'cancelled') && new Date(sub.endDate) > new Date(),
     };
   }
 
@@ -95,6 +95,33 @@ export class SubscriptionService implements ISubscriptionService {
     const updated = await this.subscriptionRepo.renewSubscription(stripeSubscriptionId, newEndDate);
     if (!updated) {
       logger.error(`Subscription ${stripeSubscriptionId} not found for renewal`);
+    }
+    return updated;
+  }
+
+  async updateSubscriptionStatus(stripeSubscriptionId: string, status: string, endDate?: Date): Promise<ISubscriptionDocument | null> {
+    const update: any = { status };
+    if (endDate) update.endDate = endDate;
+
+    const updated = await this.subscriptionRepo.updateByStripeId(
+      stripeSubscriptionId,
+      update
+    );
+
+    if (!updated) {
+      logger.error(`Subscription ${stripeSubscriptionId} not found to update status to ${status}`);
+    }
+    return updated;
+  }
+
+  async handleStripeUpdate(stripeSubscriptionId: string, data: Partial<{ status: string; planId: string; endDate: Date }>): Promise<ISubscriptionDocument | null> {
+    const updated = await this.subscriptionRepo.updateByStripeId(
+      stripeSubscriptionId,
+      data
+    );
+
+    if (!updated) {
+      logger.error(`Subscription ${stripeSubscriptionId} not found for data update`);
     }
     return updated;
   }
