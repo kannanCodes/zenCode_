@@ -130,3 +130,43 @@ export const SUBMISSION_MESSAGES = {
   NOT_FOUND: 'Submission not found',
   TIMEOUT: 'Execution timeout',
 };
+
+export const AVAILABILITY_MESSAGES = {
+  NOT_CONFIGURED: 'Mentor availability not configured',
+  START_LESS_THAN_END: 'startTime must be less than endTime',
+  OVERLAPPING_SLOTS: 'overlapping slots detected',
+  UPDATED: 'Availability updated successfully',
+  FETCHED: 'Availability fetched successfully',
+};
+
+export const SLOT_MESSAGES = {
+  FETCHED: 'Mentor slots fetched successfully',
+  START_DATE_REQUIRED: 'Start date is required',
+  END_DATE_REQUIRED: 'End date is required',
+};
+
+export const BOOKING_MESSAGES = {
+  PAST_SLOT: 'Cannot book past slots',
+  INVALID_SLOT: 'Invalid slot selected',
+  ALREADY_BOOKED: 'This slot is already booked',
+  NOT_FOUND: 'Booking not found',
+  ALREADY_CANCELLED: 'Booking already cancelled',
+  CANCELLATION_WINDOW_CLOSED: 'Cannot cancel within 2 hours of session',
+  CREATED: 'Booking created successfully',
+  FETCHED: 'Bookings fetched successfully',
+  MENTOR_FETCHED: 'Mentor bookings fetched successfully',
+  CANCELLED: 'Booking cancelled successfully',
+};
+
+export const SESSION_MESSAGES = {
+  NOT_FOUND: 'Session not found',
+  ACCESS_DENIED: 'Access denied',
+  UNAVAILABLE: 'Session unavailable',
+  CREATED: 'Session created successfully',
+  VALIDATED: 'Session access validated',
+  PARTICIPANT_ONLINE: 'Participant marked online',
+  PARTICIPANT_OFFLINE: 'Participant marked offline',
+  ENDED: 'Session ended successfully',
+  UNAUTHORIZED_PEER: 'Unauthorized peer signaling',
+};
+

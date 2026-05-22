@@ -100,7 +100,7 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async updateSubscriptionStatus(stripeSubscriptionId: string, status: string, endDate?: Date): Promise<ISubscriptionDocument | null> {
-    const update: any = { status };
+    const update: Partial<ISubscriptionDocument> = { status: status as ISubscriptionDocument['status'] };
     if (endDate) update.endDate = endDate;
 
     const updated = await this.subscriptionRepo.updateByStripeId(
@@ -115,9 +115,14 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async handleStripeUpdate(stripeSubscriptionId: string, data: Partial<{ status: string; planId: string; endDate: Date }>): Promise<ISubscriptionDocument | null> {
+    const updatedData: Partial<ISubscriptionDocument> = {
+      ...data,
+      status: data.status as ISubscriptionDocument['status'] | undefined,
+    };
+
     const updated = await this.subscriptionRepo.updateByStripeId(
       stripeSubscriptionId,
-      data
+      updatedData
     );
 
     if (!updated) {
