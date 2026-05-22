@@ -9,12 +9,17 @@ import adminAuthRoutes from './routes/admin/admin-auth.routes';
 import adminUserRoutes from './routes/admin/admin-user.routes';
 import adminMentorRoutes from './routes/admin/admin-mentor.routes';
 import mentorAuthRoutes from './routes/mentor/mentor-auth.routes';
+import mentorAvailabilityRoutes from './routes/mentor/mentor-availability.routes';
+import mentorSlotRoutes from './routes/mentor/mentor-slot.routes';
+import mentorBookingRoutes from './routes/mentor/mentor-booking.routes';
+import mentorSessionRoutes from './routes/mentor/mentor-session.routes';
 import problemRoutes from './routes/problem/problem.routes';
 import compilerRoutes from './routes/compiler/compiler.routes';
 import adminPlanRoutes from './routes/admin/AdminPlanRoutes';
 import paymentRoutes from './routes/payments/payment.routes';
 import subscriptionRoutes from './routes/payments/subscription.routes';
 import submissionRoutes from './routes/problem/submission.routes';
+import messageRoutes from './routes/chat/message.routes';
 import { webhookController } from './shared/di/payment.container';
 import { appConfig } from './config/appConfig';
 export const app = express();
@@ -27,7 +32,7 @@ app.use(cors({
 // ─── Webhooks (Must be before body parsers) ───────────────────────────────
 // Stripe requires the raw body to verify signature
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }), (req, res) => {
-  webhookController.stripeWebhookHandler(req as any, res as any);
+  webhookController.stripeWebhookHandler(req as unknown as express.Request, res as unknown as express.Response);
 });
 
 // ─── Global Middlewares ─────────────────────────────────────────────────────
@@ -42,11 +47,16 @@ app.use('/api/admin', adminUserRoutes);
 app.use('/api/admin', adminMentorRoutes);
 app.use('/api/plans', adminPlanRoutes);
 app.use('/api/mentor/auth', mentorAuthRoutes);
+app.use('/api/mentor/availability', mentorAvailabilityRoutes);
+app.use('/api/mentor-slots', mentorSlotRoutes);
+app.use('/api/mentor-bookings', mentorBookingRoutes);
+app.use('/api/mentor-sessions', mentorSessionRoutes);
 app.use('/api/problems', problemRoutes);
 app.use('/api/compiler', compilerRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/submissions', submissionRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Health check
 app.get('/health', (_req, res) => {

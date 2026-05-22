@@ -1,0 +1,8 @@
+export const SESSION_CONFIG = {
+  RECONNECT_WINDOW_MINUTES: 2,
+  NO_SHOW_THRESHOLD_MINUTES: 15,
+} as const;
+
+export const BOOKING_CONFIG = {
+  CANCELLATION_WINDOW_HOURS: 2,
+} as const;
