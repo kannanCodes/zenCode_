@@ -1,0 +1,9 @@
+export enum MentorSessionStatus {
+  SCHEDULED = 'SCHEDULED',
+  ACTIVE = 'ACTIVE',
+  ENDED = 'ENDED',
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
+  NO_SHOW = 'NO_SHOW',
+  ABANDONED = 'ABANDONED',
+}
