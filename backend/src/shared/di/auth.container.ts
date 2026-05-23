@@ -7,7 +7,7 @@ import { LoginService } from '../../services/auth/LoginService';
 import { GoogleAuthService } from '../../services/auth/GoogleAuthService';
 import { PasswordResetService } from '../../services/auth/PasswordResetService';
 import { AuthController } from '../../controllers/auth/AuthController';
-import { cacheService, emailService, tokenService, passwordService } from './shared.container';
+import { cacheService, emailService, tokenService, passwordService, tokenLifecycleRepository } from './shared.container';
 
 
 // ── Repositories ───────────────────────────────────────────────────────────────
@@ -20,7 +20,7 @@ const registrationService = new RegistrationService(authRepository, otpService, 
 const resendOTPService    = new ResendOTPService(otpService, otpRepo, emailService);
 const loginService        = new LoginService(authRepository, cacheService, tokenService, passwordService);
 const googleAuthService   = new GoogleAuthService(authRepository, cacheService, tokenService);
-const passwordResetService = new PasswordResetService(authRepository, emailService, cacheService, passwordService);
+const passwordResetService = new PasswordResetService(authRepository, emailService, tokenLifecycleRepository, passwordService);
 
 // ── Controller ─────────────────────────────────────────────────────────────────
 export const authController = new AuthController(

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { mentorSlotController } from "../../shared/di/mentor.container";
 import { authMiddleware } from "../../middlewares/auth.middleware";
-import { validateRequest } from "../../middlewares/validate.middleware";
+import { validateQuery } from "../../middlewares/validate.middleware";
 import { getSlotsValidator } from "../../validators/mentor/get-slots.validator";
 
 const router = Router();
@@ -9,7 +9,7 @@ const router = Router();
 router.get(
   "/:mentorId",
   authMiddleware,
-  validateRequest(getSlotsValidator),
+  validateQuery(getSlotsValidator),
   mentorSlotController.getMentorSlots
 );
 

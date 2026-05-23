@@ -110,6 +110,7 @@ const CreateMentorModal = ({
   };
 
   const handleClose = () => {
+    if (isLoading) return;
     reset();
     setSelectedExpertise([]);
     setNewExpertise('');
@@ -122,12 +123,20 @@ const CreateMentorModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#0f0f0f] border border-[#2a2d3a] rounded-2xl w-full max-w-[480px] mx-4">
+      <div className="relative bg-[#0f0f0f] border border-[#2a2d3a] rounded-2xl w-full max-w-[480px] mx-4 overflow-hidden">
+        {isLoading && (
+          <div className="absolute inset-0 z-10 bg-[#0f0f0f]/85 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
+            <p className="text-sm text-gray-300">Creating mentor...</p>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#2a2d3a]">
           <h2 className="text-white text-xl font-bold">Create Mentor</h2>
           <button
             onClick={handleClose}
+            disabled={isLoading}
             className="text-gray-500 hover:text-white transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +146,7 @@ const CreateMentorModal = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5" aria-busy={isLoading}>
           {/* Full Name */}
           <div className="flex flex-col gap-2">
             <label className="text-white text-sm font-medium uppercase tracking-wide">
@@ -275,6 +284,7 @@ const CreateMentorModal = ({
             <button
               type="button"
               onClick={handleClose}
+              disabled={isLoading}
               className="flex-1 h-12 rounded-lg border border-[#2a2d3a] text-white font-medium hover:bg-[#1a1a1a] transition-all"
             >
               Cancel
@@ -284,7 +294,7 @@ const CreateMentorModal = ({
               disabled={isLoading}
               className="flex-1 h-12 rounded-lg bg-[var(--color-primary)] hover:bg-blue-600 text-white font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Creating...' : 'Create Mentor'}
+              Create Mentor
             </button>
           </div>
         </form>

@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { ISubscriptionRepository } from "../../interfaces/repository-interfaces/payments/ISubscriptionRepository";
 import { logger } from "../../shared/utils/Logger";
+import { GLOBAL_MESSAGES } from "../../constants/messages";
 
 export class SubscriptionCronJobs {
   constructor(private readonly subscriptionRepo: ISubscriptionRepository) {}
@@ -17,7 +18,7 @@ export class SubscriptionCronJobs {
         await this.subscriptionRepo.expireOldSubscriptions();
         logger.info("[CRON] Expired subscriptions updated successfully.");
       } catch (error) {
-        logger.error("[CRON] Failed to expire subscriptions:", error instanceof Error ? error.message : "Unknown error");
+        logger.error("[CRON] Failed to expire subscriptions:", error instanceof Error ? error.message : GLOBAL_MESSAGES.UNKNOWN_ERROR);
       }
     });
 

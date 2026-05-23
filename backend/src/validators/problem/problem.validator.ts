@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { VALIDATION_MESSAGES } from "../../constants/messages";
 
 const exampleSchema = z.object({
   input: z.string().min(1),
@@ -39,7 +40,7 @@ export const createProblemValidator = z.object({
   title: z.string().min(5).max(150),
   description: z.string().min(20),
   difficulty: z.enum(["easy", "medium", "hard"]),
-  tags: z.array(z.string().min(1)).min(1, "At least one problem tag is required"),
+  tags: z.array(z.string().min(1)).min(1, VALIDATION_MESSAGES.PROBLEM_TAG_REQUIRED),
   companyTags: z.array(z.string()).optional(),
   constraints: z.string().optional(),
   examples: z.array(exampleSchema).optional(),

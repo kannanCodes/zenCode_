@@ -12,15 +12,23 @@ import { MentorBookingController } from "../../controllers/mentor/mentor-booking
 import { MentorSessionRepository } from "../../repositories/mentor/mentor-session.repository";
 import { MentorSessionService } from "../../services/mentor/mentor-session.service";
 import { MentorSessionController } from "../../controllers/mentor/mentor-session.controller";
+import { MentorReviewRepository } from "../../repositories/mentor/mentor-review.repository";
+import { MentorReviewService } from "../../services/mentor/mentor-review.service";
+import { MentorReviewController } from "../../controllers/mentor/mentor-review.controller";
+import { MentorProfileRepository } from "../../repositories/mentor/mentor-profile.repository";
+import { MentorProfileService } from "../../services/mentor/mentor-profile.service";
+import { MentorProfileController } from "../../controllers/mentor/mentor-profile.controller";
 import { adminMentorRepository } from "./admin.container";
-import { cacheService, tokenService, passwordService } from "./shared.container";
-import { MentorSessionCronJobs } from "../../cron/mentor-session.cron";
+import { cacheService, tokenService, passwordService, tokenLifecycleRepository, storageService } from "./shared.container";
+import { MentorSessionCronJobs } from "../../infrastructure/cron/mentor-session.cron";
 
 // ── Repositories ───────────────────────────────────────────────────────────────
 export const mentorAuthRepository = new MentorAuthRepository();
 export const mentorAvailabilityRepository = new MentorAvailabilityRepository();
 export const mentorBookingRepository = new MentorBookingRepository();
 export const mentorSessionRepository = new MentorSessionRepository();
+export const mentorReviewRepository = new MentorReviewRepository();
+export const mentorProfileRepository = new MentorProfileRepository();
 
 // ── Domain Services ────────────────────────────────────────────────────────────
 export const mentorAuthService = new MentorAuthService(
@@ -28,7 +36,8 @@ export const mentorAuthService = new MentorAuthService(
   adminMentorRepository,
   cacheService,
   tokenService,
-  passwordService
+  passwordService,
+  tokenLifecycleRepository
 );
 
 export const mentorAvailabilityService = new MentorAvailabilityService(
@@ -45,7 +54,18 @@ export const mentorBookingService = new MentorBookingService(
 );
 
 export const mentorSessionService = new MentorSessionService(
-  mentorSessionRepository
+  mentorSessionRepository,
+  mentorBookingRepository
+);
+
+export const mentorReviewService = new MentorReviewService(
+  mentorReviewRepository,
+  mentorBookingRepository
+);
+
+export const mentorProfileService = new MentorProfileService(
+  mentorProfileRepository,
+  storageService
 );
 
 // ── Cron Jobs ──────────────────────────────────────────────────────────────────
@@ -59,3 +79,5 @@ export const mentorAvailabilityController = new MentorAvailabilityController(men
 export const mentorSlotController = new MentorSlotController(mentorSlotService);
 export const mentorBookingController = new MentorBookingController(mentorBookingService);
 export const mentorSessionController = new MentorSessionController(mentorSessionService);
+export const mentorReviewController = new MentorReviewController(mentorReviewService);
+export const mentorProfileController = new MentorProfileController(mentorProfileService);

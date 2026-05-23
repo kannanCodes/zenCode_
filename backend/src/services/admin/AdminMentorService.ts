@@ -2,45 +2,32 @@ import crypto from 'crypto';
 import { IAdminMentorService } from "../../interfaces/service-interfaces/admin/IAdminMentorService";
 import { IAdminMentorRepository } from "../../interfaces/repository-interfaces/admin/IAdminMentorRepository";
 import { IEmailService } from "../../interfaces/service-interfaces/auth/IEmailService";
-import { ICacheService } from "../../interfaces/service-interfaces/auth/ICacheService";
+import { ITokenLifecycleRepository } from "../../interfaces/repository-interfaces/auth/ITokenLifecycleRepository";
 import { CreateMentorInput, ListMentorsQuery, PaginatedMentorsResponse } from "../../dtos/admin/admin-mentor.dto";
 import { AppError } from "../../shared/utils/AppError";
 import { STATUS_CODES } from "../../shared/constants/status";
-import { REDIS_KEYS } from "../../constants/redisKeys";
 import { EXPIRY_TIMES } from "../../shared/utils/expiry.util";
 import { UserRole } from "../../shared/constants/roles";
 import { appConfig } from "../../config/appConfig";
 import { ADMIN_MESSAGES } from "../../constants/messages";
+import { logger } from "../../shared/utils/Logger";
 
 export class AdminMentorService implements IAdminMentorService {
   constructor(
     private readonly _adminMentorRepository: IAdminMentorRepository,
     private readonly _emailService: IEmailService,
-    private readonly _cacheService: ICacheService
+    private readonly _tokenLifecycleRepository: ITokenLifecycleRepository
   ) {}
 
   private async _issueInviteForEmail(input: { email: string; fullName: string }): Promise<void> {
     const { email, fullName } = input;
 
     const inviteToken = crypto.randomUUID();
-
-    const emailKey = REDIS_KEYS.MENTOR_INVITE_BY_EMAIL(email);
-    const existingToken = await this._cacheService.get<string>(emailKey);
-
-    if (existingToken) {
-      await this._cacheService.del(REDIS_KEYS.MENTOR_INVITE(existingToken));
-    }
-
-    await this._cacheService.set(
-      REDIS_KEYS.MENTOR_INVITE(inviteToken),
+    await this._tokenLifecycleRepository.issueMentorInviteToken({
+      token: inviteToken,
       email,
-      EXPIRY_TIMES.MENTOR_INVITE.SECONDS
-    );
-    await this._cacheService.set(
-      emailKey,
-      inviteToken,
-      EXPIRY_TIMES.MENTOR_INVITE.SECONDS
-    );
+      ttlSeconds: EXPIRY_TIMES.MENTOR_INVITE.SECONDS,
+    });
 
     const inviteLink = `${appConfig.frontendUrl}/mentor/activate?token=${inviteToken}`;
 
@@ -59,9 +46,11 @@ export class AdminMentorService implements IAdminMentorService {
 
     await this._adminMentorRepository.createMentor(data, adminId);
 
-    await this._issueInviteForEmail({
+    void this._issueInviteForEmail({
       email: data.email,
       fullName: data.fullName,
+    }).catch((error) => {
+      logger.error(`Failed to send mentor invite to ${data.email}:`, error);
     });
   }
 

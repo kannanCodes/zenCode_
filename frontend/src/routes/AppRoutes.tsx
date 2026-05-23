@@ -15,11 +15,23 @@ import UserManagementPage from '../features/admin/pages/UserManagementPage';
 import MentorLoginPage from '../features/mentor/pages/MentorLoginPage';
 import MentorActivationPage from '../features/mentor/pages/MentorActivationPage';
 import MentorSuccessPage from '../features/mentor/pages/MentorSuccessPage';
+import MentorLayout from '../features/mentor/components/MentorLayout';
+import MentorAvailabilityPage from '../features/mentor/pages/MentorAvailabilityPage';
+import MentorBookingsPage from '../features/mentor/pages/MentorBookingsPage';
+import SessionRoomPage from '../features/mentor/pages/SessionRoomPage';
+import MentorProfilePage from '../features/mentor/pages/MentorProfilePage';
 import AdminProblemListPage from '../features/admin/pages/ProblemListPage';
 import ProblemFormPage from '../features/admin/pages/ProblemForm';
 import PlanManagementPage from '../features/admin/pages/PlanManagementPage';
+
+// Candidate Mentoring Pages
+import MentorsListPage from '../features/candidate/pages/MentorsListPage';
+import CandidateMentorProfilePage from '../features/candidate/pages/MentorProfilePage';
+import StudentBookingsPage from '../features/candidate/pages/StudentBookingsPage';
+import StudentSessionRoomPage from '../features/candidate/pages/StudentSessionRoomPage';
+
 import ProtectedRoute from '../shared/components/ProtectedRoute';
-import { tokenService } from '../shared/lib/token';
+
 
 // Subscription Pages
 import PlansPage from '../features/subscription/pages/PlansPage';
@@ -81,6 +93,40 @@ const AppRoutes = () => {
         }
       />
 
+      {/* Candidate / Mentoring Routes */}
+      <Route
+        path="/candidate/mentors"
+        element={
+          <ProtectedRoute>
+            <MentorsListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/candidate/mentors/:mentorId"
+        element={
+          <ProtectedRoute>
+            <CandidateMentorProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/candidate/bookings"
+        element={
+          <ProtectedRoute>
+            <StudentBookingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/candidate/session/:roomId"
+        element={
+          <ProtectedRoute>
+            <StudentSessionRoomPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Admin Routes */}
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route
@@ -137,25 +183,32 @@ const AppRoutes = () => {
       <Route path="/mentor/login" element={<MentorLoginPage />} />
       <Route path="/mentor/activate" element={<MentorActivationPage />} />
       <Route path="/mentor/activation-success" element={<MentorSuccessPage />} />
+      
       <Route
-        path="/mentor/dashboard"
+        path="/mentor"
         element={
           <ProtectedRoute redirectTo="/mentor/login">
-            <div className="min-h-screen bg-[var(--color-background-dark)] flex items-center justify-center">
-              <div className="text-center">
-                <h1 className="text-white text-4xl font-bold mb-4">Mentor Dashboard</h1>
-                <p className="text-gray-400 mb-8">Welcome, Mentor! 🎉</p>
-                <button
-                  onClick={() => {
-                    tokenService.clear();
-                    window.location.href = '/mentor/login';
-                  }}
-                  className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition-all"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
+            <MentorLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={
+          <div className="text-center mt-20">
+            <h1 className="text-white text-4xl font-bold mb-4">Mentor Dashboard</h1>
+            <p className="text-gray-400">Incoming bookings will appear here.</p>
+          </div>
+        } />
+        <Route path="availability" element={<MentorAvailabilityPage />} />
+        <Route path="bookings" element={<MentorBookingsPage />} />
+        <Route path="profile" element={<MentorProfilePage />} />
+      </Route>
+      
+      {/* Mentor Session (Outside layout, full screen) */}
+      <Route
+        path="/mentor/session/:roomId"
+        element={
+          <ProtectedRoute redirectTo="/mentor/login">
+            <SessionRoomPage />
           </ProtectedRoute>
         }
       />

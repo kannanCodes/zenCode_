@@ -3,6 +3,7 @@ import { ICompilerService } from '../../interfaces/service-interfaces/compiler/I
 import { sendSuccess } from '../../shared/http/response';
 import { STATUS_CODES } from '../../shared/constants/status';
 import { logger } from '../../shared/utils/Logger';
+import { COMPILER_MESSAGES } from '../../constants/messages';
 
 export class CompilerController {
   constructor(private readonly compilerService: ICompilerService) {}
@@ -14,7 +15,7 @@ export class CompilerController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: 'Execution started',
+        message: COMPILER_MESSAGES.EXECUTION_STARTED,
         data: result,
       });
     } catch (error) {
@@ -28,7 +29,7 @@ export class CompilerController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: 'Execution result',
+        message: COMPILER_MESSAGES.EXECUTION_RESULT,
         data: result,
       });
     } catch (error) {
