@@ -21,6 +21,24 @@ export class MentorAuthController {
     }
   }
 
+  async validateActivationToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { token } = req.query;
+
+      if (!token || typeof token !== 'string') {
+        throw new AppError(AUTH_MESSAGES.TOKEN_REQUIRED, STATUS_CODES.BAD_REQUEST);
+      }
+
+      const valid = await this._mentorAuthService.validateActivationToken(token);
+      sendSuccess(res, {
+        statusCode: STATUS_CODES.OK,
+        data: { valid },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { accessToken, refreshToken } = await this._mentorAuthService.login(req.body);

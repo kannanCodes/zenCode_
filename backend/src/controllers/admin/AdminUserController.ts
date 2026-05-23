@@ -4,6 +4,7 @@ import { sendSuccess } from "../../shared/http/response";
 import { STATUS_CODES } from "../../shared/constants/status";
 import { ListUsersQuery } from "../../dtos/admin/admin-user.dto";
 import { UserRole } from "../../shared/constants/roles";
+import { ADMIN_MESSAGES } from "../../constants/messages";
 
 export interface AuthenticatedRequest extends Request {
   user: {
@@ -45,7 +46,7 @@ export class AdminUserController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: 'User blocked successfully',
+        message: ADMIN_MESSAGES.USER_BLOCKED,
       });
     } catch (err) {
       next(err);
@@ -59,7 +60,7 @@ export class AdminUserController {
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
-        message: 'User unblocked successfully',
+        message: ADMIN_MESSAGES.USER_UNBLOCKED,
       });
     } catch (err) {
       next(err);

@@ -7,7 +7,7 @@ import { AdminUserController } from "../../controllers/admin/AdminUserController
 import { AdminMentorRepository } from "../../repositories/admin/AdminMentorRepository";
 import { AdminMentorService } from "../../services/admin/AdminMentorService";
 import { AdminMentorController } from "../../controllers/admin/AdminMentorController";
-import { cacheService, tokenService, emailService, passwordService } from "./shared.container";
+import { cacheService, tokenService, emailService, passwordService, tokenLifecycleRepository } from "./shared.container";
 import { stripeService, planRepository } from "./payment.container";
 import { PlanService } from "../../services/admin/PlanService";
 import { AdminPlanController } from "../../controllers/admin/AdminPlanController";
@@ -31,7 +31,7 @@ export const adminUserService = new AdminUserService(adminUserRepository);
 export const adminMentorService = new AdminMentorService(
   adminMentorRepository,
   emailService,
-  cacheService
+  tokenLifecycleRepository
 );
 
 export const planService = new PlanService(

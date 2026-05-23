@@ -26,6 +26,7 @@ export const AUTH_MESSAGES = {
   EMAIL_SEND_FAILED: 'Failed to send email',
   TOO_MANY_ATTEMPTS: 'Too many attempts. Please try again later.',
   RATE_LIMIT_EXCEEDED: 'Too many requests. Please try again later.',
+  RATE_LIMIT_SLOW_DOWN: 'Too many requests. Please slow down.',
   ACCESS_DENIED: 'Access denied. You do not have permission to perform this action.',
   TOKEN_REQUIRED: 'Authentication token is required',
 };
@@ -41,6 +42,8 @@ export const MENTOR_MESSAGES = {
   TEMP_PASSWORD_SENT: 'Temporary password sent to email',
   ACTIVATED: 'Mentor account activated successfully',
   LOGIN_SUCCESS: 'Mentor login successful',
+  PROFILE_FETCHED: 'Mentor profile fetched successfully',
+  PROFILE_UPDATED: 'Mentor profile updated successfully',
   NOT_ACTIVATED: 'Mentor account not activated',
   ACCOUNT_DISABLED: 'Account disabled. Contact admin.',
   PASSWORDS_MIN_LENGTH: 'Password must be at least 8 characters',
@@ -81,6 +84,17 @@ export const PROBLEM_MESSAGES = {
   COMPANY_TAGS_FETCHED: 'Company tags fetched successfully',
 };
 
+export const COMPILER_MESSAGES = {
+  EXECUTION_STARTED: 'Execution started',
+  EXECUTION_RESULT: 'Execution result',
+  RESULT_NOT_FOUND_OR_EXPIRED: 'Execution result not found or expired',
+  FUNCTION_NOT_FOUND: (functionName: string) =>
+    `Function '${functionName}' not found in Solution class or global scope.`,
+  UNSUPPORTED_LANGUAGE: (language: string) =>
+    `Unsupported language for native execution: ${language}`,
+  INTERNAL_TEST_MARKERS_NOT_FOUND: 'Internal Error: Test case markers not found',
+};
+
 export const PLAN_MESSAGES = {
   CREATED: 'Plan created successfully',
   UPDATED: 'Plan updated successfully',
@@ -92,6 +106,8 @@ export const PLAN_MESSAGES = {
 
 export const GLOBAL_MESSAGES = {
   INTERNAL_SERVER_ERROR: 'Internal Server Error',
+  UNKNOWN_ERROR: 'Unknown error',
+  UNKNOWN_ERROR_OCCURRED: 'Unknown error occurred',
 };
 
 export const PAYMENT_MESSAGES = {
@@ -107,6 +123,14 @@ export const PAYMENT_MESSAGES = {
   MISSING_SIGNATURE: 'Missing stripe-signature header',
   INVALID_SIGNATURE: 'Invalid signature',
   WEBHOOK_FAILED: 'Webhook handler failed',
+  STRIPE_SECRET_KEY_NOT_CONFIGURED: 'STRIPE_SECRET_KEY is not configured',
+  STRIPE_WEBHOOK_SECRET_NOT_CONFIGURED: 'STRIPE_WEBHOOK_SECRET is not configured',
+  STRIPE_PRODUCT_CREATION_FAILED: 'Stripe product creation failed',
+  STRIPE_CHECKOUT_SESSION_CREATION_FAILED: 'Stripe checkout session creation failed',
+  WEBHOOK_SIGNATURE_VERIFICATION_FAILED: 'Webhook signature verification failed',
+  CHECKOUT_SESSION_RETRIEVAL_FAILED: 'Failed to retrieve checkout session',
+  SUBSCRIPTION_CANCEL_FAILED: 'Failed to cancel subscription',
+  SUBSCRIPTION_UPGRADE_FAILED: 'Failed to upgrade subscription',
 };
 
 export const SUBSCRIPTION_MESSAGES = {
@@ -124,6 +148,15 @@ export const SUBSCRIPTION_MESSAGES = {
   WEBHOOK_ERROR: 'Webhook error',
 };
 
+export const STORAGE_MESSAGES = {
+  S3_CONFIG_MISSING: 'S3 storage configuration is missing',
+  AVATAR_UPLOAD_URL_GENERATED: 'Avatar upload URL generated successfully',
+  AVATAR_CONTENT_TYPE_INVALID: 'Invalid avatar file type',
+  AVATAR_FILE_TOO_LARGE: 'Avatar file is too large',
+  AVATAR_FILE_NAME_REQUIRED: 'Avatar file name is required',
+  AVATAR_CONTENT_TYPE_REQUIRED: 'Avatar content type is required',
+};
+
 export const SUBMISSION_MESSAGES = {
   EXECUTED: 'Submission executed successfully',
   FETCHED: 'Submission fetched successfully',
@@ -132,7 +165,10 @@ export const SUBMISSION_MESSAGES = {
 };
 
 export const AVAILABILITY_MESSAGES = {
+  NOT_FOUND: 'Mentor availability not found',
   NOT_CONFIGURED: 'Mentor availability not configured',
+  INVALID_START_TIME: 'Invalid start time',
+  INVALID_END_TIME: 'Invalid end time',
   START_LESS_THAN_END: 'startTime must be less than endTime',
   OVERLAPPING_SLOTS: 'overlapping slots detected',
   UPDATED: 'Availability updated successfully',
@@ -158,6 +194,15 @@ export const BOOKING_MESSAGES = {
   CANCELLED: 'Booking cancelled successfully',
 };
 
+export const REVIEW_MESSAGES = {
+  SUBMITTED: 'Review submitted successfully',
+  FETCHED: 'Mentor reviews fetched successfully',
+  UNAUTHORIZED_BOOKING: 'Unauthorized to review this booking',
+  CANNOT_REVIEW_CANCELLED_OR_NO_SHOW: 'Cannot review a cancelled or no-show session',
+  CANNOT_REVIEW_BEFORE_END: 'Cannot review a session before it ends',
+  ALREADY_REVIEWED: 'You have already reviewed this session',
+};
+
 export const SESSION_MESSAGES = {
   NOT_FOUND: 'Session not found',
   ACCESS_DENIED: 'Access denied',
@@ -170,3 +215,30 @@ export const SESSION_MESSAGES = {
   UNAUTHORIZED_PEER: 'Unauthorized peer signaling',
 };
 
+export const CHAT_MESSAGES = {
+  MESSAGES_FETCHED: 'Messages fetched successfully',
+};
+
+export const VALIDATION_MESSAGES = {
+  VALID_EMAIL_REQUIRED: 'Please provide a valid email',
+  INVALID_EMAIL: 'Invalid email address',
+  PASSWORD_MIN_6: 'Password must be at least 6 characters long',
+  FULL_NAME_MIN: 'Name must be at least 2 characters long',
+  OTP_LENGTH: 'OTP must be 6 digits',
+  OTP_NUMERIC: 'OTP must contain only numbers',
+  TOKEN_REQUIRED: 'Token is required',
+  CONFIRM_PASSWORD_REQUIRED: 'Confirm password is required',
+  PASSWORD_REQUIRED: 'Password is required',
+  INVALID_LANGUAGE: 'Invalid language',
+  SOURCE_CODE_REQUIRED: 'Source code is required',
+  CODE_TOO_LARGE: 'Code too large',
+  INPUT_TOO_LARGE: 'Input too large',
+  FEATURE_NAME_REQUIRED: 'Feature name is required',
+  PLAN_NAME_MIN: 'Plan name must be at least 3 characters',
+  PRICE_NON_NEGATIVE: 'Price must be non-negative',
+  BILLING_CYCLE_INVALID: 'Billing cycle must be monthly or yearly',
+  PLAN_DESCRIPTION_MIN: 'Description must be at least 10 characters',
+  FEATURE_REQUIRED: 'At least one feature is required',
+  PROBLEM_TAG_REQUIRED: 'At least one problem tag is required',
+  PROBLEM_ID_REQUIRED: 'Problem ID is required',
+};

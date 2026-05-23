@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Link } from 'react-router-dom';
 import { mentorService } from '../services/mentor.service';
 import { showError } from '../../../shared/utils/toast.util';
 
@@ -26,6 +27,8 @@ const MentorActivationPage = () => {
   const token = searchParams.get('token');
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
+  const [isTokenValid, setIsTokenValid] = useState(false);
 
   const {
     register,
@@ -46,14 +49,28 @@ const MentorActivationPage = () => {
   };
 
   useEffect(() => {
-    if (!token) {
-      showError('Invalid activation link');
-      navigate('/mentor/login');
-    }
-  }, [token, navigate]);
+    const validateToken = async () => {
+      if (!token) {
+        setIsTokenValid(false);
+        setIsValidating(false);
+        return;
+      }
+
+      try {
+        const valid = await mentorService.validateActivationToken(token);
+        setIsTokenValid(valid);
+      } catch {
+        setIsTokenValid(false);
+      } finally {
+        setIsValidating(false);
+      }
+    };
+
+    validateToken();
+  }, [token]);
 
   const onSubmit = async (data: ActivationFormData) => {
-    if (!token) return;
+    if (!token || !isTokenValid) return;
 
     setIsLoading(true);
     try {
@@ -63,15 +80,61 @@ const MentorActivationPage = () => {
         confirmPassword: data.confirmPassword,
       });
       navigate('/mentor/activation-success');
-    } catch (error: any) {
-      if (error.response?.status >= 400 && error.response?.status < 500) {
-        const message = error.response?.data?.message || 'Activation failed';
-        showError(message);
+    } catch (error: unknown) {
+      const status =
+        error instanceof Object && 'response' in error
+          ? (error as { response?: { status?: number; data?: { message?: string } } }).response?.status
+          : undefined;
+      const message =
+        error instanceof Object && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      if (status !== undefined && status >= 400 && status < 500) {
+        showError(message || 'Activation failed');
       }
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isValidating) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#2a2d3a] border-t-[var(--color-primary)] rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg">Validating activation link...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isTokenValid) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="fixed top-6 left-6">
+          <span className="text-xl font-bold text-[var(--color-primary)]">ZenCode</span>
+        </div>
+
+        <div className="w-full max-w-[420px] px-4">
+          <div className="bg-[#1a1d26] border border-[#2a2d3a] rounded-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h1 className="text-white text-2xl font-bold mb-3">Invalid or Expired Invite Link</h1>
+            <p className="text-gray-400 mb-6">This activation link is invalid, expired, or already used.</p>
+            <Link
+              to="/mentor/login"
+              className="block w-full h-12 rounded-lg bg-[var(--color-primary)] hover:bg-blue-600 text-white font-bold transition-all flex items-center justify-center"
+            >
+              Back to Mentor Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">

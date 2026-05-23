@@ -5,7 +5,7 @@ import { IPlanRepository } from '../../interfaces/repository-interfaces/admin/IP
 import { logger } from '../../shared/utils/Logger';
 import { sendSuccess, sendError } from '../../shared/http/response';
 import { STATUS_CODES } from '../../shared/constants/status';
-import { PAYMENT_MESSAGES } from '../../constants/messages';
+import { GLOBAL_MESSAGES, PAYMENT_MESSAGES } from '../../constants/messages';
 import { 
   StripeEvent, 
   StripeCheckoutSessionCompletedEvent, 
@@ -13,8 +13,7 @@ import {
   StripeCustomerSubscriptionUpdatedEvent,
   StripeInvoicePaymentSucceededEvent,
   StripeInvoicePaymentFailedEvent,
-  StripeInvoicePaidEvent,
-  StripeSubscription
+  StripeInvoicePaidEvent
 } from '../../interfaces/service-interfaces/payments/IStripeExtTypes';
 
 export class WebhookController {
@@ -39,7 +38,7 @@ export class WebhookController {
       const payload = req.body instanceof Buffer ? req.body : Buffer.from(JSON.stringify(req.body));
       event = await this.stripeService.constructWebhookEvent(payload, signature);
     } catch (err) {
-      logger.error('❌ Webhook signature verification failed:', err instanceof Error ? err.message : 'Unknown error');
+      logger.error('❌ Webhook signature verification failed:', err instanceof Error ? err.message : GLOBAL_MESSAGES.UNKNOWN_ERROR);
       sendError(res, PAYMENT_MESSAGES.INVALID_SIGNATURE, STATUS_CODES.BAD_REQUEST);
       return;
     }
@@ -106,7 +105,7 @@ export class WebhookController {
           const subscription = subscriptionEvent.data.object;
           
           if (subscription.status !== 'deleted') {
-            const sub = subscription as any; // Cast to any to access current_period_end safely
+            const sub = subscription as unknown as { items: { data: [{ price: { id: string } }] }, current_period_end: number };
             const priceId = sub.items.data[0].price.id;
             const plan = await this.planRepo.findByStripePriceId(priceId);
             
@@ -173,7 +172,7 @@ export class WebhookController {
 
       sendSuccess(res, { statusCode: STATUS_CODES.OK, data: { received: true } });
     } catch (error) {
-      logger.error('❌ Webhook processing error:', error instanceof Error ? error.message : 'Unknown error');
+      logger.error('❌ Webhook processing error:', error instanceof Error ? error.message : GLOBAL_MESSAGES.UNKNOWN_ERROR);
       sendError(res, PAYMENT_MESSAGES.WEBHOOK_FAILED, STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
   };

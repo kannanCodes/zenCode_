@@ -9,13 +9,14 @@ import {
 } from '../../interfaces/service-interfaces/payments/IStripeExtTypes';
 import { IStripeService } from '../../interfaces/service-interfaces/payments/stripe.service.interface';
 import { appConfig } from '../../config/appConfig';
+import { PAYMENT_MESSAGES } from '../../constants/messages';
 
 export class StripeService implements IStripeService {
   private readonly stripe: InstanceType<typeof Stripe>;
 
   constructor() {
     if (!appConfig.stripe.secretKey) {
-      throw new AppError('STRIPE_SECRET_KEY is not configured', STATUS_CODES.INTERNAL_SERVER_ERROR);
+      throw new AppError(PAYMENT_MESSAGES.STRIPE_SECRET_KEY_NOT_CONFIGURED, STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
 
     this.stripe = new Stripe(appConfig.stripe.secretKey, {
@@ -53,7 +54,7 @@ export class StripeService implements IStripeService {
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(
-        error instanceof Error ? error.message : 'Stripe product creation failed',
+        error instanceof Error ? error.message : PAYMENT_MESSAGES.STRIPE_PRODUCT_CREATION_FAILED,
         STATUS_CODES.INTERNAL_SERVER_ERROR
       );
     }
@@ -83,7 +84,7 @@ export class StripeService implements IStripeService {
       };
     } catch (error) {
       throw new AppError(
-        error instanceof Error ? error.message : 'Stripe checkout session creation failed',
+        error instanceof Error ? error.message : PAYMENT_MESSAGES.STRIPE_CHECKOUT_SESSION_CREATION_FAILED,
         STATUS_CODES.INTERNAL_SERVER_ERROR
       );
     }
@@ -92,14 +93,14 @@ export class StripeService implements IStripeService {
   async constructWebhookEvent(payload: Buffer, signature: string): Promise<StripeEvent> {
     const webhookSecret = appConfig.stripe.webhookSecret;
     if (!webhookSecret) {
-      throw new AppError('STRIPE_WEBHOOK_SECRET is not configured', STATUS_CODES.INTERNAL_SERVER_ERROR);
+      throw new AppError(PAYMENT_MESSAGES.STRIPE_WEBHOOK_SECRET_NOT_CONFIGURED, STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
 
     try {
       return this.stripe.webhooks.constructEvent(payload, signature, webhookSecret) as StripeEvent;
     } catch (error) {
       throw new AppError(
-        error instanceof Error ? error.message : 'Webhook signature verification failed',
+        error instanceof Error ? error.message : PAYMENT_MESSAGES.WEBHOOK_SIGNATURE_VERIFICATION_FAILED,
         STATUS_CODES.BAD_REQUEST
       );
     }
@@ -112,7 +113,7 @@ export class StripeService implements IStripeService {
       });
     } catch (error) {
       throw new AppError(
-        error instanceof Error ? error.message : 'Failed to retrieve checkout session',
+        error instanceof Error ? error.message : PAYMENT_MESSAGES.CHECKOUT_SESSION_RETRIEVAL_FAILED,
         STATUS_CODES.INTERNAL_SERVER_ERROR
       );
     }
@@ -125,7 +126,7 @@ export class StripeService implements IStripeService {
       });
     } catch (error) {
       throw new AppError(
-        error instanceof Error ? error.message : 'Failed to cancel subscription',
+        error instanceof Error ? error.message : PAYMENT_MESSAGES.SUBSCRIPTION_CANCEL_FAILED,
         STATUS_CODES.INTERNAL_SERVER_ERROR
       );
     }
@@ -147,7 +148,7 @@ export class StripeService implements IStripeService {
       });
     } catch (error) {
       throw new AppError(
-        error instanceof Error ? error.message : 'Failed to upgrade subscription',
+        error instanceof Error ? error.message : PAYMENT_MESSAGES.SUBSCRIPTION_UPGRADE_FAILED,
         STATUS_CODES.INTERNAL_SERVER_ERROR
       );
     }

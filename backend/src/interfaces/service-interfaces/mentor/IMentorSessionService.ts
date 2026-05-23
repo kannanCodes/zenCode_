@@ -2,7 +2,7 @@ import { CreateMentorSessionInput } from "../../../dtos/mentor/create-session.dt
 import { IMentorSession } from "../../../infrastructure/database/models/mentor-session.model";
 
 export interface IMentorSessionService {
-  createSession(data: CreateMentorSessionInput): Promise<IMentorSession>;
+  createSession(data: CreateMentorSessionInput, requesterId: string): Promise<IMentorSession>;
   validateSessionAccess(roomId: string, userId: string): Promise<IMentorSession>;
   markParticipantOnline(roomId: string, userId: string): Promise<IMentorSession | null>;
   markParticipantOffline(roomId: string, userId: string): Promise<IMentorSession | null>;

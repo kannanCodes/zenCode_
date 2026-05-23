@@ -20,6 +20,11 @@ export const mentorService = {
           return response.data;
      },
 
+     validateActivationToken: async (token: string): Promise<boolean> => {
+          const response = await api.get(`/mentor/auth/activate/validate?token=${token}`);
+          return response.data.data.valid;
+     },
+
      login: async (data: { email: string; password: string }): Promise<LoginResponse['data']> => {
           const response = await api.post<LoginResponse>('/mentor/auth/login', data);
           return response.data.data;

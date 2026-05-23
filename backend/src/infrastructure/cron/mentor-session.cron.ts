@@ -1,6 +1,6 @@
 import cron from 'node-cron';
-import { IMentorSessionService } from '../interfaces/service-interfaces/mentor/IMentorSessionService';
-import { logger } from '../shared/utils/Logger';
+import { IMentorSessionService } from '../../interfaces/service-interfaces/mentor/IMentorSessionService';
+import { logger } from '../../shared/utils/Logger';
 
 export class MentorSessionCronJobs {
   constructor(private readonly sessionService: IMentorSessionService) {}

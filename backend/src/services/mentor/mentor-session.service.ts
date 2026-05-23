@@ -1,32 +1,67 @@
 import { IMentorSessionService } from "../../interfaces/service-interfaces/mentor/IMentorSessionService";
 import { IMentorSessionRepository } from "../../interfaces/repository-interfaces/mentor/IMentorSessionRepository";
+import { IMentorBookingRepository } from "../../interfaces/repository-interfaces/mentor/IMentorBookingRepository";
 import { CreateMentorSessionInput } from "../../dtos/mentor/create-session.dto";
 import { IMentorSession } from "../../infrastructure/database/models/mentor-session.model";
 import { AppError } from "../../shared/utils/AppError";
 import { STATUS_CODES } from "../../shared/constants/status";
 import { generateRoomId } from "../../shared/utils/generate-room-id.util";
-import { SESSION_MESSAGES } from "../../constants/messages";
+import { BOOKING_MESSAGES, SESSION_MESSAGES } from "../../constants/messages";
 import { MentorSessionStatus } from "../../constants/session-status";
 import { SESSION_CONFIG } from "../../constants/session-config";
 import { Types } from "mongoose";
+import { BookingStatus } from "../../constants/booking-status";
 
 export class MentorSessionService implements IMentorSessionService {
-  constructor(private readonly sessionRepo: IMentorSessionRepository) {}
+  constructor(
+    private readonly sessionRepo: IMentorSessionRepository,
+    private readonly bookingRepo: IMentorBookingRepository
+  ) {}
 
-  async createSession(data: CreateMentorSessionInput): Promise<IMentorSession> {
+  async createSession(data: CreateMentorSessionInput, requesterId: string): Promise<IMentorSession> {
     const existingSession = await this.sessionRepo.findByBookingId(data.bookingId);
 
     if (existingSession) {
+      const isParticipant =
+        existingSession.mentorId.toString() === requesterId ||
+        existingSession.studentId.toString() === requesterId;
+
+      if (!isParticipant) {
+        throw new AppError(SESSION_MESSAGES.ACCESS_DENIED, STATUS_CODES.FORBIDDEN);
+      }
+
       return existingSession;
+    }
+
+    const booking = await this.bookingRepo.findById(data.bookingId);
+
+    if (!booking) {
+      throw new AppError(BOOKING_MESSAGES.NOT_FOUND, STATUS_CODES.NOT_FOUND);
+    }
+
+    const isParticipant =
+      booking.mentorId.toString() === requesterId ||
+      booking.studentId.toString() === requesterId;
+
+    if (!isParticipant) {
+      throw new AppError(SESSION_MESSAGES.ACCESS_DENIED, STATUS_CODES.FORBIDDEN);
+    }
+
+    if (booking.status !== BookingStatus.CONFIRMED && booking.status !== BookingStatus.PENDING) {
+      throw new AppError(SESSION_MESSAGES.UNAVAILABLE, STATUS_CODES.BAD_REQUEST);
     }
 
     const roomId = generateRoomId();
 
     return this.sessionRepo.createSession({
-      ...data,
+      bookingId: booking._id as Types.ObjectId,
+      mentorId: booking.mentorId,
+      studentId: booking.studentId,
+      scheduledStart: booking.startTime,
+      scheduledEnd: booking.endTime,
       roomId,
       status: MentorSessionStatus.SCHEDULED,
-    } as unknown as Partial<IMentorSession>);
+    } as Partial<IMentorSession>);
   }
 
   async validateSessionAccess(roomId: string, userId: string): Promise<IMentorSession> {
@@ -69,8 +104,16 @@ export class MentorSessionService implements IMentorSessionService {
       updateData.mentorJoinedAt = new Date();
     }
 
+    if (session.mentorId.toString() === userId) {
+      updateData.mentorOnline = true;
+    }
+
     if (session.studentId.toString() === userId && !session.studentJoinedAt) {
       updateData.studentJoinedAt = new Date();
+    }
+
+    if (session.studentId.toString() === userId) {
+      updateData.studentOnline = true;
     }
 
     const isMentorJoined = updateData.mentorJoinedAt || session.mentorJoinedAt;

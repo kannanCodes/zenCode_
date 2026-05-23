@@ -10,6 +10,10 @@ router.post(
   validateRequest(activateMentorSchema),
   mentorAuthController.activate.bind(mentorAuthController)
 );
+router.get(
+  "/activate/validate",
+  mentorAuthController.validateActivationToken.bind(mentorAuthController)
+);
 
 router.post(
   "/login",

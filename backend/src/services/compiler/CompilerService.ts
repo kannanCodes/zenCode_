@@ -8,6 +8,7 @@ import { STATUS_CODES } from "../../shared/constants/status";
 import crypto from "crypto";
 import { ITestCase } from "../../infrastructure/database/models/problem.model";
 import { logger } from "../../shared/utils/Logger";
+import { COMPILER_MESSAGES } from "../../constants/messages";
 
 export class CompilerService implements ICompilerService {
   constructor(
@@ -52,7 +53,7 @@ export class CompilerService implements ICompilerService {
     const result = await this.cacheService.get<ExecutionResultDto>(token);
     
     if (!result) {
-      throw new AppError("Execution result not found or expired", STATUS_CODES.NOT_FOUND);
+      throw new AppError(COMPILER_MESSAGES.RESULT_NOT_FOUND_OR_EXPIRED, STATUS_CODES.NOT_FOUND);
     }
     
     // Clean up after retrieval (one-time poll)

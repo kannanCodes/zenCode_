@@ -5,7 +5,19 @@ import { presenceStore } from './presence.store';
 import { mentorSessionService } from '../../shared/di/mentor.container';
 import { registerChatSockets } from './chat.socket';
 import { registerCollabSockets } from './collab.socket';
+import { collaborationStore } from './collab.store';
 import { logger } from '../../shared/utils/Logger';
+import { GLOBAL_MESSAGES } from '../../constants/messages';
+
+const getOnlineParticipants = (session: {
+  mentorId: { toString(): string };
+  studentId: { toString(): string };
+  mentorOnline?: boolean;
+  studentOnline?: boolean;
+}) => [
+  ...(session.mentorOnline ? [session.mentorId.toString()] : []),
+  ...(session.studentOnline ? [session.studentId.toString()] : []),
+];
 
 export const registerSessionSocket = (io: Server) => {
   io.on('connection', (socket: AuthenticatedSocket) => {
@@ -33,7 +45,8 @@ export const registerSessionSocket = (io: Server) => {
         socket.currentRoomId = roomId;
 
         await mentorSessionService.handleReconnect(roomId, userId);
-        await mentorSessionService.markParticipantOnline(roomId, userId);
+        const updatedSession = await mentorSessionService.markParticipantOnline(roomId, userId);
+        const activeSession = updatedSession || session;
 
         socket.to(roomId).emit(SESSION_EVENTS.USER_JOINED, {
           userId,
@@ -43,13 +56,17 @@ export const registerSessionSocket = (io: Server) => {
           userId,
         });
 
+        const editorState = collaborationStore.get(roomId);
+
         socket.emit(SESSION_EVENTS.SESSION_JOINED_SUCCESS, {
           roomId,
           sessionId: session._id,
+          participants: getOnlineParticipants(activeSession),
+          editorState: editorState || null,
         });
       } catch (error: unknown) {
         socket.emit(SESSION_EVENTS.SESSION_ERROR, {
-          message: error instanceof Error ? error.message : 'Unknown error occurred',
+          message: error instanceof Error ? error.message : GLOBAL_MESSAGES.UNKNOWN_ERROR_OCCURRED,
         });
       }
     });
@@ -125,7 +142,7 @@ export const registerSessionSocket = (io: Server) => {
         });
       } catch (error: unknown) {
         socket.emit(SESSION_EVENTS.SESSION_ERROR, {
-          message: error instanceof Error ? error.message : 'Unknown error occurred',
+          message: error instanceof Error ? error.message : GLOBAL_MESSAGES.UNKNOWN_ERROR_OCCURRED,
         });
       }
     });
@@ -148,7 +165,7 @@ export const registerSessionSocket = (io: Server) => {
         });
       } catch (error: unknown) {
         socket.emit(SESSION_EVENTS.SESSION_ERROR, {
-          message: error instanceof Error ? error.message : 'Unknown error occurred',
+          message: error instanceof Error ? error.message : GLOBAL_MESSAGES.UNKNOWN_ERROR_OCCURRED,
         });
       }
     });
@@ -171,7 +188,7 @@ export const registerSessionSocket = (io: Server) => {
         });
       } catch (error: unknown) {
         socket.emit(SESSION_EVENTS.SESSION_ERROR, {
-          message: error instanceof Error ? error.message : 'Unknown error occurred',
+          message: error instanceof Error ? error.message : GLOBAL_MESSAGES.UNKNOWN_ERROR_OCCURRED,
         });
       }
     });

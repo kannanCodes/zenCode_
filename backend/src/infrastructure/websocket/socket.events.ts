@@ -29,4 +29,5 @@ export const COLLAB_EVENTS = {
   CODE_CHANGED: 'collab:code-changed',
   CODE_SYNC: 'collab:code-sync',
   LANGUAGE_CHANGED: 'collab:language-changed',
+  RUN_RESULT: 'collab:run-result',
 } as const;
