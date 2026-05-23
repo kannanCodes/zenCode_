@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import { STORAGE_CONSTANTS } from "../constants/storage.constants";
 
 dotenv.config();
 
@@ -38,5 +39,12 @@ export const appConfig = {
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY as string,
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET as string,
+  },
+  s3: {
+    region: process.env.AWS_S3_REGION || process.env.AWS_REGION || "",
+    bucket: process.env.AWS_S3_BUCKET || process.env.AWS_BUCKET_NAME || "",
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+    avatarUploadUrlExpirySeconds: Number(process.env.AWS_AVATAR_UPLOAD_URL_EXPIRY_SECONDS || STORAGE_CONSTANTS.AVATAR_UPLOAD_URL_EXPIRY_SECONDS),
   },
 };

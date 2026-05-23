@@ -5,7 +5,7 @@ export interface ConnectionEvent {
   userId: string;
   type: string;
   timestamp: Date;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface IMentorSession extends Document {
@@ -107,7 +107,7 @@ const MentorSessionSchema = new Schema(
           userId: String,
           type: { type: String },
           timestamp: Date,
-          metadata: Schema.Types.Mixed,
+          metadata: { type: Schema.Types.Mixed },
         }
       ],
       default: [],
@@ -147,7 +147,6 @@ const MentorSessionSchema = new Schema(
   }
 );
 
-MentorSessionSchema.index({ roomId: 1 });
 MentorSessionSchema.index({ mentorId: 1 });
 MentorSessionSchema.index({ studentId: 1 });
 MentorSessionSchema.index({ status: 1 });

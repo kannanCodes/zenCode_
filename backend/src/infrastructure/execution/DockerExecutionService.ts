@@ -4,8 +4,9 @@ import { AppError } from '../../shared/utils/AppError';
 import { STATUS_CODES } from '../../shared/constants/status';
 import { ExecuteCodeDto, ExecutionResultDto, TestCaseResultDto } from '../../dtos/compiler/execute-code.dto';
 import { IDockerExecutionService } from '../../interfaces/infrastructure-interfaces/execution/IDockerExecutionService';
-import { DOCKER_IMAGE_MAP, DEFAULT_TIMEOUT } from '../../constants/compiler.constants';
+import { DOCKER_IMAGE_MAP, DEFAULT_TIMEOUT, EXECUTION_DEFAULTS, EXECUTION_STATUS } from '../../constants/compiler.constants';
 import { logger } from '../../shared/utils/Logger';
+import { COMPILER_MESSAGES } from '../../constants/messages';
 
 const execAsync = promisify(exec);
 
@@ -21,6 +22,7 @@ export class DockerExecutionService implements IDockerExecutionService {
     }
 
     const { functionName } = functionSignature;
+    const functionNotFoundMessage = COMPILER_MESSAGES.FUNCTION_NOT_FOUND(functionName);
 
     // JavaScript runner (Node)
     if (language === 'javascript') {
@@ -61,7 +63,7 @@ const testCases = ${JSON.stringify(testCases)};
             }
 
             if (!runner) {
-                throw new Error("Function '${functionName}' not found in Solution class or global scope.");
+                throw new Error(${JSON.stringify(functionNotFoundMessage)});
             }
 
             const result = await runner(...args);
@@ -138,7 +140,7 @@ for i, tc in enumerate(test_cases):
             runner = namespace['${functionName}']
 
         if not runner:
-            raise Exception("Function '${functionName}' not found in Solution class or global scope.")
+            raise Exception(${JSON.stringify(functionNotFoundMessage)})
 
         result = runner(*args)
         print("TOKEN_RESULT")
@@ -161,7 +163,7 @@ for i, tc in enumerate(test_cases):
 
     const config = DOCKER_IMAGE_MAP[language];
     if (!config) {
-      throw new AppError(`Unsupported language for native execution: ${language}`, STATUS_CODES.BAD_REQUEST);
+      throw new AppError(COMPILER_MESSAGES.UNSUPPORTED_LANGUAGE(language), STATUS_CODES.BAD_REQUEST);
     }
 
     try {
@@ -177,8 +179,8 @@ for i, tc in enumerate(test_cases):
 
       const { stdout, stderr } = await execAsync(dockerCmd, { timeout: DEFAULT_TIMEOUT });
 
-      let statusId = 3; // Accepted
-      let description = 'Accepted';
+      let statusId: number = EXECUTION_STATUS.ACCEPTED.ID;
+      let description: string = EXECUTION_STATUS.ACCEPTED.DESCRIPTION;
       const testResults: TestCaseResultDto[] = [];
       let finalStdout = stdout;
 
@@ -233,7 +235,7 @@ for i, tc in enumerate(test_cases):
             allPassed = false;
             
             // Try to extract a useful error message from stdout or stderr if markers are missing
-            let errorMessage = "Internal Error: Test case markers not found";
+            let errorMessage = COMPILER_MESSAGES.INTERNAL_TEST_MARKERS_NOT_FOUND;
             if (stderr) {
                 errorMessage = stderr.trim();
             } else if (stdout && stdout.length > 0) {
@@ -259,8 +261,10 @@ for i, tc in enumerate(test_cases):
           .trim();
 
         if (!allPassed) {
-            statusId = 4; // Use 4 for fail (Wrong Answer / Runtime Error)
-            description = testResults.some(r => r.error) ? 'Runtime Error' : 'Wrong Answer';
+            statusId = EXECUTION_STATUS.RUNTIME_ERROR.ID;
+            description = testResults.some(r => r.error)
+              ? EXECUTION_STATUS.RUNTIME_ERROR.DESCRIPTION
+              : EXECUTION_STATUS.WRONG_ANSWER.DESCRIPTION;
         }
       }
 
@@ -273,8 +277,8 @@ for i, tc in enumerate(test_cases):
           description: description,
         },
         testResults,
-        time: '0.100',
-        memory: 1024,
+        time: EXECUTION_DEFAULTS.TIME,
+        memory: EXECUTION_DEFAULTS.MEMORY,
       };
     } catch (error: unknown) {
       const err = error as { stderr?: string; message?: string; stdout?: string; stack?: string };
@@ -292,8 +296,10 @@ for i, tc in enumerate(test_cases):
         stderr: stderr,
         compile_output: '',
         status: {
-          id: isDockerError ? 13 : 4, // 13 = Internal Error (roughly)
-          description: isDockerError ? 'System Error' : 'Runtime Error',
+          id: isDockerError ? EXECUTION_STATUS.SYSTEM_ERROR.ID : EXECUTION_STATUS.RUNTIME_ERROR.ID,
+          description: isDockerError
+            ? EXECUTION_STATUS.SYSTEM_ERROR.DESCRIPTION
+            : EXECUTION_STATUS.RUNTIME_ERROR.DESCRIPTION,
         },
         testResults: [],
         time: null,

@@ -20,8 +20,13 @@ export const socketAuthMiddleware = (
       appConfig.jwt.accessSecret
     ) as SocketJwtPayload;
 
+    const userId = decoded.sub || decoded.id;
+    if (!userId) {
+      return next(new Error(AUTH_MESSAGES.UNAUTHORIZED));
+    }
+
     (socket as AuthenticatedSocket).user = {
-      id: decoded.id,
+      id: userId,
       role: decoded.role,
     };
 

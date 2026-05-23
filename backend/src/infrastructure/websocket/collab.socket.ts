@@ -30,4 +30,13 @@ export const registerCollabSockets = (io: Server, socket: AuthenticatedSocket) =
     const { roomId, language } = payload;
     socket.to(roomId).emit(COLLAB_EVENTS.LANGUAGE_CHANGED, { language });
   });
+
+  socket.on(COLLAB_EVENTS.RUN_RESULT, (payload) => {
+    const { roomId, result, error } = payload;
+    socket.to(roomId).emit(COLLAB_EVENTS.RUN_RESULT, {
+      result,
+      error,
+      userId: socket.user?.id,
+    });
+  });
 };

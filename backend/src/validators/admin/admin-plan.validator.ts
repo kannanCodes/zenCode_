@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { VALIDATION_MESSAGES } from '../../constants/messages';
 
 const featureSchema = z.object({
-  name: z.string().min(1, 'Feature name is required'),
+  name: z.string().min(1, VALIDATION_MESSAGES.FEATURE_NAME_REQUIRED),
   description: z.string().optional(),
   enabled: z.boolean().default(true),
 });
@@ -19,14 +20,14 @@ const updateAccessSchema = z.object({
 });
 
 export const createPlanValidator = z.object({
-  name: z.string().min(3, 'Plan name must be at least 3 characters'),
-  price: z.number().min(0, 'Price must be non-negative'),
+  name: z.string().min(3, VALIDATION_MESSAGES.PLAN_NAME_MIN),
+  price: z.number().min(0, VALIDATION_MESSAGES.PRICE_NON_NEGATIVE),
   billingCycle: z.enum(['monthly', 'yearly'], {
-    message: 'Billing cycle must be monthly or yearly',
+    message: VALIDATION_MESSAGES.BILLING_CYCLE_INVALID,
   }),
   intervalCount: z.number().min(1).default(1),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  features: z.array(featureSchema).min(1, 'At least one feature is required'),
+  description: z.string().min(10, VALIDATION_MESSAGES.PLAN_DESCRIPTION_MIN),
+  features: z.array(featureSchema).min(1, VALIDATION_MESSAGES.FEATURE_REQUIRED),
   access: accessSchema,
   stripeProductId: z.string().optional().default(''),
   stripePriceId: z.string().optional().default(''),

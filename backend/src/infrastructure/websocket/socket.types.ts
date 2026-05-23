@@ -10,7 +10,8 @@ export interface AuthenticatedSocket extends Socket {
 }
 
 export interface SocketJwtPayload extends JwtPayload {
-  id: string;
+  id?: string;
+  sub?: string;
   role: string;
 }
 

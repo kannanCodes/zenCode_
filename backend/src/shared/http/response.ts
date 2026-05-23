@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { STATUS_CODES } from '../constants/status';
 
 export const sendSuccess = <T>(
   res: Response,
@@ -9,7 +10,7 @@ export const sendSuccess = <T>(
     meta?: Record<string, unknown>;
   },
 ): void => {
-  const { statusCode = 200, message, data, meta } = options;
+  const { statusCode = STATUS_CODES.OK, message, data, meta } = options;
   res.status(statusCode).json({
     success: true,
     message,

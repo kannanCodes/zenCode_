@@ -28,3 +28,27 @@ export const DOCKER_IMAGE_MAP: Record<
 
 export const DEFAULT_TIMEOUT = 10000; // 10 seconds
 export const MAX_MEMORY = 256000;     // 256MB
+
+export const EXECUTION_STATUS = {
+  ACCEPTED: {
+    ID: 3,
+    DESCRIPTION: 'Accepted',
+  },
+  WRONG_ANSWER: {
+    ID: 4,
+    DESCRIPTION: 'Wrong Answer',
+  },
+  RUNTIME_ERROR: {
+    ID: 4,
+    DESCRIPTION: 'Runtime Error',
+  },
+  SYSTEM_ERROR: {
+    ID: 13,
+    DESCRIPTION: 'System Error',
+  },
+} as const;
+
+export const EXECUTION_DEFAULTS = {
+  TIME: '0.100',
+  MEMORY: 1024,
+} as const;

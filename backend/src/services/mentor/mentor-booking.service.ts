@@ -44,7 +44,7 @@ export class MentorBookingService implements IMentorBookingService {
       return await this.bookingRepo.createBooking(studentId, data);
     } catch (error: unknown) {
       // Mongo duplicate key = already booked
-      if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 11000) {
+      if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: number }).code === 11000) {
         throw new AppError(BOOKING_MESSAGES.ALREADY_BOOKED, STATUS_CODES.CONFLICT);
       }
       throw error;
