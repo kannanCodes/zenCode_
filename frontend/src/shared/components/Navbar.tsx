@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { clearSubscription, selectIsHydrated, selectIsPremium } from '../../store/slices/subscriptionSlice';
@@ -6,6 +6,7 @@ import { tokenService } from '../lib/token';
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -15,6 +16,17 @@ const Navbar = () => {
   const isHydrated = useSelector(selectIsHydrated);
   // While token exists but subscription is still loading, show nothing to prevent flash
   const showBadge = isAuthenticated && isHydrated;
+  const navLinks = isAuthenticated
+    ? [
+        { label: 'Problems', to: '/problems' },
+        { label: 'Mentors', to: '/candidate/mentors' },
+        { label: 'My Sessions', to: '/candidate/bookings' },
+      ]
+    : [
+        { label: 'Problems', to: '/problems' },
+        { label: 'Mentors', to: '/login' },
+        { label: 'Mock Interviews', to: '/login' },
+      ];
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -46,15 +58,24 @@ const Navbar = () => {
 
         {/* Nav Links */}
         <div className="hidden md:flex items-center gap-8">
-          <Link to="/problems" className="text-sm text-gray-400 hover:text-white transition-colors">
-            Problems
-          </Link>
-          <Link to="/mock-interviews" className="text-sm text-gray-400 hover:text-white transition-colors">
-            Mock Interviews
-          </Link>
-          <Link to="/mentors" className="text-sm text-gray-400 hover:text-white transition-colors">
-            Mentors
-          </Link>
+          {navLinks.map((link) => {
+            const isActive = link.to === '/' 
+              ? location.pathname === '/' 
+              : location.pathname.startsWith(link.to) && link.to !== '/login';
+            return (
+              <Link
+                key={link.label}
+                to={link.to}
+                className={`text-sm transition-colors border-b-2 h-16 flex items-center ${
+                  isActive
+                    ? 'text-[var(--color-primary)] border-[var(--color-primary)] font-medium'
+                    : 'text-gray-400 border-transparent hover:text-white'
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Right Side */}
@@ -125,6 +146,20 @@ const Navbar = () => {
                       className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
                     >
                       My Submissions
+                    </Link>
+                    <Link
+                      to="/candidate/mentors"
+                      onClick={() => setDropdownOpen(false)}
+                      className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
+                    >
+                      Mentors
+                    </Link>
+                    <Link
+                      to="/candidate/bookings"
+                      onClick={() => setDropdownOpen(false)}
+                      className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
+                    >
+                      My Sessions
                     </Link>
                     <Link
                       to="/subscription/manage"

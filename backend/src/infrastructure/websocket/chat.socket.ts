@@ -4,6 +4,7 @@ import { CHAT_EVENTS } from './socket.events';
 import { messageService } from '../../shared/di/chat.container';
 import { logger } from '../../shared/utils/Logger';
 import { Types } from 'mongoose';
+import { MessageModel } from '../../infrastructure/database/models/message.model';
 
 export const registerChatSockets = (io: Server, socket: AuthenticatedSocket) => {
   if (!socket.user) return;
@@ -13,11 +14,17 @@ export const registerChatSockets = (io: Server, socket: AuthenticatedSocket) => 
     try {
       const { roomId, content } = payload;
 
-      const message = await messageService.createMessage({
+      const saved = await messageService.createMessage({
         roomId,
         senderId: new Types.ObjectId(userId),
         content,
       });
+
+      // Populate sender info so the emitted shape matches the REST history response
+      const message = await MessageModel.findById(saved._id)
+        .populate('senderId', 'fullName avatarUrl')
+        .lean()
+        .exec();
 
       io.to(roomId).emit(CHAT_EVENTS.NEW_MESSAGE, message);
     } catch (error: unknown) {

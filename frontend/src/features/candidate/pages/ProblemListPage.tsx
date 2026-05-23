@@ -6,6 +6,7 @@ import { showError } from '../../../shared/utils/toast.util';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { selectIsPremium } from '../../../store/slices/subscriptionSlice';
+import Navbar from '../../../shared/components/Navbar';
 
 interface Problem {
   _id: string;
@@ -120,47 +121,15 @@ const ProblemListPage = () => {
     }
   };
 
-  const handleLogout = () => {
-    tokenService.clear();
-    navigate('/login');
-  };
-
   const filteredCompanyTags = availableCompanyTags.filter((c) =>
     c.name.toLowerCase().includes(companySearch.toLowerCase())
   );
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0a] border-b border-[#1c1c1c]">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <span className="text-xl font-bold text-[var(--color-primary)]">ZenCode</span>
-            <nav className="hidden md:flex items-center gap-6">
-              <button className="text-sm text-white font-medium">Problems</button>
-              <button className="text-sm text-gray-400 hover:text-white transition-colors">
-                Sessions
-              </button>
-            </nav>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-400 hover:bg-[#1a1a1a] hover:text-white transition-all"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-            Logout
-          </button>
-        </div>
-      </div>
+      <Navbar />
 
-      <div className="pt-20 px-6 py-8">
+      <div className="px-6 pt-24 pb-8">
         <div className="max-w-7xl mx-auto flex gap-6">
           {/* Main Content */}
           <div className="flex-1 min-w-0">

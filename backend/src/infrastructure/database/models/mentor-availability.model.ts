@@ -1,5 +1,5 @@
 import { Schema, model, Types, Document } from "mongoose";
-import { DEFAULT_TIMEZONE } from "../../../shared/constants/booking";
+import { DEFAULT_TIMEZONE } from "../../../constants/booking.constants";
 
 export interface IMentorAvailability extends Document {
   mentorId: Types.ObjectId;
@@ -55,7 +55,5 @@ const MentorAvailabilitySchema = new Schema(
     timestamps: true,
   }
 );
-
-MentorAvailabilitySchema.index({ mentorId: 1 }, { unique: true });
 
 export default model<IMentorAvailability>("MentorAvailability", MentorAvailabilitySchema);

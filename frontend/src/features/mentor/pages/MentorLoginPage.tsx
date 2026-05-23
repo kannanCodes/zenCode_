@@ -40,10 +40,17 @@ const MentorLoginPage = () => {
       tokenService.setAccessToken(response.accessToken);
       showSuccess('Login successful');
       navigate('/mentor/dashboard', { replace: true });
-    } catch (error: any) {
-      if (error.response?.status >= 400 && error.response?.status < 500) {
-        const message = error.response?.data?.message || 'Login failed';
-        showError(message);
+    } catch (error: unknown) {
+      const status =
+        error instanceof Object && 'response' in error
+          ? (error as { response?: { status?: number; data?: { message?: string } } }).response?.status
+          : undefined;
+      const message =
+        error instanceof Object && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      if (status !== undefined && status >= 400 && status < 500) {
+        showError(message || 'Login failed');
       }
     } finally {
       setIsLoading(false);

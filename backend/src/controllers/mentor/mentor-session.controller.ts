@@ -10,7 +10,8 @@ export class MentorSessionController {
 
   createSession = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const session = await this.sessionService.createSession(req.body);
+      const userId = (req as AuthenticatedRequest).user.id;
+      const session = await this.sessionService.createSession(req.body, userId);
 
       return sendSuccess(res, {
         statusCode: STATUS_CODES.CREATED,

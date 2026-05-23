@@ -8,6 +8,8 @@ export interface IUser extends Document {
      password?: string;
      role: UserRole;
      avatarUrl?: string;
+     mentorTitle?: string;
+     mentorBio?: string;
      isBlocked: boolean;
      isPremium: boolean;
      premiumExpiresAt?: Date;
@@ -54,6 +56,14 @@ const userSchema = new Schema<IUser>(
                default: UserRole.CANDIDATE,
           },
           avatarUrl: String,
+          mentorTitle: {
+               type: String,
+               trim: true,
+          },
+          mentorBio: {
+               type: String,
+               trim: true,
+          },
           isBlocked: {
                type: Boolean,
                default: false,

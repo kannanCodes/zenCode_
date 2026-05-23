@@ -14,7 +14,7 @@ export class MessageRepository extends BaseRepository<IMessage> implements IMess
   async getRoomMessages(roomId: string): Promise<IMessage[]> {
     return this.model.find({ roomId })
       .sort({ createdAt: 1 })
-      .populate('senderId', 'name profileImage')
+      .populate('senderId', 'fullName avatarUrl')
       .exec();
   }
 }

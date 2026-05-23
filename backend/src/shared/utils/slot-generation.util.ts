@@ -1,7 +1,7 @@
 import { addDays, addMinutes, isAfter, isBefore, startOfDay } from 'date-fns';
 import { fromZonedTime } from 'date-fns-tz';
 import { WEEKDAY_MAP, convertTimeToMinutes } from './date.util';
-import { SLOT_DURATION_MINUTES } from '../constants/booking';
+import { SLOT_DURATION_MINUTES } from '../../constants/booking.constants';
 
 interface TimeSlot {
   startTime: string;
@@ -31,7 +31,10 @@ export const generateSlots = ({
 
     for (const availabilitySlot of dayAvailability) {
       const startMinutes = convertTimeToMinutes(availabilitySlot.startTime);
-      const endMinutes = convertTimeToMinutes(availabilitySlot.endTime);
+      const endMinutes =
+        availabilitySlot.endTime === '23:59'
+          ? 24 * 60
+          : convertTimeToMinutes(availabilitySlot.endTime);
       let currentSlotStart = startMinutes;
 
       while (currentSlotStart + SLOT_DURATION_MINUTES <= endMinutes) {

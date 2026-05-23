@@ -12,6 +12,7 @@ import { REDIS_KEYS } from "../../constants/redisKeys";
 import { parseExpiryToSeconds } from "../../shared/utils/expiry.util";
 import { REFRESH_TOKEN_EXPIRY } from "../../constants/token.constants";
 import { UserRole } from "../../shared/constants/roles";
+import { ITokenLifecycleRepository } from "../../interfaces/repository-interfaces/auth/ITokenLifecycleRepository";
 
 export class MentorAuthService implements IMentorAuthService {
   constructor(
@@ -19,7 +20,8 @@ export class MentorAuthService implements IMentorAuthService {
     private readonly _adminMentorRepository: IAdminMentorRepository,
     private readonly _cacheService: ICacheService,
     private readonly _tokenService: ITokenService,
-    private readonly _passwordService: IPasswordService
+    private readonly _passwordService: IPasswordService,
+    private readonly _tokenLifecycleRepository: ITokenLifecycleRepository
   ) {}
 
   async activateMentor(input: ActivateMentorInput): Promise<void> {
@@ -33,13 +35,8 @@ export class MentorAuthService implements IMentorAuthService {
       throw new AppError(MENTOR_MESSAGES.PASSWORDS_MIN_LENGTH, STATUS_CODES.BAD_REQUEST);
     }
 
-    const email = await this._cacheService.get<string>(REDIS_KEYS.MENTOR_INVITE(token));
+    const email = await this._tokenLifecycleRepository.getValidMentorInviteEmail(token);
     if (!email) {
-      throw new AppError(MENTOR_MESSAGES.INVALID_INVITE, STATUS_CODES.UNAUTHORIZED);
-    }
-
-    const latestTokenForEmail = await this._cacheService.get<string>(REDIS_KEYS.MENTOR_INVITE_BY_EMAIL(email));
-    if (!latestTokenForEmail || latestTokenForEmail !== token) {
       throw new AppError(MENTOR_MESSAGES.INVALID_INVITE, STATUS_CODES.UNAUTHORIZED);
     }
 
@@ -63,8 +60,12 @@ export class MentorAuthService implements IMentorAuthService {
     const hashedPassword = await this._passwordService.hash(password);
     await this._adminMentorRepository.activateMentor(mentor.id, hashedPassword);
 
-    await this._cacheService.del(REDIS_KEYS.MENTOR_INVITE(token));
-    await this._cacheService.del(REDIS_KEYS.MENTOR_INVITE_BY_EMAIL(email));
+    await this._tokenLifecycleRepository.consumeMentorInviteToken({ token, email });
+  }
+
+  async validateActivationToken(token: string): Promise<boolean> {
+    const email = await this._tokenLifecycleRepository.getValidMentorInviteEmail(token);
+    return !!email;
   }
 
   async login(input: MentorLoginInput): Promise<{ accessToken: string; refreshToken: string }> {

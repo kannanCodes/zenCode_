@@ -23,7 +23,7 @@ export class MentorBookingRepository extends BaseRepository<IMentorBooking> impl
   async getStudentBookings(studentId: string): Promise<IMentorBooking[]> {
     return this.model
       .find({ studentId })
-      .populate("mentorId", "name email")
+      .populate("mentorId", "fullName email avatarUrl")
       .sort({ startTime: -1 })
       .exec();
   }
@@ -31,7 +31,7 @@ export class MentorBookingRepository extends BaseRepository<IMentorBooking> impl
   async getMentorBookings(mentorId: string): Promise<IMentorBooking[]> {
     return this.model
       .find({ mentorId })
-      .populate("studentId", "name email")
+      .populate("studentId", "fullName email avatarUrl")
       .sort({ startTime: -1 })
       .exec();
   }
