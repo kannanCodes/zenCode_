@@ -130,6 +130,7 @@ export const PAYMENT_MESSAGES = {
   WEBHOOK_SIGNATURE_VERIFICATION_FAILED: 'Webhook signature verification failed',
   CHECKOUT_SESSION_RETRIEVAL_FAILED: 'Failed to retrieve checkout session',
   SUBSCRIPTION_CANCEL_FAILED: 'Failed to cancel subscription',
+  SUBSCRIPTION_RESUME_FAILED: 'Failed to resume subscription',
   SUBSCRIPTION_UPGRADE_FAILED: 'Failed to upgrade subscription',
 };
 
@@ -137,9 +138,12 @@ export const SUBSCRIPTION_MESSAGES = {
   FETCHED: 'Subscription fetched',
   NOT_FOUND: 'No subscription found',
   WILL_CANCEL: 'Subscription will be cancelled at the end of the current billing period',
+  RESUMED: 'Subscription auto-renewal resumed',
   PLAN_CHANGED: 'Plan changed successfully',
   ACTIVE_EXISTS: 'You already have an active subscription. Use plan change to switch plans.',
   ACTIVE_NOT_FOUND: 'No active subscription found',
+  CHANGE_CANCELLED_DENIED: 'Auto-renew is disabled. Renew subscription before changing plans.',
+  SAME_PLAN: 'You are already on this plan',
   PLAN_NOT_CONFIGURED: 'Plan not found or not configured on Stripe',
   REQUIRED: 'You need an active subscription to access this feature',
   EXPIRED: 'Your subscription has expired. Please renew to continue.',

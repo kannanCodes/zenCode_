@@ -4,6 +4,10 @@ import { IPlanDocument } from "./plan.model";
 export interface ISubscriptionDocument extends Document {
   userId: Types.ObjectId | string;
   planId: Types.ObjectId | IPlanDocument | string;
+  scheduledPlanId?: Types.ObjectId | IPlanDocument | string | null;
+  scheduledChangeAt?: Date | null;
+  scheduledChangeType?: 'upgrade' | 'downgrade' | null;
+  stripeScheduleId?: string | null;
   stripeCustomerId: string;
   stripeSubscriptionId: string;
   status: 'active' | 'cancelled' | 'expired' | 'past_due' | 'unpaid' | 'trialing';
@@ -25,6 +29,24 @@ const SubscriptionSchema = new Schema(
       type: Types.ObjectId,
       ref: "Plan",
       required: true,
+    },
+    scheduledPlanId: {
+      type: Types.ObjectId,
+      ref: "Plan",
+      default: null,
+    },
+    scheduledChangeAt: {
+      type: Date,
+      default: null,
+    },
+    scheduledChangeType: {
+      type: String,
+      enum: ["upgrade", "downgrade", null],
+      default: null,
+    },
+    stripeScheduleId: {
+      type: String,
+      default: null,
     },
     stripeCustomerId: {
       type: String,

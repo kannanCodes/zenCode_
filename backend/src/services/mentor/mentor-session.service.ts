@@ -81,7 +81,9 @@ export class MentorSessionService implements IMentorSessionService {
     if (
       session.status === MentorSessionStatus.CANCELLED ||
       session.status === MentorSessionStatus.ENDED ||
-      session.status === MentorSessionStatus.EXPIRED
+      session.status === MentorSessionStatus.EXPIRED ||
+      session.status === MentorSessionStatus.NO_SHOW ||
+      session.status === MentorSessionStatus.ABANDONED
     ) {
       throw new AppError(SESSION_MESSAGES.UNAVAILABLE, STATUS_CODES.BAD_REQUEST);
     }
@@ -259,7 +261,18 @@ export class MentorSessionService implements IMentorSessionService {
         !session.mentorJoinedAt;
 
       // Abandoned detection: Reconnect deadline passed
-      const isAbandoned = session.reconnectDeadline && session.reconnectDeadline <= now;
+      const isBothParticipantsOffline = !session.mentorOnline && !session.studentOnline;
+      const isPastScheduledEnd =
+        session.scheduledEnd.getTime() <= now.getTime() - SESSION_CONFIG.SESSION_END_GRACE_MINUTES * 60 * 1000;
+
+      // A single participant disconnect should never make the room inaccessible.
+      // Abandon only when nobody is online and either the reconnect window or scheduled end grace has passed.
+      const isAbandoned =
+        isBothParticipantsOffline &&
+        (
+          (session.reconnectDeadline && session.reconnectDeadline <= now) ||
+          isPastScheduledEnd
+        );
 
       if (isNoShow) {
         await this.sessionRepo.updateByRoomId(session.roomId, {

@@ -5,7 +5,7 @@ import { tokenService } from '../../../shared/lib/token';
 import { showError } from '../../../shared/utils/toast.util';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
-import { selectIsPremium } from '../../../store/slices/subscriptionSlice';
+import { selectHasFeatureAccess } from '../../../store/slices/subscriptionSlice';
 import Navbar from '../../../shared/components/Navbar';
 
 interface Problem {
@@ -35,7 +35,7 @@ const ProblemListPage = () => {
   const [availableCompanyTags, setAvailableCompanyTags] = useState<{ name: string; count: number }[]>([]);
   const [companySearch, setCompanySearch] = useState('');
   
-  const userIsPremium = useSelector(selectIsPremium);
+  const canAccessPremiumProblems = useSelector(selectHasFeatureAccess('premiumProblems'));
 
   // Fetch available tags and company tags on mount
   useEffect(() => {
@@ -267,14 +267,14 @@ const ProblemListPage = () => {
                       <tr
                         key={problem._id}
                         onClick={() => {
-                          if (problem.isPremium && !userIsPremium) {
-                            showError('This is a premium problem. Upgrade to unlock!');
+                          if (problem.isPremium && !canAccessPremiumProblems) {
+                            showError('Your current plan does not include premium problems.');
                             return;
                           }
                           navigate(`/problems/${problem._id}`);
                         }}
                         className={`border-b border-[#2a2d3a] transition-colors ${
-                          problem.isPremium && !userIsPremium
+                          problem.isPremium && !canAccessPremiumProblems
                             ? 'cursor-not-allowed opacity-60'
                             : 'hover:bg-[#1a1a1a] cursor-pointer'
                         }`}
@@ -285,7 +285,7 @@ const ProblemListPage = () => {
                         <td className="p-4">
                           <div className="flex items-center gap-2">
                             <span className="text-white font-medium">{problem.title}</span>
-                            {problem.isPremium && !userIsPremium && (
+                            {problem.isPremium && !canAccessPremiumProblems && (
                               <svg
                                 className="w-4 h-4 text-yellow-400"
                                 fill="currentColor"

@@ -19,3 +19,20 @@ export interface PublicMentorResponse {
   availabilityPreview: PublicMentorAvailability;
   stats: PublicMentorStats;
 }
+
+export interface ListCandidateMentorsQuery {
+  search?: string;
+  skills?: string[];
+  page: number;
+  limit: number;
+}
+
+export interface PaginatedPublicMentorsResponse {
+  data: PublicMentorResponse[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}

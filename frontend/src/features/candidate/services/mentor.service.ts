@@ -22,10 +22,40 @@ export interface PublicMentorResponse {
   stats: PublicMentorStats;
 }
 
+export interface MentorListQuery {
+  search?: string;
+  skills?: string[];
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedMentorsResponse {
+  data: PublicMentorResponse[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export const candidateMentorApi = {
-  getMentors: async (): Promise<{ data: PublicMentorResponse[] }> => {
-    const response = await api.get('/candidates/mentors');
-    return response.data;
+  getMentors: async (query: MentorListQuery = {}): Promise<PaginatedMentorsResponse> => {
+    const { skills, ...rest } = query;
+    const response = await api.get('/candidates/mentors', {
+      params: {
+        ...rest,
+        ...(skills && skills.length > 0
+          ? { skills: skills.join(',') }
+          : {}),
+      },
+    });
+    return response.data.data;
+  },
+
+  getMentorSkills: async (): Promise<string[]> => {
+    const response = await api.get('/candidates/mentors/skills');
+    return response.data.data;
   },
 
   getMentorDetails: async (mentorId: string): Promise<{ data: PublicMentorResponse }> => {

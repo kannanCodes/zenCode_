@@ -6,6 +6,7 @@ const router = Router();
 
 router.get("/me", authMiddleware, subscriptionController.getMySubscription);
 router.delete("/cancel", authMiddleware, subscriptionController.cancelSubscription);
+router.patch("/resume", authMiddleware, subscriptionController.resumeSubscription);
 router.patch("/change-plan", authMiddleware, subscriptionController.changePlan);
 
 export default router;

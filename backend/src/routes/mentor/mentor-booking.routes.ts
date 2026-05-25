@@ -5,6 +5,7 @@ import { roleGuard } from "../../middlewares/role.middleware";
 import { UserRole } from "../../shared/constants/roles";
 import { validateRequest } from "../../middlewares/validate.middleware";
 import { createBookingValidator } from "../../validators/mentor/create-booking.validator";
+import { subscriptionMiddleware } from "../../shared/di/payment.container";
 
 const router = Router();
 
@@ -15,6 +16,7 @@ router.post(
   "/",
   authMiddleware,
   roleGuard(UserRole.CANDIDATE),
+  subscriptionMiddleware.requireFeatureAccess("mentorBooking"),
   validateRequest(createBookingValidator),
   mentorBookingController.createBooking
 );

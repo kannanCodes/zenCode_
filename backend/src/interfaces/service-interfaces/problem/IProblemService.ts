@@ -10,5 +10,5 @@ export interface IProblemService {
   getDistinctCompanyTags(): Promise<{ name: string; count: number }[]>;
   deleteProblem(problemId: string): Promise<IProblem>;
   listCandidateProblems(query: ListProblemsQuery): Promise<PaginatedProblemsResponse>;
-  getCandidateProblem(problemId: string): Promise<Partial<IProblem>>;
+  getCandidateProblem(problemId: string, userId: string): Promise<Partial<IProblem>>;
 }

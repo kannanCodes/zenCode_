@@ -38,6 +38,22 @@ export class SubscriptionController {
     }
   };
 
+  resumeSubscription = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user!.id;
+
+      const subscription = await this.subscriptionService.resumeUserSubscription(userId);
+
+      sendSuccess(res, {
+        statusCode: STATUS_CODES.OK,
+        message: SUBSCRIPTION_MESSAGES.RESUMED,
+        data: subscription,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   changePlan = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.id;

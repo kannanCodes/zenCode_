@@ -69,6 +69,7 @@ const StudentSessionRoomPage = () => {
   }) => {
     setIsJoined(true);
     setParticipantJoined(payload.participants.length > 1);
+    setSession((prev: any) => prev ? { ...prev, status: prev.status === 'SCHEDULED' && payload.participants.length > 1 ? 'ACTIVE' : prev.status } : prev);
     if (payload.editorState) {
       setEditorState(payload.editorState);
     }
@@ -79,10 +80,25 @@ const StudentSessionRoomPage = () => {
     setAccessError(message);
   }, []);
 
+  const handlePeerJoined = useCallback(({ userId }: { userId: string }) => {
+    if (userId === currentUserId) return;
+    setParticipantJoined(true);
+    setSession((prev: any) => prev ? { ...prev, status: 'ACTIVE' } : prev);
+  }, [currentUserId]);
+
+  const handlePeerLeft = useCallback(({ userId }: { userId: string }) => {
+    if (userId === currentUserId) return;
+    setParticipantJoined(false);
+  }, [currentUserId]);
+
   const socketRef = useSocket({
     roomId: roomId!,
     onJoinSuccess: handleJoinSuccess,
     onSessionError: handleSessionError,
+    onUserJoined: handlePeerJoined,
+    onUserLeft: handlePeerLeft,
+    onParticipantOnline: handlePeerJoined,
+    onParticipantOffline: handlePeerLeft,
   });
 
   // --- WebRTC ---
@@ -91,23 +107,6 @@ const StudentSessionRoomPage = () => {
     socketRef,
     currentUserId,
   });
-
-  // --- Events ---
-  useEffect(() => {
-    if (!socketRef.current) return;
-    const socket = socketRef.current;
-
-    const onUserJoined = () => setParticipantJoined(true);
-    const onUserLeft = () => setParticipantJoined(false);
-
-    socket.on('session:user-joined', onUserJoined);
-    socket.on('session:user-left', onUserLeft);
-
-    return () => {
-      socket.off('session:user-joined', onUserJoined);
-      socket.off('session:user-left', onUserLeft);
-    };
-  }, [socketRef]);
 
   // --- Leave Session ---
   const handleLeaveSession = () => {
@@ -172,7 +171,7 @@ const StudentSessionRoomPage = () => {
     );
   }
 
-  if (!participantJoined) {
+  if (!participantJoined && session.status !== 'ACTIVE') {
     return (
       <div className="min-h-screen bg-[var(--color-background-dark)] flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-[#111111] border border-[var(--color-primary)]/30 rounded-xl p-10 shadow-[0_0_40px_rgba(45,95,255,0.08)]">
@@ -209,8 +208,8 @@ const StudentSessionRoomPage = () => {
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-xs text-gray-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            ACTIVE
+            <span className={`w-2 h-2 rounded-full ${participantJoined ? 'bg-emerald-500 animate-pulse' : 'bg-yellow-400'}`} />
+            {participantJoined ? 'ACTIVE' : 'MENTOR RECONNECTING'}
           </div>
           <button
             onClick={handleLeaveSession}
@@ -220,6 +219,12 @@ const StudentSessionRoomPage = () => {
           </button>
         </div>
       </header>
+
+      {!participantJoined && (
+        <div className="border-b border-yellow-500/30 bg-yellow-500/10 px-6 py-2 text-center text-xs text-yellow-300 shrink-0">
+          Mentor is offline. The session is still active, and your editor/chat state will remain available while they reconnect.
+        </div>
+      )}
 
       {/* Main Layout */}
       <div className="flex-1 flex overflow-hidden">
