@@ -27,12 +27,23 @@ export interface Plan {
 
 // ─── Subscription ────────────────────────────────────────────────────────────
 
-export type SubscriptionStatus = 'active' | 'cancelled' | 'expired';
+export type SubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'past_due' | 'unpaid';
+export type SubscriptionUiState =
+  | 'active'
+  | 'active_cancel_scheduled'
+  | 'cancelled'
+  | 'expired'
+  | 'past_due'
+  | 'unpaid';
 
 export interface Subscription {
   _id: string;
   userId: string;
   planId: Plan | string;            // populated or raw id
+  scheduledPlanId?: Plan | string | null;
+  scheduledChangeAt?: string | null;
+  scheduledChangeType?: 'upgrade' | 'downgrade' | null;
+  stripeScheduleId?: string | null;
   stripeCustomerId: string;
   stripeSubscriptionId: string;
   status: SubscriptionStatus;
@@ -51,6 +62,7 @@ export interface SubscriptionState {
   currentPlanId: string | null;
   currentPlanPrice: number | null;  // used to derive upgrade vs downgrade direction
   subscriptionStatus: SubscriptionStatus | null;
+  subscriptionUiState: SubscriptionUiState | null;
   expiryDate: string | null;
   isLoading: boolean;
   isHydrated: boolean;              // true after first fetch resolves (prevents navbar flash)

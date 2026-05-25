@@ -16,13 +16,14 @@ export class SubscriptionRepository extends BaseRepository<ISubscriptionDocument
     return this.model.findOne({
       userId,
       status: { $in: ['active', 'cancelled'] },
-    }).populate('planId').exec();
+    }).populate('planId').populate('scheduledPlanId').exec();
   }
 
   async findLatestByUser(userId: string): Promise<ISubscriptionDocument | null> {
     return this.model.findOne({ userId })
       .sort({ createdAt: -1 })
       .populate('planId')
+      .populate('scheduledPlanId')
       .exec();
   }
 
@@ -39,7 +40,7 @@ export class SubscriptionRepository extends BaseRepository<ISubscriptionDocument
     );
   }
 
-  async updateById(id: string, data: Partial<{ status: string; planId: string; endDate: Date }>): Promise<ISubscriptionDocument | null> {
+  async updateById(id: string, data: Record<string, unknown>): Promise<ISubscriptionDocument | null> {
     return this.model.findByIdAndUpdate(id, data, { returnDocument: 'after' }).exec();
   }
 

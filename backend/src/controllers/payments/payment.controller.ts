@@ -8,6 +8,15 @@ import { StripeSubscription } from '../../interfaces/service-interfaces/payments
 import { STATUS_CODES } from '../../shared/constants/status';
 import { PLAN_MESSAGES, PAYMENT_MESSAGES, SUBSCRIPTION_MESSAGES } from '../../constants/messages';
 
+const getStripeObjectId = (value: unknown): string | null => {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && 'id' in value) {
+    const id = (value as { id?: unknown }).id;
+    return typeof id === 'string' ? id : null;
+  }
+  return null;
+};
+
 export class PaymentController {
   constructor(
     private readonly stripeService: IStripeService,
@@ -80,11 +89,15 @@ export class PaymentController {
         throw new AppError(PAYMENT_MESSAGES.PAYMENT_NOT_COMPLETED, STATUS_CODES.BAD_REQUEST);
       }
 
-      const stripeSubscriptionId = session.subscription as string;
-      const stripeCustomerId = session.customer as string;
+      const stripeSubscriptionId = getStripeObjectId(session.subscription);
+      const stripeCustomerId = getStripeObjectId(session.customer);
 
       if (!stripeSubscriptionId) {
         throw new AppError(PAYMENT_MESSAGES.NO_SUBSCRIPTION_IN_SESSION, STATUS_CODES.BAD_REQUEST);
+      }
+
+      if (!stripeCustomerId) {
+        throw new AppError(PAYMENT_MESSAGES.FAILED_TO_RETRIEVE_SUBSCRIPTION, STATUS_CODES.INTERNAL_SERVER_ERROR);
       }
 
       // Check if the webhook already processed it
@@ -101,8 +114,7 @@ export class PaymentController {
 
       // Otherwise, the webhook hasn't processed it yet, or the user didn't have an active one.
       // We need to fetch the full subscription from Stripe to get the period_end
-      const fullSession = await this.stripeService.retrieveCheckoutSession(sessionId);
-      const stripeSub = fullSession.subscription as StripeSubscription;
+      const stripeSub = session.subscription as StripeSubscription;
       
       if (!stripeSub || !stripeSub.items || stripeSub.items.data.length === 0) {
           throw new AppError(PAYMENT_MESSAGES.FAILED_TO_RETRIEVE_SUBSCRIPTION, STATUS_CODES.INTERNAL_SERVER_ERROR);

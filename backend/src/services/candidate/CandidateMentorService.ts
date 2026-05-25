@@ -3,7 +3,11 @@ import { MENTOR_DEFAULT_BIO, MENTOR_DEFAULT_TITLE, MENTOR_EXPERIENCE_MAPPING } f
 import { ICandidateMentorRepository } from "../../interfaces/repository-interfaces/candidate/ICandidateMentorRepository";
 import { IMentorAvailabilityRepository } from "../../interfaces/repository-interfaces/mentor/IMentorAvailabilityRepository";
 import { IMentorReviewRepository } from "../../interfaces/repository-interfaces/mentor/IMentorReviewRepository";
-import { PublicMentorResponse } from "../../dtos/candidate/candidate-mentor.dto";
+import {
+  ListCandidateMentorsQuery,
+  PaginatedPublicMentorsResponse,
+  PublicMentorResponse,
+} from "../../dtos/candidate/candidate-mentor.dto";
 import type { ReviewResponse } from "../../dtos/mentor/mentor-review.dto";
 import { IUser } from "../../infrastructure/database/models/user.model";
 import { IMentorAvailability } from "../../infrastructure/database/models/mentor-availability.model";
@@ -51,18 +55,29 @@ export class CandidateMentorService implements ICandidateMentorService {
     };
   }
 
-  async getMentors(): Promise<PublicMentorResponse[]> {
-    const users = await this.candidateMentorRepository.findActiveMentors();
+  async getMentors(query: ListCandidateMentorsQuery): Promise<PaginatedPublicMentorsResponse> {
+    const result = await this.candidateMentorRepository.findActiveMentors(query);
     
     const mentors = await Promise.all(
-      users.map(async (user) => {
+      result.data.map(async (user) => {
         const mentorId = user.id || (user._id as unknown as { toString(): string })?.toString();
         const availability = await this.mentorAvailabilityRepository.findByMentorId(mentorId);
         return this.mapToPublicProfile(user, availability);
       })
     );
 
-    return mentors;
+    return {
+      data: mentors,
+      meta: result.meta,
+    };
+  }
+
+  async getMentorSkills(): Promise<string[]> {
+    const skills = await this.candidateMentorRepository.findActiveMentorSkills();
+    return skills
+      .filter((skill): skill is string => typeof skill === "string" && skill.trim().length > 0)
+      .map((skill) => skill.trim())
+      .sort((a, b) => a.localeCompare(b));
   }
 
   async getMentorDetails(mentorId: string): Promise<PublicMentorResponse | null> {

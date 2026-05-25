@@ -7,9 +7,18 @@ export interface ISubscriptionService {
   getActiveSubscription(userId: string): Promise<ISubscriptionDocument | null>;
   getUserSubscriptionDetails(userId: string): Promise<Record<string, unknown> | null>;
   cancelUserSubscription(userId: string): Promise<ISubscriptionDocument | null>;
+  resumeUserSubscription(userId: string): Promise<ISubscriptionDocument | null>;
   changePlan(userId: string, newPlanId: string): Promise<ISubscriptionDocument | null>;
   cancelSubscription(stripeSubscriptionId: string): Promise<ISubscriptionDocument | null>;
   renewSubscription(stripeSubscriptionId: string, endDate: Date): Promise<ISubscriptionDocument | null>;
   updateSubscriptionStatus(stripeSubscriptionId: string, status: string, endDate?: Date): Promise<ISubscriptionDocument | null>;
-  handleStripeUpdate(stripeSubscriptionId: string, data: Partial<{ status: string, planId: string, endDate: Date }>): Promise<ISubscriptionDocument | null>;
+  handleStripeUpdate(stripeSubscriptionId: string, data: Partial<{
+    status: string;
+    planId: string;
+    endDate: Date;
+    scheduledPlanId: string | null;
+    scheduledChangeAt: Date | null;
+    scheduledChangeType: string | null;
+    stripeScheduleId: string | null;
+  }>): Promise<ISubscriptionDocument | null>;
 }

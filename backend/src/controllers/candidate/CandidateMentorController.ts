@@ -3,14 +3,25 @@ import { ICandidateMentorService } from "../../interfaces/service-interfaces/can
 import { sendError, sendSuccess } from "../../shared/http/response";
 import { STATUS_CODES } from "../../shared/constants/status";
 import { AVAILABILITY_MESSAGES, MENTOR_MESSAGES } from "../../constants/messages";
+import { ListCandidateMentorsQuery } from "../../dtos/candidate/candidate-mentor.dto";
 
 export class CandidateMentorController {
   constructor(private readonly candidateMentorService: ICandidateMentorService) {}
 
   async getMentors(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const mentors = await this.candidateMentorService.getMentors();
+      const query = req.validatedQuery as ListCandidateMentorsQuery;
+      const mentors = await this.candidateMentorService.getMentors(query);
       sendSuccess(res, { statusCode: STATUS_CODES.OK, data: mentors });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getMentorSkills(_req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const skills = await this.candidateMentorService.getMentorSkills();
+      sendSuccess(res, { statusCode: STATUS_CODES.OK, data: skills });
     } catch (error) {
       next(error);
     }
