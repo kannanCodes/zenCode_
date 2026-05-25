@@ -4,6 +4,7 @@ import type {
   SubscriptionState,
   Subscription,
   ChangePlanPayload,
+  SubscriptionUiState,
 } from '../../features/subscription/types/subscription.types';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -31,6 +32,16 @@ const derivePlanPrice = (sub: Subscription | null): number | null => {
   return null;
 };
 
+const deriveSubscriptionUiState = (sub: Subscription | null): SubscriptionUiState | null => {
+  if (!sub) return null;
+
+  if (sub.status === 'cancelled') {
+    return sub.isActive ? 'active_cancel_scheduled' : 'cancelled';
+  }
+
+  return sub.status;
+};
+
 // ─── Initial State ───────────────────────────────────────────────────────────
 
 const initialState: SubscriptionState = {
@@ -39,6 +50,7 @@ const initialState: SubscriptionState = {
   currentPlanId: null,
   currentPlanPrice: null,
   subscriptionStatus: null,
+  subscriptionUiState: null,
   expiryDate: null,
   isLoading: false,
   isHydrated: false,
@@ -53,6 +65,7 @@ const applyFetchResult = (state: SubscriptionState, sub: Subscription | null) =>
   state.currentPlanId = derivePlanId(sub);
   state.currentPlanPrice = derivePlanPrice(sub);
   state.subscriptionStatus = sub?.status ?? null;
+  state.subscriptionUiState = deriveSubscriptionUiState(sub);
   state.expiryDate = sub?.endDate ?? null;
   state.isLoading = false;
   state.isHydrated = true;
@@ -94,6 +107,18 @@ export const cancelSubscription = createAsyncThunk<void, void, { rejectValue: st
   }
 );
 
+export const resumeSubscription = createAsyncThunk<void, void, { rejectValue: string }>(
+  'subscription/resume',
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      await subscriptionService.resumeSubscription();
+      await dispatch(fetchSubscription());
+    } catch {
+      return rejectWithValue('Failed to resume subscription');
+    }
+  }
+);
+
 /**
  * Upgrades or downgrades the user to a new plan.
  */
@@ -123,6 +148,7 @@ const subscriptionSlice = createSlice({
       state.currentPlanId = null;
       state.currentPlanPrice = null;
       state.subscriptionStatus = null;
+      state.subscriptionUiState = null;
       state.expiryDate = null;
       state.isHydrated = true; // keep true so navbar doesn't flash after logout
       state.error = null;
@@ -156,6 +182,19 @@ const subscriptionSlice = createSlice({
       state.error = action.payload ?? 'Unknown error';
     });
 
+    // ─── resumeSubscription ───────────────────────────────────────────────
+    builder.addCase(resumeSubscription.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+    });
+    builder.addCase(resumeSubscription.fulfilled, (state) => {
+      state.isLoading = false;
+    });
+    builder.addCase(resumeSubscription.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload ?? 'Unknown error';
+    });
+
     // ─── changePlan ───────────────────────────────────────────────────────
     builder.addCase(changePlan.pending, (state) => {
       state.isLoading = true;
@@ -182,8 +221,21 @@ export const selectIsPremium          = (state: RootState) => state.subscription
 export const selectCurrentPlanId      = (state: RootState) => state.subscription.currentPlanId;
 export const selectCurrentPlanPrice   = (state: RootState) => state.subscription.currentPlanPrice;
 export const selectSubscriptionStatus = (state: RootState) => state.subscription.subscriptionStatus;
+export const selectSubscriptionUiState = (state: RootState) => state.subscription.subscriptionUiState;
 export const selectExpiryDate         = (state: RootState) => state.subscription.expiryDate;
 export const selectSubscriptionLoading= (state: RootState) => state.subscription.isLoading;
 export const selectIsHydrated         = (state: RootState) => state.subscription.isHydrated;
+export const selectHasFeatureAccess =
+  (feature: keyof import('../../features/subscription/types/subscription.types').PlanAccess) =>
+  (state: RootState): boolean => {
+    const { subscription, isPremium } = state.subscription;
+    if (!isPremium) return false;
+
+    if (typeof subscription?.planId === 'object') {
+      return subscription.planId.access?.[feature] === true;
+    }
+
+    return true;
+  };
 
 export default subscriptionSlice.reducer;

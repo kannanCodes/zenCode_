@@ -23,6 +23,10 @@ export const paymentService = {
    * POST /api/payments/verify-session
    */
   verifySession: async (sessionId: string): Promise<void> => {
-    await api.post('/payments/verify-session', { sessionId });
+    await api.post(
+      '/payments/verify-session',
+      { sessionId },
+      { suppressGlobalErrorToast: true }
+    );
   },
 };

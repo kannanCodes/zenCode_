@@ -107,6 +107,11 @@ const ProblemDetailPage = () => {
           navigate('/problems');
           return;
         }
+        if (error.response?.status === 403) {
+          showError(error.response.data?.message || 'Your current plan does not include this problem.');
+          navigate('/plans');
+          return;
+        }
       }
       showError('Failed to load problem');
     } finally {

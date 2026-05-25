@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Plan } from '../types/subscription.types';
+import type { Plan, SubscriptionUiState } from '../types/subscription.types';
 import { paymentService } from '../services/payment.service';
 import { showError } from '../../../shared/utils/toast.util';
 
@@ -9,10 +9,16 @@ interface Props {
   isCurrentPlan: boolean;
   /** True only if user has an ACTIVE (or cancelled-but-still-active) subscription */
   canChangePlan: boolean;
+  subscriptionUiState?: SubscriptionUiState | null;
+  subscriptionEndDate?: string | null;
+  scheduledPlanId?: string | null;
+  scheduledChangeAt?: string | null;
   /** Price of user's current plan — used to determine Upgrade vs Downgrade label */
   currentPlanPrice: number | null;
   onChangePlan: (planId: string) => Promise<void>;
+  onResumeSubscription?: () => Promise<void>;
   isChangingPlan: boolean;
+  isResumingSubscription?: boolean;
 }
 
 const CheckIcon = () => (
@@ -35,9 +41,15 @@ const PlanCard = ({
   plan,
   isCurrentPlan,
   canChangePlan,
+  subscriptionUiState,
+  subscriptionEndDate,
+  scheduledPlanId,
+  scheduledChangeAt,
   currentPlanPrice,
   onChangePlan,
+  onResumeSubscription,
   isChangingPlan,
+  isResumingSubscription,
 }: Props) => {
   const navigate = useNavigate();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -79,15 +91,47 @@ const PlanCard = ({
     price === 0 ? 'Free' : `₹${price}/${cycle === 'monthly' ? 'mo' : 'yr'}`;
 
   const isLoading = isCheckingOut || isChangingPlan;
+  const formattedEndDate = subscriptionEndDate
+    ? new Date(subscriptionEndDate).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : null;
+  const currentPlanHint =
+    subscriptionUiState === 'active' && formattedEndDate
+      ? `Auto-renews on ${formattedEndDate}`
+      : subscriptionUiState === 'active_cancel_scheduled' && formattedEndDate
+      ? `Access until ${formattedEndDate} · Auto-renew disabled`
+      : subscriptionUiState === 'expired' || subscriptionUiState === 'cancelled'
+      ? 'Expired'
+      : null;
+  const isScheduledTarget = scheduledPlanId === plan._id;
+  const isRenewalDisabled = subscriptionUiState === 'active_cancel_scheduled';
+  const scheduledDate = scheduledChangeAt
+    ? new Date(scheduledChangeAt).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : null;
 
   // Determine button label for the upgrade/downgrade case
   const getChangePlanLabel = (): string => {
     if (isChangingPlan) return '';
     if (currentPlanPrice === null) return 'Switch Plan';
-    if (plan.price > currentPlanPrice) return 'Upgrade';
-    if (plan.price < currentPlanPrice) return 'Downgrade';
+    if (plan.price > currentPlanPrice) return 'Upgrade and Pay';
+    if (plan.price < currentPlanPrice) return 'Schedule Downgrade';
     return 'Switch Plan';
   };
+  const planNameLower = plan.name.toLowerCase();
+  const planBadgeLabel = planNameLower.includes('pro')
+    ? 'PRO'
+    : planNameLower.includes('basic')
+    ? 'BASIC'
+    : plan.price > 0
+    ? 'PAID'
+    : '';
 
   return (
     <div
@@ -111,9 +155,14 @@ const PlanCard = ({
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-1">
           <h3 className="text-lg font-bold text-white">{plan.name}</h3>
-          {plan.price > 0 && (
+          {planBadgeLabel && (
             <span className="px-2 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 text-xs font-semibold">
-              PRO
+              {planBadgeLabel}
+            </span>
+          )}
+          {isCurrentPlan && isRenewalDisabled && (
+            <span className="px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-semibold">
+              Renewal disabled
             </span>
           )}
         </div>
@@ -160,12 +209,29 @@ const PlanCard = ({
 
       {/* CTA Button */}
       {isCurrentPlan ? (
-        <button
-          disabled
-          className="w-full h-10 rounded-md bg-[#2D5FFF]/20 border border-[#2D5FFF]/40 text-[#2D5FFF] text-sm font-semibold cursor-not-allowed opacity-70"
-        >
-          ✓ Current Plan
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            disabled
+            className="w-full h-10 rounded-md bg-[#2D5FFF]/20 border border-[#2D5FFF]/40 text-[#2D5FFF] text-sm font-semibold cursor-not-allowed opacity-70"
+          >
+            Current Plan
+          </button>
+          {currentPlanHint && (
+            <p className="text-center text-xs text-gray-500">{currentPlanHint}</p>
+          )}
+        </div>
+      ) : isScheduledTarget ? (
+        <div className="flex flex-col gap-2">
+          <button
+            disabled
+            className="w-full h-10 rounded-md bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm font-semibold cursor-not-allowed"
+          >
+            Scheduled
+          </button>
+          {scheduledDate && (
+            <p className="text-center text-xs text-gray-500">Starts on {scheduledDate}</p>
+          )}
+        </div>
       ) : canChangePlan ? (
         /* User has active subscription → upgrade or downgrade */
         <button
@@ -178,6 +244,33 @@ const PlanCard = ({
           ) : (
             getChangePlanLabel()
           )}
+        </button>
+      ) : subscriptionUiState === 'active_cancel_scheduled' ? (
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={onResumeSubscription}
+            disabled={!onResumeSubscription || isResumingSubscription}
+            className="w-full h-10 rounded-md bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-500/15 text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isResumingSubscription ? (
+              <><Spinner /> Resuming...</>
+            ) : (
+              'Resume Auto-Renew'
+            )}
+          </button>
+          {formattedEndDate && (
+            <p className="text-center text-xs text-yellow-400/70">
+              Required before changing plans. Access until {formattedEndDate}.
+            </p>
+          )}
+        </div>
+      ) : subscriptionUiState === 'past_due' || subscriptionUiState === 'unpaid' ? (
+        <button
+          disabled
+          className="w-full h-10 rounded-md bg-[#1a1d26] text-gray-500 border border-[#272b3a] text-sm font-semibold cursor-not-allowed"
+        >
+          Resolve billing to change plans
         </button>
       ) : (
         /* No subscription → buy now (free plan is always disabled) */

@@ -114,6 +114,10 @@ export class WebhookController {
                 status: subscription.status,
                 planId: plan._id.toString(),
                 endDate: new Date(sub.current_period_end * 1000),
+                scheduledPlanId: null,
+                scheduledChangeAt: null,
+                scheduledChangeType: null,
+                stripeScheduleId: null,
               });
               logger.info(`✅ Subscription updated: ${subscription.id}`);
             }
@@ -156,6 +160,27 @@ export class WebhookController {
           if (billingReason === 'subscription_cycle' && stripeSubscriptionId) {
             const periodEnd = invoice.lines.data[0]?.period?.end;
             if (periodEnd) {
+              const line = invoice.lines.data[0] as unknown as { price?: { id?: string } };
+              const priceId = line.price?.id;
+              const plan = priceId ? await this.planRepo.findByStripePriceId(priceId) : null;
+
+              if (plan) {
+                await this.subscriptionService.handleStripeUpdate(
+                  stripeSubscriptionId,
+                  {
+                    status: 'active',
+                    planId: plan._id.toString(),
+                    endDate: new Date(periodEnd * 1000),
+                    scheduledPlanId: null,
+                    scheduledChangeAt: null,
+                    scheduledChangeType: null,
+                    stripeScheduleId: null,
+                  }
+                );
+                logger.info(`✅ Subscription renewed and reconciled: ${stripeSubscriptionId}`);
+                break;
+              }
+
               await this.subscriptionService.renewSubscription(
                 stripeSubscriptionId,
                 new Date(periodEnd * 1000)

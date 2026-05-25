@@ -84,7 +84,7 @@ export class ProblemController {
       if (userRole === UserRole.ADMIN) {
         problem = await this._problemService.getProblemById(problemId);
       } else {
-        problem = await this._problemService.getCandidateProblem(problemId);
+        problem = await this._problemService.getCandidateProblem(problemId, user.id);
       }
 
       sendSuccess(res, {
@@ -143,8 +143,9 @@ export class ProblemController {
 
   getCandidateProblem = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const { user } = req as AuthenticatedRequest;
       const problemId = req.params.id as string;
-      const problem = await this._problemService.getCandidateProblem(problemId);
+      const problem = await this._problemService.getCandidateProblem(problemId, user.id);
 
       sendSuccess(res, {
         statusCode: STATUS_CODES.OK,

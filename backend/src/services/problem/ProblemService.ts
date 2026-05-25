@@ -4,10 +4,15 @@ import { CreateProblemInput, UpdateProblemInput, ListProblemsQuery, PaginatedPro
 import { IProblem, ITestCase } from "../../infrastructure/database/models/problem.model";
 import { AppError } from "../../shared/utils/AppError";
 import { STATUS_CODES } from "../../shared/constants/status";
-import { PROBLEM_MESSAGES } from "../../constants/messages";
+import { PROBLEM_MESSAGES, SUBSCRIPTION_MESSAGES } from "../../constants/messages";
+import { ISubscriptionService } from "../../interfaces/service-interfaces/payments/subscription.service.interface";
+import { IPlanDocument } from "../../infrastructure/database/models/plan.model";
 
 export class ProblemService implements IProblemService {
-  constructor(private readonly _problemRepository: IProblemRepository) {}
+  constructor(
+    private readonly _problemRepository: IProblemRepository,
+    private readonly _subscriptionService: ISubscriptionService
+  ) {}
 
   async createProblem(adminId: string, data: CreateProblemInput): Promise<IProblem> {
     const existingProblem = await this._problemRepository.findByTitle(data.title);
@@ -144,10 +149,30 @@ export class ProblemService implements IProblemService {
     };
   }
 
-  async getCandidateProblem(problemId: string): Promise<Partial<IProblem>> {
+  async getCandidateProblem(problemId: string, userId: string): Promise<Partial<IProblem>> {
     const problem = await this._problemRepository.findById(problemId);
     if (!problem || !problem.isActive) {
       throw new AppError(PROBLEM_MESSAGES.NOT_FOUND, STATUS_CODES.NOT_FOUND);
+    }
+
+    if (problem.isPremium) {
+      const subscription = await this._subscriptionService.getActiveSubscription(userId);
+      const plan =
+        subscription && typeof subscription.planId === "object"
+          ? (subscription.planId as IPlanDocument)
+          : null;
+
+      if (!subscription) {
+        throw new AppError(SUBSCRIPTION_MESSAGES.REQUIRED, STATUS_CODES.FORBIDDEN);
+      }
+
+      if (new Date(subscription.endDate) < new Date()) {
+        throw new AppError(SUBSCRIPTION_MESSAGES.EXPIRED, STATUS_CODES.FORBIDDEN);
+      }
+
+      if (!plan?.access?.premiumProblems) {
+        throw new AppError(SUBSCRIPTION_MESSAGES.FEATURE_DENIED, STATUS_CODES.FORBIDDEN);
+      }
     }
 
     const problemObj = problem.toObject();

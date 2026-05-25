@@ -5,6 +5,8 @@ import type { AppDispatch, RootState } from '../../../store';
 import {
   cancelSubscription,
   fetchSubscription,
+  resumeSubscription,
+  selectSubscriptionUiState,
 } from '../../../store/slices/subscriptionSlice';
 import Navbar from '../../../shared/components/Navbar';
 import SubscriptionStatusBadge from '../components/SubscriptionStatusBadge';
@@ -59,9 +61,11 @@ const ManageSubscriptionPage = () => {
   const { subscription, isLoading, subscriptionStatus } = useSelector(
     (state: RootState) => state.subscription
   );
+  const subscriptionUiState = useSelector(selectSubscriptionUiState);
 
   // Local dialog state
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [isResuming, setIsResuming] = useState(false);
 
   useEffect(() => {
     dispatch(fetchSubscription());
@@ -71,20 +75,36 @@ const ManageSubscriptionPage = () => {
     setShowCancelDialog(false);
     try {
       await dispatch(cancelSubscription()).unwrap();
-      showSuccess('Subscription cancelled. You retain access until the billing period ends.');
+      showSuccess('Auto-renew disabled. You retain access until the billing period ends.');
     } catch {
       showError('Failed to cancel subscription. Please try again.');
+    }
+  };
+
+  const handleResumeSubscription = async () => {
+    setIsResuming(true);
+    try {
+      await dispatch(resumeSubscription()).unwrap();
+      showSuccess('Auto-renew resumed.');
+    } catch {
+      showError('Failed to resume auto-renew. Please try again.');
+    } finally {
+      setIsResuming(false);
     }
   };
 
   // ─── Derived values ───────────────────────────────────────────────────────
 
   const isActive = subscriptionStatus === 'active';
-  const isCancelled = subscriptionStatus === 'cancelled';
   const isExpired = subscriptionStatus === 'expired';
-  const isActiveCancelled = isCancelled && subscription?.isActive === true;
+  const isActiveCancelScheduled = subscriptionUiState === 'active_cancel_scheduled';
+  const isEnded = subscriptionUiState === 'cancelled' || isExpired;
 
   const planObj = subscription && typeof subscription.planId === 'object' ? subscription.planId : null;
+  const scheduledPlanObj =
+    subscription && typeof subscription.scheduledPlanId === 'object'
+      ? subscription.scheduledPlanId
+      : null;
   const planName = planObj?.name ?? 'Premium Plan';
   const planPrice = planObj?.price ?? 0;
   const planCycle = planObj?.billingCycle ?? 'monthly';
@@ -99,8 +119,8 @@ const ManageSubscriptionPage = () => {
       {showCancelDialog && (
         <ConfirmDialog
           title="Cancel Subscription?"
-          message="You will lose access to all premium features at the end of your current billing period. This action cannot be undone."
-          confirmLabel="Yes, Cancel It"
+          message="Auto-renew will be disabled. You will keep premium access until the current billing period ends."
+          confirmLabel="Disable Auto-Renew"
           isDanger
           onConfirm={handleCancelConfirm}
           onCancel={() => setShowCancelDialog(false)}
@@ -144,18 +164,33 @@ const ManageSubscriptionPage = () => {
         ) : (
           <div className="flex flex-col gap-5">
             {/* Status banners */}
+            {subscriptionUiState === 'active' && subscription.endDate && (
+              <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-3">
+                <span>
+                  Your subscription renews automatically on{' '}
+                  <strong>{formatDate(subscription.endDate)}</strong>.
+                </span>
+              </div>
+            )}
             {isExpired && (
               <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-3">
-                <span>⚠️</span>
                 <span>Your subscription has expired. Renew to regain premium access.</span>
               </div>
             )}
-            {isActiveCancelled && (
+            {isActiveCancelScheduled && (
               <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm flex items-center gap-3">
-                <span>ℹ️</span>
                 <span>
-                  Your subscription is cancelled but you retain full access until{' '}
-                  <strong>{formatDate(subscription.endDate)}</strong>.
+                  Auto-renew is disabled. Your subscription will end on{' '}
+                  <strong>{formatDate(subscription.endDate)}</strong>. Access remains active until then.
+                </span>
+              </div>
+            )}
+            {subscription.scheduledChangeAt && (
+              <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm flex items-center gap-3">
+                <span>
+                  {subscription.scheduledChangeType === 'downgrade' ? 'Downgrade' : 'Plan change'} to{' '}
+                  <strong>{scheduledPlanObj?.name ?? 'selected plan'}</strong> is scheduled for{' '}
+                  <strong>{formatDate(subscription.scheduledChangeAt)}</strong>. Current features stay active until then.
                 </span>
               </div>
             )}
@@ -170,7 +205,7 @@ const ManageSubscriptionPage = () => {
                     ₹{planPrice} / {planCycle}
                   </p>
                 </div>
-                <SubscriptionStatusBadge status={subscription.status} endDate={subscription.endDate} />
+                <SubscriptionStatusBadge state={subscriptionUiState ?? 'expired'} endDate={subscription.endDate} />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-[#272b3a]">
@@ -180,7 +215,7 @@ const ManageSubscriptionPage = () => {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1.5">
-                    {isCancelled || isExpired ? 'Access Ends' : 'Next Billing Date'}
+                    {isEnded ? 'Access Ends' : isActiveCancelScheduled ? 'Access Until' : 'Next Billing Date'}
                   </p>
                   <p className="text-white font-medium">{formatDate(subscription.endDate)}</p>
                 </div>
@@ -189,15 +224,26 @@ const ManageSubscriptionPage = () => {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                to="/plans"
-                className="flex-1 flex justify-center items-center h-11 rounded-lg bg-[#1a1d26] hover:bg-[#272b3a] text-white border border-[#272b3a] transition-all font-semibold text-sm"
-              >
-                {isExpired ? 'Renew Plan' : 'Change Plan'}
-              </Link>
+              {isActiveCancelScheduled ? (
+                <button
+                  type="button"
+                  onClick={handleResumeSubscription}
+                  disabled={isResuming}
+                  className="flex-1 flex justify-center items-center h-11 rounded-lg bg-yellow-500/10 hover:bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 transition-all font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isResuming ? 'Resuming...' : 'Resume Auto-Renew'}
+                </button>
+              ) : (
+                <Link
+                  to="/plans"
+                  className="flex-1 flex justify-center items-center h-11 rounded-lg bg-[#1a1d26] hover:bg-[#272b3a] text-white border border-[#272b3a] transition-all font-semibold text-sm"
+                >
+                  {isExpired ? 'Renew Plan' : 'Change Plan'}
+                </Link>
+              )}
 
-              {/* Cancel only visible for active subscriptions (not already cancelled) */}
-              {isActive && (
+              {/* Cancel only visible for actively renewing subscriptions */}
+              {isActive && subscriptionUiState === 'active' && (
                 <button
                   onClick={() => setShowCancelDialog(true)}
                   className="flex-1 h-11 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 transition-all font-semibold text-sm"
