@@ -4,9 +4,11 @@ import type { AppDispatch, RootState } from '../../../store';
 import {
   changePlan,
   fetchSubscription,
+  resumeSubscription,
   selectCurrentPlanId,
   selectCurrentPlanPrice,
   selectSubscription,
+  selectSubscriptionUiState,
 } from '../../../store/slices/subscriptionSlice';
 import { planService } from '../services/plan.service';
 import type { Plan } from '../types/subscription.types';
@@ -22,10 +24,12 @@ const PlansPage = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
   const [changingPlanId, setChangingPlanId] = useState<string | null>(null);
+  const [isResumingSubscription, setIsResumingSubscription] = useState(false);
 
   const currentPlanId = useSelector(selectCurrentPlanId);
   const currentPlanPrice = useSelector(selectCurrentPlanPrice);
   const subscription = useSelector(selectSubscription);
+  const subscriptionUiState = useSelector(selectSubscriptionUiState);
   const { isLoading: isSubLoading, subscriptionStatus } = useSelector(
     (state: RootState) => state.subscription
   );
@@ -62,7 +66,13 @@ const PlansPage = () => {
     try {
       await dispatch(changePlan({ planId })).unwrap();
       const newPlan = plans.find(p => p._id === planId);
-      showSuccess(`Switched to ${newPlan?.name ?? 'new plan'} successfully!`);
+      const currentPrice = currentPlanPrice ?? 0;
+      const nextPrice = newPlan?.price ?? currentPrice;
+      showSuccess(
+        nextPrice < currentPrice
+          ? `${newPlan?.name ?? 'New plan'} scheduled for the next billing period.`
+          : `Switched to ${newPlan?.name ?? 'new plan'} successfully!`
+      );
     } catch (err: any) {
       showError(typeof err === 'string' ? err : 'Failed to change plan. Please try again.');
     } finally {
@@ -70,21 +80,42 @@ const PlansPage = () => {
     }
   };
 
+  const handleResumeSubscription = async () => {
+    setIsResumingSubscription(true);
+    try {
+      await dispatch(resumeSubscription()).unwrap();
+      showSuccess('Auto-renew resumed. You can change plans again.');
+    } catch {
+      showError('Failed to resume auto-renew. Please try again.');
+    } finally {
+      if (isMounted.current) setIsResumingSubscription(false);
+    }
+  };
+
   // ─── Derived state ────────────────────────────────────────────────────────
 
   /**
-   * canChangePlan = user has an ACTIVE subscription (not expired).
-   * Cancelled subscriptions that are still within their billing period also qualify.
-   * Expired subscriptions must buy a new plan fresh.
+   * Only actively renewing subscriptions can change plan.
+   * active_cancel_scheduled users keep access, but cannot change plan until renewal is restored.
    */
   const canChangePlan =
     subscription !== null &&
     subscription.isActive === true &&
-    (subscriptionStatus === 'active' || subscriptionStatus === 'cancelled');
+    subscriptionUiState === 'active';
 
   const isExpired = subscriptionStatus === 'expired';
-  const isCancelledActive = subscriptionStatus === 'cancelled' && subscription?.isActive === true;
+  const isActiveCancelScheduled = subscriptionUiState === 'active_cancel_scheduled';
   const isLoading = isLoadingPlans || isSubLoading;
+  const scheduledPlanId: string | null = (() => {
+    const scheduled = subscription?.scheduledPlanId;
+    if (!scheduled) return null;
+    return typeof scheduled === 'string' ? scheduled : scheduled._id;
+  })();
+  const scheduledPlanName = (() => {
+    const scheduled = subscription?.scheduledPlanId;
+    if (scheduled && typeof scheduled === 'object') return scheduled.name;
+    return plans.find((plan) => plan._id === scheduledPlanId)?.name;
+  })();
 
   return (
     <div className="min-h-screen bg-[var(--color-background-dark)] flex flex-col">
@@ -102,13 +133,25 @@ const PlansPage = () => {
 
           {isExpired && (
             <div className="mt-6 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-              ⚠️ Your subscription has expired. Renew below to regain premium access.
+              Your subscription has expired. Choose a plan below to regain premium access.
             </div>
           )}
 
-          {isCancelledActive && (
+          {subscriptionUiState === 'active' && subscription?.endDate && (
+            <div className="mt-6 p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-sm">
+              Your subscription renews automatically on{' '}
+              <span className="font-semibold">
+                {new Date(subscription.endDate).toLocaleDateString('en-US', {
+                  month: 'long', day: 'numeric', year: 'numeric',
+                })}
+              </span>
+              . Use Change Plan if you want to switch before the next billing cycle.
+            </div>
+          )}
+
+          {isActiveCancelScheduled && (
             <div className="mt-6 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm">
-              Your subscription is cancelled but remains active until{' '}
+              Auto-renew is disabled. Your subscription will end on{' '}
               <span className="font-semibold">
                 {subscription?.endDate
                   ? new Date(subscription.endDate).toLocaleDateString('en-US', {
@@ -116,7 +159,20 @@ const PlansPage = () => {
                     })
                   : 'end of billing period'}
               </span>
-              . You can still upgrade or downgrade.
+              . Access remains active until then.
+            </div>
+          )}
+
+          {subscription?.scheduledChangeAt && scheduledPlanName && (
+            <div className="mt-6 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm">
+              {subscription.scheduledChangeType === 'downgrade' ? 'Downgrade' : 'Plan change'} to{' '}
+              <span className="font-semibold">{scheduledPlanName}</span> is scheduled for{' '}
+              <span className="font-semibold">
+                {new Date(subscription.scheduledChangeAt).toLocaleDateString('en-US', {
+                  month: 'long', day: 'numeric', year: 'numeric',
+                })}
+              </span>
+              . Your current features remain active until then.
             </div>
           )}
         </div>
@@ -138,11 +194,17 @@ const PlansPage = () => {
               <PlanCard
                 key={plan._id}
                 plan={plan}
-                isCurrentPlan={currentPlanId === plan._id}
+                isCurrentPlan={currentPlanId === plan._id && !isExpired}
                 canChangePlan={canChangePlan}
+                subscriptionUiState={subscriptionUiState}
+                subscriptionEndDate={subscription?.endDate ?? null}
+                scheduledPlanId={scheduledPlanId}
+                scheduledChangeAt={subscription?.scheduledChangeAt ?? null}
                 currentPlanPrice={currentPlanPrice}
                 onChangePlan={handleChangePlan}
+                onResumeSubscription={handleResumeSubscription}
                 isChangingPlan={changingPlanId === plan._id}
+                isResumingSubscription={isResumingSubscription}
               />
             ))
           )}

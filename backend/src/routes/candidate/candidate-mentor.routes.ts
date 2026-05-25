@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { candidateMentorController } from "../../shared/di/candidate.container";
+import { validateQuery } from "../../middlewares/validate.middleware";
+import { listCandidateMentorsQuerySchema } from "../../validators/candidate/candidate-mentor.validator";
 
 const router = Router();
 
@@ -7,7 +9,13 @@ const router = Router();
 // Based on typical systems, discovering mentors is public, but let's just make it public.
 router.get(
   "/",
+  validateQuery(listCandidateMentorsQuerySchema),
   candidateMentorController.getMentors.bind(candidateMentorController)
+);
+
+router.get(
+  "/skills",
+  candidateMentorController.getMentorSkills.bind(candidateMentorController)
 );
 
 router.get(

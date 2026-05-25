@@ -2,6 +2,12 @@ import axios from 'axios';
 import { tokenService } from './token';
 import { showError } from '../utils/toast.util';
 
+declare module 'axios' {
+     export interface AxiosRequestConfig {
+          suppressGlobalErrorToast?: boolean;
+     }
+}
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const api = axios.create({
@@ -122,7 +128,7 @@ api.interceptors.response.use(
 
           // Only show toast for server errors (5xx) or network issues
           // Let components handle 4xx errors (validation, unauthorized, etc.)
-          if (error.response.status >= 500) {
+          if (error.response.status >= 500 && !originalRequest?.suppressGlobalErrorToast) {
                showError('Server error. Please try again later.');
           }
 

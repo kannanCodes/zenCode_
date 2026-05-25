@@ -132,7 +132,24 @@ export class StripeService implements IStripeService {
     }
   }
 
+  async resumeStripeSubscription(stripeSubscriptionId: string): Promise<StripeSubscription> {
+    try {
+      return await this.stripe.subscriptions.update(stripeSubscriptionId, {
+        cancel_at_period_end: false,
+      });
+    } catch (error) {
+      throw new AppError(
+        error instanceof Error ? error.message : PAYMENT_MESSAGES.SUBSCRIPTION_RESUME_FAILED,
+        STATUS_CODES.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   async upgradeSubscription(stripeSubscriptionId: string, newPriceId: string): Promise<StripeSubscription> {
+    return this.changeSubscriptionPriceImmediately(stripeSubscriptionId, newPriceId);
+  }
+
+  async changeSubscriptionPriceImmediately(stripeSubscriptionId: string, newPriceId: string): Promise<StripeSubscription> {
     try {
       const subscription = await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
       const subscriptionItemId = subscription.items.data[0].id;
@@ -144,8 +161,63 @@ export class StripeService implements IStripeService {
             price: newPriceId,
           },
         ],
-        proration_behavior: 'create_prorations',
+        proration_behavior: 'always_invoice',
+        payment_behavior: 'error_if_incomplete',
       });
+    } catch (error) {
+      throw new AppError(
+        error instanceof Error ? error.message : PAYMENT_MESSAGES.SUBSCRIPTION_UPGRADE_FAILED,
+        STATUS_CODES.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async scheduleSubscriptionPriceChangeAtPeriodEnd(
+    stripeSubscriptionId: string,
+    currentPriceId: string,
+    newPriceId: string
+  ): Promise<{ scheduleId: string; effectiveAt: Date }> {
+    try {
+      const subscription = await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
+      const item = subscription.items.data[0] as unknown as {
+        price: { id: string };
+        quantity?: number;
+        current_period_start: number;
+        current_period_end: number;
+      };
+      const quantity = item.quantity || 1;
+      const currentPeriodStart = item.current_period_start;
+      const currentPeriodEnd = item.current_period_end;
+
+      const schedule = await this.stripe.subscriptionSchedules.create({
+        from_subscription: stripeSubscriptionId,
+      });
+
+      const scheduleData = schedule as unknown as {
+        id: string;
+        phases?: Array<{ start_date?: number }>;
+      };
+      const phaseStart = scheduleData.phases?.[0]?.start_date || currentPeriodStart;
+
+      await this.stripe.subscriptionSchedules.update(schedule.id, {
+        end_behavior: 'release',
+        phases: [
+          {
+            start_date: phaseStart,
+            end_date: currentPeriodEnd,
+            items: [{ price: currentPriceId, quantity }],
+          },
+          {
+            start_date: currentPeriodEnd,
+            items: [{ price: newPriceId, quantity }],
+          },
+        ],
+      });
+
+      return {
+        scheduleId: schedule.id,
+        effectiveAt: new Date(currentPeriodEnd * 1000),
+      };
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : PAYMENT_MESSAGES.SUBSCRIPTION_UPGRADE_FAILED,

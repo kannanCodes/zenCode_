@@ -27,6 +27,15 @@ export const subscriptionService = {
   },
 
   /**
+   * Resumes auto-renewal for a subscription that was set to cancel at period end.
+   * PATCH /api/subscriptions/resume
+   */
+  resumeSubscription: async (): Promise<Subscription> => {
+    const response = await api.patch<SubscriptionResponse>('/subscriptions/resume');
+    return response.data.data as Subscription;
+  },
+
+  /**
    * Upgrade or downgrade to a different plan (prorated billing via Stripe).
    * PATCH /api/subscriptions/change-plan
    */

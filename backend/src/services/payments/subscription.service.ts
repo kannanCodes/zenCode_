@@ -8,6 +8,7 @@ import { STATUS_CODES } from '../../shared/constants/status';
 import { SUBSCRIPTION_MESSAGES } from '../../constants/messages';
 import { ISubscriptionDocument } from '../../infrastructure/database/models/subscription.model';
 import { logger } from '../../shared/utils/Logger';
+import { IPlanDocument } from '../../infrastructure/database/models/plan.model';
 
 export class SubscriptionService implements ISubscriptionService {
   constructor(
@@ -58,11 +59,29 @@ export class SubscriptionService implements ISubscriptionService {
     });
   }
 
+  async resumeUserSubscription(userId: string): Promise<ISubscriptionDocument | null> {
+    const sub = await this.subscriptionRepo.findActiveByUser(userId);
+
+    if (!sub) {
+      throw new AppError(SUBSCRIPTION_MESSAGES.ACTIVE_NOT_FOUND, STATUS_CODES.NOT_FOUND);
+    }
+
+    await this.stripeService.resumeStripeSubscription(sub.stripeSubscriptionId);
+
+    return this.subscriptionRepo.updateById(sub._id.toString(), {
+      status: "active",
+    });
+  }
+
   async changePlan(userId: string, newPlanId: string): Promise<ISubscriptionDocument | null> {
     const sub = await this.subscriptionRepo.findActiveByUser(userId);
 
     if (!sub) {
       throw new AppError(SUBSCRIPTION_MESSAGES.ACTIVE_NOT_FOUND, STATUS_CODES.NOT_FOUND);
+    }
+
+    if (sub.status === 'cancelled') {
+      throw new AppError(SUBSCRIPTION_MESSAGES.CHANGE_CANCELLED_DENIED, STATUS_CODES.BAD_REQUEST);
     }
 
     const newPlan = await this.planRepo.findById(newPlanId);
@@ -71,15 +90,68 @@ export class SubscriptionService implements ISubscriptionService {
       throw new AppError(SUBSCRIPTION_MESSAGES.PLAN_NOT_CONFIGURED, STATUS_CODES.NOT_FOUND);
     }
 
-    // Update subscription on Stripe (prorated billing applied automatically)
-    await this.stripeService.upgradeSubscription(
+    if (!newPlan.isActive || newPlan.isArchived) {
+      throw new AppError(SUBSCRIPTION_MESSAGES.PLAN_NOT_CONFIGURED, STATUS_CODES.NOT_FOUND);
+    }
+
+    const currentPlan =
+      typeof sub.planId === 'object'
+        ? (sub.planId as IPlanDocument)
+        : await this.planRepo.findById(sub.planId.toString());
+
+    if (!currentPlan || !currentPlan.stripePriceId) {
+      throw new AppError(SUBSCRIPTION_MESSAGES.PLAN_NOT_CONFIGURED, STATUS_CODES.NOT_FOUND);
+    }
+
+    if (currentPlan._id.toString() === newPlan._id.toString()) {
+      throw new AppError(SUBSCRIPTION_MESSAGES.SAME_PLAN, STATUS_CODES.BAD_REQUEST);
+    }
+
+    if (newPlan.price > currentPlan.price) {
+      const stripeSub = await this.stripeService.changeSubscriptionPriceImmediately(
+        sub.stripeSubscriptionId,
+        newPlan.stripePriceId
+      );
+      const stripeItem = stripeSub.items.data[0] as unknown as { current_period_end?: number };
+
+      return this.subscriptionRepo.updateById(sub._id.toString(), {
+        planId: newPlan._id.toString(),
+        endDate: stripeItem.current_period_end
+          ? new Date(stripeItem.current_period_end * 1000)
+          : sub.endDate,
+        scheduledPlanId: null,
+        scheduledChangeAt: null,
+        scheduledChangeType: null,
+        stripeScheduleId: null,
+      });
+    }
+
+    if (newPlan.price < currentPlan.price) {
+      const scheduled = await this.stripeService.scheduleSubscriptionPriceChangeAtPeriodEnd(
+        sub.stripeSubscriptionId,
+        currentPlan.stripePriceId,
+        newPlan.stripePriceId
+      );
+
+      return this.subscriptionRepo.updateById(sub._id.toString(), {
+        scheduledPlanId: newPlan._id.toString(),
+        scheduledChangeAt: scheduled.effectiveAt,
+        scheduledChangeType: 'downgrade',
+        stripeScheduleId: scheduled.scheduleId,
+      });
+    }
+
+    await this.stripeService.changeSubscriptionPriceImmediately(
       sub.stripeSubscriptionId,
       newPlan.stripePriceId
     );
 
-    // Update planId in our DB
     return this.subscriptionRepo.updateById(sub._id.toString(), {
-      planId: newPlanId,
+      planId: newPlan._id.toString(),
+      scheduledPlanId: null,
+      scheduledChangeAt: null,
+      scheduledChangeType: null,
+      stripeScheduleId: null,
     });
   }
 
@@ -114,8 +186,16 @@ export class SubscriptionService implements ISubscriptionService {
     return updated;
   }
 
-  async handleStripeUpdate(stripeSubscriptionId: string, data: Partial<{ status: string; planId: string; endDate: Date }>): Promise<ISubscriptionDocument | null> {
-    const updatedData: Partial<ISubscriptionDocument> = {
+  async handleStripeUpdate(stripeSubscriptionId: string, data: Partial<{
+    status: string;
+    planId: string;
+    endDate: Date;
+    scheduledPlanId: string | null;
+    scheduledChangeAt: Date | null;
+    scheduledChangeType: string | null;
+    stripeScheduleId: string | null;
+  }>): Promise<ISubscriptionDocument | null> {
+    const updatedData: Record<string, unknown> = {
       ...data,
       status: data.status as ISubscriptionDocument['status'] | undefined,
     };
