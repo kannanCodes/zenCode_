@@ -1,5 +1,6 @@
 import { Schema, model, Types, Document } from 'mongoose';
 import { MentorSessionStatus } from '../../../constants/session-status';
+import { ExecutionResultDto } from '../../../dtos/compiler/execute-code.dto';
 
 export interface ConnectionEvent {
   userId: string;
@@ -30,6 +31,12 @@ export interface IMentorSession extends Document {
   studentOnline: boolean;
   endedBy?: Types.ObjectId;
   cancellationReason?: string;
+  problemId?: Types.ObjectId;
+  workspaceCode?: string;
+  workspaceLanguage?: string;
+  workspaceVersion?: number;
+  lastRunResult?: ExecutionResultDto;
+  lastRunError?: string;
   
   // Metrics
   totalReconnects?: number;
@@ -127,6 +134,27 @@ const MentorSessionSchema = new Schema(
     cancellationReason: {
       type: String,
     },
+    problemId: {
+      type: Types.ObjectId,
+      ref: 'Problem',
+    },
+    workspaceCode: {
+      type: String,
+    },
+    workspaceLanguage: {
+      type: String,
+      default: 'javascript',
+    },
+    workspaceVersion: {
+      type: Number,
+      default: 0,
+    },
+    lastRunResult: {
+      type: Schema.Types.Mixed,
+    },
+    lastRunError: {
+      type: String,
+    },
     totalReconnects: {
       type: Number,
       default: 0,
@@ -150,6 +178,7 @@ const MentorSessionSchema = new Schema(
 MentorSessionSchema.index({ mentorId: 1 });
 MentorSessionSchema.index({ studentId: 1 });
 MentorSessionSchema.index({ status: 1 });
+MentorSessionSchema.index({ problemId: 1 });
 MentorSessionSchema.index({
   scheduledStart: 1,
   scheduledEnd: 1,

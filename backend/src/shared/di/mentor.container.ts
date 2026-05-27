@@ -21,6 +21,8 @@ import { MentorProfileController } from "../../controllers/mentor/mentor-profile
 import { adminMentorRepository } from "./admin.container";
 import { cacheService, tokenService, passwordService, tokenLifecycleRepository, storageService } from "./shared.container";
 import { MentorSessionCronJobs } from "../../infrastructure/cron/mentor-session.cron";
+import { problemRepository } from "./problem.container";
+import { subscriptionService } from "./payment.container";
 
 // ── Repositories ───────────────────────────────────────────────────────────────
 export const mentorAuthRepository = new MentorAuthRepository();
@@ -55,7 +57,9 @@ export const mentorBookingService = new MentorBookingService(
 
 export const mentorSessionService = new MentorSessionService(
   mentorSessionRepository,
-  mentorBookingRepository
+  mentorBookingRepository,
+  problemRepository,
+  subscriptionService
 );
 
 export const mentorReviewService = new MentorReviewService(

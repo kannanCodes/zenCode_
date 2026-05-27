@@ -1,5 +1,5 @@
 import api from '../../../shared/lib/axios';
-import type { Subscription, ChangePlanPayload } from '../types/subscription.types';
+import type { Subscription, ChangePlanPayload, ChangePlanResponse } from '../types/subscription.types';
 
 interface SubscriptionResponse {
   success: boolean;
@@ -39,8 +39,8 @@ export const subscriptionService = {
    * Upgrade or downgrade to a different plan (prorated billing via Stripe).
    * PATCH /api/subscriptions/change-plan
    */
-  changePlan: async (payload: ChangePlanPayload): Promise<Subscription> => {
-    const response = await api.patch<SubscriptionResponse>('/subscriptions/change-plan', payload);
-    return response.data.data as Subscription;
+  changePlan: async (payload: ChangePlanPayload): Promise<ChangePlanResponse> => {
+    const response = await api.patch<{ success: boolean; message: string; data: ChangePlanResponse }>('/subscriptions/change-plan', payload);
+    return response.data.data;
   },
 };

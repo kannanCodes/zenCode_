@@ -83,3 +83,10 @@ export interface CheckoutResponse {
 export interface ChangePlanPayload {
   planId: string;
 }
+
+export type ChangePlanResponse =
+  | Subscription
+  | {
+      action: 'redirect';
+      url: string;
+    };

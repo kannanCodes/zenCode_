@@ -6,17 +6,7 @@ import { showError } from '../../../shared/utils/toast.util';
 import { useSocket } from '../../../shared/hooks/useSocket';
 import { useWebRTC } from '../../../shared/hooks/useWebRTC';
 import { tokenService } from '../../../shared/lib/token';
-import SessionChat from '../../../shared/components/session/SessionChat';
-import CodeCollabPanel from '../../../shared/components/session/CodeCollabPanel';
-import VideoGrid from '../../../shared/components/session/VideoGrid';
-import { Panel, Group, Separator } from 'react-resizable-panels';
-import api from '../../../shared/lib/axios';
-
-interface EditorState {
-  code: string;
-  language: string;
-  version: number;
-}
+import SessionWorkspaceLayout from '../../../shared/components/session/SessionWorkspaceLayout';
 
 const SessionRoomPage = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -30,7 +20,8 @@ const SessionRoomPage = () => {
 
   const [session, setSession] = useState<MentorSession | null>(null);
   const [accessError, setAccessError] = useState<string | null>(null);
-  const [editorState, setEditorState] = useState<EditorState | null>(null);
+  const [isJoined, setIsJoined] = useState(false);
+  const [participantJoined, setParticipantJoined] = useState(false);
 
   // --- Session Validation ---
   useEffect(() => {
@@ -61,11 +52,10 @@ const SessionRoomPage = () => {
     roomId: string;
     sessionId: string;
     participants: string[];
-    editorState: EditorState | null;
+    editorState: unknown;
   }) => {
-    if (payload.editorState) {
-      setEditorState(payload.editorState);
-    }
+    setIsJoined(true);
+    setParticipantJoined(payload.participants.length > 1);
     // Transition session status to ACTIVE (optimistic UI)
     setSession(prev => prev ? { ...prev, status: 'ACTIVE' } : prev);
   }, []);
@@ -74,10 +64,22 @@ const SessionRoomPage = () => {
     setAccessError(message);
   }, []);
 
+  const handlePeerJoined = useCallback(({ userId }: { userId: string }) => {
+    if (userId !== currentUserId) setParticipantJoined(true);
+  }, [currentUserId]);
+
+  const handlePeerLeft = useCallback(({ userId }: { userId: string }) => {
+    if (userId !== currentUserId) setParticipantJoined(false);
+  }, [currentUserId]);
+
   const socketRef = useSocket({
     roomId: roomId!,
     onJoinSuccess: handleJoinSuccess,
     onSessionError: handleSessionError,
+    onUserJoined: handlePeerJoined,
+    onUserLeft: handlePeerLeft,
+    onParticipantOnline: handlePeerJoined,
+    onParticipantOffline: handlePeerLeft,
   });
 
   // --- WebRTC ---
@@ -87,17 +89,11 @@ const SessionRoomPage = () => {
     currentUserId,
   });
 
-  // --- End Session ---
-  const handleEndSession = async () => {
+  // --- Leave Room ---
+  const handleLeaveSession = async () => {
     if (!roomId) return;
-    try {
-      await api.patch(`/mentor-sessions/${roomId}/end`);
-      socketRef.current?.emit('session:leave');
-      navigate('/mentor/bookings');
-    } catch {
-      // Still navigate away even if end API fails
-      navigate('/mentor/bookings');
-    }
+    socketRef.current?.emit('session:leave');
+    navigate('/mentor/bookings');
   };
 
   // ─── Error Screen ────────────────────────────────────────────────────────────
@@ -121,7 +117,7 @@ const SessionRoomPage = () => {
   }
 
   // ─── Loading Screen ───────────────────────────────────────────────────────────
-  if (!session) {
+  if (!session || !isJoined) {
     return (
       <div className="min-h-screen bg-[var(--color-background-dark)] flex items-center justify-center font-mono">
         <div className="flex flex-col items-center gap-4">
@@ -155,115 +151,19 @@ const SessionRoomPage = () => {
   }
 
   // ─── Waiting Room ─────────────────────────────────────────────────────────────
-  if (session.status === 'SCHEDULED' || session.status === 'WAITING') {
-    return (
-      <div className="min-h-screen bg-[var(--color-background-dark)] flex items-center justify-center p-6 text-center font-mono">
-        <div className="max-w-md w-full bg-[#111111] border border-[var(--color-primary)]/30 rounded-xl p-10 shadow-[0_0_40px_rgba(45,95,255,0.08)]">
-          <div className="relative w-20 h-20 mx-auto mb-6">
-            <div className="absolute inset-0 rounded-full border-4 border-[#272b3a] border-t-[var(--color-primary)] animate-spin" />
-            <div className="absolute inset-2 rounded-full bg-[#1a1d26] flex items-center justify-center text-[var(--color-primary)]">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            </div>
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Waiting Room</h1>
-          <p className="text-gray-400 mb-2">Waiting for the other participant to join...</p>
-          <p className="text-sm text-gray-600">The session will start automatically when both are present.</p>
-          <div className="mt-8 pt-6 border-t border-[#272b3a]">
-            <button onClick={() => navigate('/mentor/bookings')} className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
-              ← Back to Bookings
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ─── Active Session Room ──────────────────────────────────────────────────────
   return (
-    <div className="h-screen bg-[var(--color-background-dark)] flex flex-col font-mono text-white overflow-hidden">
-      {/* Session Navbar */}
-      <header className="h-14 border-b border-[#272b3a] bg-[#111111] flex items-center justify-between px-6 shrink-0">
-        <div className="flex items-center gap-3">
-          <span className="font-bold text-[var(--color-primary)]">ZenCode_</span>
-          <span className="text-gray-600">|</span>
-          <span className="text-xs text-gray-400 tracking-wider">LIVE SESSION</span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-xs text-gray-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            ACTIVE
-          </div>
-          <button
-            onClick={handleEndSession}
-            className="px-4 py-1.5 border border-red-500/60 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded font-bold text-xs transition-all"
-          >
-            END SESSION
-          </button>
-        </div>
-      </header>
-
-      {/* Main Layout: Editor | Chat */}
-      <div className="flex-1 flex overflow-hidden">
-        <Group orientation="horizontal">
-          {/* Left: Notes & Video */}
-          <Panel defaultSize={25} minSize={20}>
-            <div className="flex flex-col h-full bg-[#111111]">
-              <div className="flex-1 p-4 overflow-y-auto border-b border-[#272b3a] flex flex-col">
-                <h3 className="text-xs font-bold text-gray-400 tracking-wider uppercase mb-4 shrink-0">Session Info & Scratchpad</h3>
-                <textarea
-                  className="w-full flex-1 bg-transparent resize-none outline-none text-sm text-gray-300 placeholder-gray-600"
-                  placeholder="Write your notes or paste problem statements here..."
-                />
-              </div>
-              <div className="shrink-0 h-56 bg-[#0a0a0a]">
-                <VideoGrid
-                  localStream={webRTC.localStream}
-                  remoteStream={webRTC.remoteStream}
-                  mediaState={webRTC.mediaState}
-                  remoteMediaState={webRTC.remoteMediaState}
-                  isScreenSharing={webRTC.isScreenSharing}
-                  isRemoteScreenSharing={webRTC.isRemoteScreenSharing}
-                  onToggleAudio={webRTC.toggleAudio}
-                  onToggleVideo={webRTC.toggleVideo}
-                  onToggleScreenShare={webRTC.isScreenSharing ? webRTC.stopScreenShare : webRTC.startScreenShare}
-                  onEndSession={handleEndSession}
-                />
-              </div>
-            </div>
-          </Panel>
-
-          <Separator className="w-1 bg-[#272b3a] hover:bg-[var(--color-primary)] transition-colors" />
-
-          {/* Middle: Editor */}
-          <Panel defaultSize={50} minSize={30}>
-            <div className="h-full bg-[#1e1e1e] overflow-hidden">
-              <CodeCollabPanel
-                roomId={roomId!}
-                socketRef={socketRef}
-                initialCode={editorState?.code}
-                initialLanguage={editorState?.language}
-              />
-            </div>
-          </Panel>
-
-          <Separator className="w-1 bg-[#272b3a] hover:bg-[var(--color-primary)] transition-colors" />
-
-          {/* Right: Chat */}
-          <Panel defaultSize={25} minSize={20}>
-            <div className="h-full overflow-hidden">
-              <SessionChat
-                roomId={roomId!}
-                socketRef={socketRef}
-                currentUserId={currentUserId}
-              />
-            </div>
-          </Panel>
-        </Group>
-      </div>
-    </div>
+    <SessionWorkspaceLayout
+      roomId={roomId!}
+      currentUserId={currentUserId}
+      role="mentor"
+      statusLabel={participantJoined ? 'ACTIVE' : 'WAITING FOR STUDENT'}
+      participantJoined={participantJoined}
+      onEndSession={handleLeaveSession}
+      endLabel="LEAVE SESSION"
+      webRTC={webRTC}
+      socketRef={socketRef}
+      offlineNotice={!participantJoined ? 'Student is not in the room yet. The workspace is ready and will connect video when they join.' : undefined}
+    />
   );
 };
 

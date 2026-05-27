@@ -46,7 +46,10 @@ export class MentorSessionRepository extends BaseRepository<IMentorSession> impl
           status: MentorSessionStatus.SCHEDULED, 
           scheduledStart: { $lte: new Date(currentTime.getTime() - SESSION_CONFIG.NO_SHOW_THRESHOLD_MINUTES * 60 * 1000) },
           mentorJoinedAt: { $exists: false }
-        }
+        },
+        {
+          scheduledEnd: { $lte: new Date(currentTime.getTime() - SESSION_CONFIG.SESSION_END_GRACE_MINUTES * 60 * 1000) }
+        },
       ]
     }).exec();
   }

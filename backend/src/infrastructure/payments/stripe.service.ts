@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { AppError } from '../../shared/utils/AppError';
 import { STATUS_CODES } from '../../shared/constants/status';
-import { StripeProductData, CheckoutSessionResult } from '../../interfaces/service-interfaces/payments/IPaymentTypes';
+import { BillingPortalSessionResult, StripeProductData, CheckoutSessionResult } from '../../interfaces/service-interfaces/payments/IPaymentTypes';
 import { 
   StripeEvent, 
   StripeCheckoutSession, 
@@ -82,6 +82,22 @@ export class StripeService implements IStripeService {
         sessionId: session.id,
         url: session.url,
       };
+    } catch (error) {
+      throw new AppError(
+        error instanceof Error ? error.message : PAYMENT_MESSAGES.STRIPE_CHECKOUT_SESSION_CREATION_FAILED,
+        STATUS_CODES.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async createBillingPortalSession(customerId: string): Promise<BillingPortalSessionResult> {
+    try {
+      const session = await this.stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${appConfig.frontendUrl}/plans`,
+      });
+
+      return { url: session.url };
     } catch (error) {
       throw new AppError(
         error instanceof Error ? error.message : PAYMENT_MESSAGES.STRIPE_CHECKOUT_SESSION_CREATION_FAILED,

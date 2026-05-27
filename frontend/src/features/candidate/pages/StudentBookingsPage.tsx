@@ -11,11 +11,16 @@ interface Booking {
   mentorId: {
     _id: string;
     fullName: string;
-  };
+    email?: string;
+    avatarUrl?: string;
+  } | null;
   startTime: string;
   endTime: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show' | 'expired';
 }
+
+const SESSION_JOIN_EARLY_MS = 5 * 60 * 1000;
+const SESSION_JOIN_GRACE_MS = 30 * 60 * 1000;
 
 const formatDate = (isoDate: string) =>
   new Date(isoDate).toLocaleDateString(undefined, {
@@ -30,17 +35,38 @@ const formatTime = (isoDate: string) =>
     minute: '2-digit',
   });
 
-const isAfterNow = (isoDate: string) => new Date(isoDate).getTime() > Date.now();
+const isAfterNow = (isoDate: string, nowMs = Date.now()) => new Date(isoDate).getTime() > nowMs;
 
-const canEnterBooking = (booking: Booking) =>
+const canEnterBooking = (booking: Booking, nowMs = Date.now()) =>
   booking.status === 'confirmed' &&
-  Date.now() >= new Date(booking.startTime).getTime() - 5 * 60 * 1000 &&
-  Date.now() < new Date(booking.endTime).getTime();
+  nowMs >= new Date(booking.startTime).getTime() - SESSION_JOIN_EARLY_MS &&
+  nowMs < new Date(booking.endTime).getTime() + SESSION_JOIN_GRACE_MS;
+
+const getMentorName = (booking: Booking) =>
+  booking.mentorId?.fullName || booking.mentorId?.email || 'Mentor unavailable';
+
+const getStatusMeta = (booking: Booking, nowMs: number) => {
+  const isClosed = nowMs >= new Date(booking.endTime).getTime() + SESSION_JOIN_GRACE_MS;
+  if (booking.status === 'confirmed' && !isClosed) {
+    return { label: 'Confirmed', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
+  }
+  if (booking.status === 'pending') {
+    return { label: 'Pending', className: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' };
+  }
+  if (booking.status === 'cancelled') {
+    return { label: 'Cancelled', className: 'bg-red-500/10 text-red-400 border-red-500/20' };
+  }
+  if (booking.status === 'completed' || isClosed) {
+    return { label: 'Session closed', className: 'bg-gray-500/10 text-gray-400 border-gray-500/20' };
+  }
+  return { label: booking.status.replace('_', ' '), className: 'bg-gray-500/10 text-gray-400 border-gray-500/20' };
+};
 
 const StudentBookingsPage = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -53,7 +79,7 @@ const StudentBookingsPage = () => {
       try {
         const res = await candidateBookingApi.getMyBookings();
         if (!cancelled) {
-          setBookings(res.data);
+          setBookings(Array.isArray(res.data) ? res.data : []);
         }
       } catch (err) {
         if (!cancelled) {
@@ -66,6 +92,11 @@ const StudentBookingsPage = () => {
     };
     fetchBookings();
     return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const handleEnterSession = async (bookingId: string) => {
@@ -110,7 +141,10 @@ const StudentBookingsPage = () => {
   }
 
   const upcomingBookings = bookings
-    .filter((booking) => isAfterNow(booking.endTime) && (booking.status === 'confirmed' || booking.status === 'pending'))
+    .filter((booking) => {
+      const joinClosesAt = new Date(booking.endTime).getTime() + SESSION_JOIN_GRACE_MS;
+      return joinClosesAt > nowMs && (booking.status === 'confirmed' || booking.status === 'pending');
+    })
     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
   const pastBookings = bookings
@@ -148,13 +182,29 @@ const StudentBookingsPage = () => {
                   </div>
                 ) : (
                   upcomingBookings.map((booking) => {
-                    const canEnter = canEnterBooking(booking);
-                    const canCancel = isAfterNow(booking.startTime) && (booking.status === 'confirmed' || booking.status === 'pending');
+                    const canEnter = canEnterBooking(booking, nowMs);
+                    const canCancel = isAfterNow(booking.startTime, nowMs) && (booking.status === 'confirmed' || booking.status === 'pending');
+                    const statusMeta = getStatusMeta(booking, nowMs);
+                    const startsAt = new Date(booking.startTime).getTime();
+                    const endsAt = new Date(booking.endTime).getTime();
+                    const isLiveWindow = nowMs >= startsAt - SESSION_JOIN_EARLY_MS && nowMs < endsAt;
+                    const isGraceWindow = nowMs >= endsAt && nowMs < endsAt + SESSION_JOIN_GRACE_MS;
+                    const helperText =
+                      booking.status === 'pending'
+                        ? 'Awaiting confirmation'
+                        : nowMs < startsAt - SESSION_JOIN_EARLY_MS
+                        ? 'Opens 5 mins before start'
+                        : isGraceWindow
+                        ? 'Session ended · rejoin window active'
+                        : nowMs >= endsAt + SESSION_JOIN_GRACE_MS
+                        ? 'Session window closed'
+                        : null;
+                    const actionLabel = isGraceWindow ? 'Rejoin Session' : isLiveWindow ? 'Enter Session' : 'Enter Session';
 
                     return (
-                      <div key={booking._id} className="bg-[#1a1d26] border border-[#2a2d3a] rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 hover:border-[#3a3d4a] transition-colors">
-                        <div>
-                          <h3 className="text-lg font-bold mb-1">Session with {booking.mentorId?.fullName || 'Mentor'}</h3>
+                      <div key={booking._id} className="bg-[#1a1d26] border border-[#2a2d3a] rounded-lg p-5 flex flex-col md:flex-row items-center justify-between gap-5 hover:border-[#3a3d4a] transition-colors">
+                        <div className="min-w-0">
+                          <h3 className="text-lg font-bold mb-1 truncate">Session with {getMentorName(booking)}</h3>
                           <div className="flex items-center gap-4 text-sm text-gray-400">
                             <div className="flex items-center gap-1">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,12 +218,8 @@ const StudentBookingsPage = () => {
                               </svg>
                               {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
                             </div>
-                            <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                              booking.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-400' :
-                              booking.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400' :
-                              'bg-gray-500/10 text-gray-400'
-                            }`}>
-                              {booking.status.toUpperCase()}
+                            <span className={`px-2 py-0.5 rounded border text-xs font-bold capitalize ${statusMeta.className}`}>
+                              {statusMeta.label}
                             </span>
                           </div>
                         </div>
@@ -184,11 +230,11 @@ const StudentBookingsPage = () => {
                               onClick={() => handleEnterSession(booking._id)}
                               className="w-full md:w-auto px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)]"
                             >
-                              Enter Session
+	                              {actionLabel}
                             </button>
                           ) : (
                             <div className="text-sm text-gray-500 bg-[#111111] px-4 py-2 rounded-lg border border-[#2a2d3a]">
-                              Opens 5 mins before start
+                              {helperText || 'Unavailable'}
                             </div>
                           )}
 
@@ -220,7 +266,7 @@ const StudentBookingsPage = () => {
                   pastBookings.map((booking) => (
                     <div key={booking._id} className="bg-[#1a1d26] border border-[#2a2d3a] rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
                       <div>
-                        <h3 className="text-lg font-bold mb-1">Session with {booking.mentorId?.fullName || 'Mentor'}</h3>
+                        <h3 className="text-lg font-bold mb-1">Session with {getMentorName(booking)}</h3>
                         <div className="flex items-center gap-4 text-sm text-gray-400">
                           <div className="flex items-center gap-1">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,12 +282,8 @@ const StudentBookingsPage = () => {
                           </div>
                         </div>
                       </div>
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        booking.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
-                        booking.status === 'cancelled' ? 'bg-red-500/10 text-red-400' :
-                        'bg-gray-500/10 text-gray-400'
-                      }`}>
-                        {booking.status.toUpperCase()}
+                      <span className={`px-2 py-1 rounded border text-xs font-bold capitalize ${getStatusMeta(booking, nowMs).className}`}>
+                        {getStatusMeta(booking, nowMs).label}
                       </span>
                     </div>
                   ))
@@ -254,7 +296,7 @@ const StudentBookingsPage = () => {
         {reviewBooking && (
           <ReviewModal
             bookingId={reviewBooking._id}
-            mentorName={reviewBooking.mentorId?.fullName || 'Mentor'}
+            mentorName={getMentorName(reviewBooking)}
             onClose={() => setSearchParams({})}
             onSubmitted={() => setSearchParams({})}
           />

@@ -114,10 +114,6 @@ export class WebhookController {
                 status: subscription.status,
                 planId: plan._id.toString(),
                 endDate: new Date(sub.current_period_end * 1000),
-                scheduledPlanId: null,
-                scheduledChangeAt: null,
-                scheduledChangeType: null,
-                stripeScheduleId: null,
               });
               logger.info(`✅ Subscription updated: ${subscription.id}`);
             }
@@ -187,6 +183,65 @@ export class WebhookController {
               );
               logger.info(`✅ Subscription renewed: ${stripeSubscriptionId}`);
             }
+          }
+          break;
+        }
+
+        case 'subscription_schedule.created':
+        case 'subscription_schedule.updated': {
+          const schedule = event.data.object as {
+            id: string;
+            status?: string;
+            subscription?: string | { id?: string } | null;
+            phases?: Array<{
+              start_date?: number;
+              items?: Array<{ price?: string | { id?: string } }>;
+            }>;
+          };
+          const stripeSubscriptionId =
+            typeof schedule.subscription === 'string'
+              ? schedule.subscription
+              : schedule.subscription?.id;
+
+          if (!stripeSubscriptionId) break;
+
+          const futurePhase = schedule.phases?.[1];
+          const futurePrice = futurePhase?.items?.[0]?.price;
+          const futurePriceId = typeof futurePrice === 'string' ? futurePrice : futurePrice?.id;
+          const futurePlan = futurePriceId ? await this.planRepo.findByStripePriceId(futurePriceId) : null;
+
+          if (futurePlan && futurePhase?.start_date) {
+            await this.subscriptionService.handleStripeUpdate(stripeSubscriptionId, {
+              scheduledPlanId: futurePlan._id.toString(),
+              scheduledChangeAt: new Date(futurePhase.start_date * 1000),
+              scheduledChangeType: 'downgrade',
+              stripeScheduleId: schedule.id,
+            });
+            logger.info(`✅ Subscription schedule synced: ${schedule.id}`);
+          }
+          break;
+        }
+
+        case 'subscription_schedule.canceled':
+        case 'subscription_schedule.completed':
+        case 'subscription_schedule.released': {
+          const schedule = event.data.object as {
+            id: string;
+            subscription?: string | { id?: string } | null;
+          };
+          const stripeSubscriptionId =
+            typeof schedule.subscription === 'string'
+              ? schedule.subscription
+              : schedule.subscription?.id;
+
+          if (stripeSubscriptionId) {
+            await this.subscriptionService.handleStripeUpdate(stripeSubscriptionId, {
+              scheduledPlanId: null,
+              scheduledChangeAt: null,
+              scheduledChangeType: null,
+              stripeScheduleId: null,
+            });
+            logger.info(`✅ Subscription schedule cleared: ${schedule.id}`);
           }
           break;
         }

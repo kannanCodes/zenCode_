@@ -126,7 +126,11 @@ export const changePlan = createAsyncThunk<void, ChangePlanPayload, { rejectValu
   'subscription/changePlan',
   async (payload, { dispatch, rejectWithValue }) => {
     try {
-      await subscriptionService.changePlan(payload);
+      const result = await subscriptionService.changePlan(payload);
+      if ('action' in result && result.action === 'redirect') {
+        window.location.href = result.url;
+        return;
+      }
       await dispatch(fetchSubscription());
     } catch (err: any) {
       const message = err?.response?.data?.message ?? 'Failed to change plan';

@@ -8,7 +8,7 @@ export interface ISubscriptionService {
   getUserSubscriptionDetails(userId: string): Promise<Record<string, unknown> | null>;
   cancelUserSubscription(userId: string): Promise<ISubscriptionDocument | null>;
   resumeUserSubscription(userId: string): Promise<ISubscriptionDocument | null>;
-  changePlan(userId: string, newPlanId: string): Promise<ISubscriptionDocument | null>;
+  changePlan(userId: string, newPlanId: string): Promise<ISubscriptionDocument | { action: 'redirect'; url: string } | null>;
   cancelSubscription(stripeSubscriptionId: string): Promise<ISubscriptionDocument | null>;
   renewSubscription(stripeSubscriptionId: string, endDate: Date): Promise<ISubscriptionDocument | null>;
   updateSubscriptionStatus(stripeSubscriptionId: string, status: string, endDate?: Date): Promise<ISubscriptionDocument | null>;

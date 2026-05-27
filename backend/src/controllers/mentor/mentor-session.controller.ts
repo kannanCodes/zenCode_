@@ -52,4 +52,56 @@ export class MentorSessionController {
       next(error);
     }
   };
+
+  getWorkspace = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const workspace = await this.sessionService.getWorkspace(req.params.roomId as string, userId);
+
+      return sendSuccess(res, {
+        statusCode: STATUS_CODES.OK,
+        message: SESSION_MESSAGES.VALIDATED,
+        data: workspace,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  listWorkspaceProblems = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const problems = await this.sessionService.listWorkspaceProblems(req.params.roomId as string, userId, {
+        search: req.query.search as string | undefined,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+      });
+
+      return sendSuccess(res, {
+        statusCode: STATUS_CODES.OK,
+        message: SESSION_MESSAGES.VALIDATED,
+        data: problems,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  selectWorkspaceProblem = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const workspace = await this.sessionService.selectWorkspaceProblem(
+        req.params.roomId as string,
+        userId,
+        req.body.problemId
+      );
+
+      return sendSuccess(res, {
+        statusCode: STATUS_CODES.OK,
+        message: SESSION_MESSAGES.VALIDATED,
+        data: workspace,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

@@ -1,4 +1,4 @@
-export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show' | 'expired';
 
 export interface BookingUser {
   _id: string;
@@ -9,8 +9,8 @@ export interface BookingUser {
 
 export interface MentorBooking {
   _id: string;
-  mentorId: BookingUser;
-  studentId: BookingUser;
+  mentorId: BookingUser | null;
+  studentId: BookingUser | null;
   startTime: string; // ISO string
   endTime: string; // ISO string
   status: BookingStatus;

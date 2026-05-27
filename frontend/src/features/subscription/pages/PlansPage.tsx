@@ -64,10 +64,13 @@ const PlansPage = () => {
   const handleChangePlan = async (planId: string) => {
     setChangingPlanId(planId);
     try {
-      await dispatch(changePlan({ planId })).unwrap();
       const newPlan = plans.find(p => p._id === planId);
       const currentPrice = currentPlanPrice ?? 0;
       const nextPrice = newPlan?.price ?? currentPrice;
+      await dispatch(changePlan({ planId })).unwrap();
+      if (nextPrice > currentPrice) {
+        return;
+      }
       showSuccess(
         nextPrice < currentPrice
           ? `${newPlan?.name ?? 'New plan'} scheduled for the next billing period.`
