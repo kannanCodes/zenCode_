@@ -111,6 +111,9 @@ interface VideoGridProps {
   onToggleVideo: () => void;
   onToggleScreenShare: () => void;
   onEndSession: () => void;
+  isExpanded?: boolean;
+  onToggleExpanded?: () => void;
+  endSessionTitle?: string;
 }
 
 const VideoGrid = ({
@@ -124,6 +127,9 @@ const VideoGrid = ({
   onToggleVideo,
   onToggleScreenShare,
   onEndSession,
+  isExpanded = false,
+  onToggleExpanded,
+  endSessionTitle = 'Leave session',
 }: VideoGridProps) => {
   return (
     <div className="flex flex-col h-full bg-[#0d0d0d] p-3 gap-3">
@@ -163,6 +169,22 @@ const VideoGrid = ({
 
       {/* Controls bar */}
       <div className="flex items-center justify-center gap-3 shrink-0 py-1">
+        {onToggleExpanded && (
+          <button
+            onClick={onToggleExpanded}
+            title={isExpanded ? 'Collapse video' : 'Expand video'}
+            className="w-11 h-11 rounded-full bg-[#1a1d26] hover:bg-[#272b3a] flex items-center justify-center text-white transition-all"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {isExpanded ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9H5V5m0 0l5 5M15 9h4V5m0 0l-5 5M9 15H5v4m0 0l5-5M15 15h4v4m0 0l-5-5" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4h4M4 4l6 6m10-2V4h-4m4 0l-6 6M4 16v4h4m-4 0l6-6m10 2v4h-4m4 0l-6-6" />
+              )}
+            </svg>
+          </button>
+        )}
+
         {/* Mic */}
         <button
           onClick={onToggleAudio}
@@ -225,7 +247,7 @@ const VideoGrid = ({
         {/* End call */}
         <button
           onClick={onEndSession}
-          title="End session"
+          title={endSessionTitle}
           className="w-11 h-11 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center text-white transition-all ml-4"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

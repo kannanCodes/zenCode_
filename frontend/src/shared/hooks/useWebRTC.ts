@@ -110,6 +110,21 @@ export function useWebRTC({ roomId, socketRef, currentUserId }: UseWebRTCOptions
     return pc;
   }, [roomId, socketRef]);
 
+  const createAndSendOffer = useCallback(async (targetUserId: string) => {
+    const pc = createPeerConnection(targetUserId);
+
+    try {
+      isNegotiatingRef.current = true;
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socketRef.current?.emit('webrtc:offer', { roomId, targetUserId, offer: pc.localDescription });
+    } catch (err) {
+      console.error('[WebRTC] Offer creation failed:', err);
+    } finally {
+      isNegotiatingRef.current = false;
+    }
+  }, [createPeerConnection, roomId, socketRef]);
+
   // ─── Socket signaling listeners ─────────────────────────────────────────────
   useEffect(() => {
     const socket = socketRef.current;
@@ -118,18 +133,7 @@ export function useWebRTC({ roomId, socketRef, currentUserId }: UseWebRTCOptions
     // Another participant joined — initiate offer as the caller
     const handleUserJoined = async ({ userId: targetUserId }: { userId: string }) => {
       if (targetUserId === currentUserId) return;
-      const pc = createPeerConnection(targetUserId);
-
-      try {
-        isNegotiatingRef.current = true;
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit('webrtc:offer', { roomId, targetUserId, offer: pc.localDescription });
-      } catch (err) {
-        console.error('[WebRTC] Offer creation failed:', err);
-      } finally {
-        isNegotiatingRef.current = false;
-      }
+      await createAndSendOffer(targetUserId);
     };
 
     const handleOffer = async ({
@@ -198,7 +202,7 @@ export function useWebRTC({ roomId, socketRef, currentUserId }: UseWebRTCOptions
       setIsRemoteScreenSharing(false);
     };
 
-    socket.on('session:user-joined', handleUserJoined);
+    socket.on('session:participant-online', handleUserJoined);
     socket.on('webrtc:offer', handleOffer);
     socket.on('webrtc:answer', handleAnswer);
     socket.on('webrtc:ice-candidate', handleIceCandidate);
@@ -207,7 +211,7 @@ export function useWebRTC({ roomId, socketRef, currentUserId }: UseWebRTCOptions
     socket.on('screen-share:stopped', handleScreenShareStopped);
 
     return () => {
-      socket.off('session:user-joined', handleUserJoined);
+      socket.off('session:participant-online', handleUserJoined);
       socket.off('webrtc:offer', handleOffer);
       socket.off('webrtc:answer', handleAnswer);
       socket.off('webrtc:ice-candidate', handleIceCandidate);
@@ -215,7 +219,7 @@ export function useWebRTC({ roomId, socketRef, currentUserId }: UseWebRTCOptions
       socket.off('screen-share:started', handleScreenShareStarted);
       socket.off('screen-share:stopped', handleScreenShareStopped);
     };
-  }, [socketRef, roomId, currentUserId, createPeerConnection]);
+  }, [socketRef, roomId, currentUserId, createPeerConnection, createAndSendOffer]);
 
   // ─── Acquire media on mount and clean up on unmount ────────────────────────
   useEffect(() => {
@@ -230,6 +234,10 @@ export function useWebRTC({ roomId, socketRef, currentUserId }: UseWebRTCOptions
         }
         localStreamRef.current = stream;
         setLocalStream(stream);
+
+        if (remoteUserIdRef.current) {
+          await createAndSendOffer(remoteUserIdRef.current);
+        }
       } catch (err) {
         console.error('[WebRTC] getUserMedia failed:', err);
       }

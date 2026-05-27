@@ -7,3 +7,7 @@ export interface CheckoutSessionResult {
   sessionId: string;
   url: string | null;
 }
+
+export interface BillingPortalSessionResult {
+  url: string;
+}

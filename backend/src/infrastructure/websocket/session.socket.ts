@@ -56,7 +56,8 @@ export const registerSessionSocket = (io: Server) => {
           userId,
         });
 
-        const editorState = collaborationStore.get(roomId);
+        const workspace = await mentorSessionService.getWorkspace(roomId, userId);
+        const editorState = collaborationStore.get(roomId) || workspace.editorState;
 
         socket.emit(SESSION_EVENTS.SESSION_JOINED_SUCCESS, {
           roomId,

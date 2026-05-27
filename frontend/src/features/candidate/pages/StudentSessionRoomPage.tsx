@@ -5,16 +5,7 @@ import { showError } from '../../../shared/utils/toast.util';
 import { useSocket } from '../../../shared/hooks/useSocket';
 import { useWebRTC } from '../../../shared/hooks/useWebRTC';
 import { tokenService } from '../../../shared/lib/token';
-import SessionChat from '../../../shared/components/session/SessionChat';
-import CodeCollabPanel from '../../../shared/components/session/CodeCollabPanel';
-import VideoGrid from '../../../shared/components/session/VideoGrid';
-import { Panel, Group, Separator } from 'react-resizable-panels';
-
-interface EditorState {
-  code: string;
-  language: string;
-  version: number;
-}
+import SessionWorkspaceLayout from '../../../shared/components/session/SessionWorkspaceLayout';
 
 const getCurrentUserId = () => {
   const payload = tokenService.getTokenPayload();
@@ -31,7 +22,6 @@ const StudentSessionRoomPage = () => {
   // Realtime States
   const [isJoined, setIsJoined] = useState(false);
   const [participantJoined, setParticipantJoined] = useState(false);
-  const [editorState, setEditorState] = useState<EditorState | null>(null);
 
   // We decode the JWT to pass the userId to chat & webrtc
   const currentUserId = getCurrentUserId();
@@ -65,14 +55,11 @@ const StudentSessionRoomPage = () => {
     roomId: string;
     sessionId: string;
     participants: string[];
-    editorState: EditorState | null;
+    editorState: unknown;
   }) => {
     setIsJoined(true);
     setParticipantJoined(payload.participants.length > 1);
     setSession((prev: any) => prev ? { ...prev, status: prev.status === 'SCHEDULED' && payload.participants.length > 1 ? 'ACTIVE' : prev.status } : prev);
-    if (payload.editorState) {
-      setEditorState(payload.editorState);
-    }
   }, []);
 
   const handleSessionError = useCallback(({ message }: { message: string }) => {
@@ -195,96 +182,19 @@ const StudentSessionRoomPage = () => {
     );
   }
 
-  // ─── Active Session Room ──────────────────────────────────────────────────────
   return (
-    <div className="h-screen bg-[var(--color-background-dark)] flex flex-col font-mono text-white overflow-hidden">
-      {/* Session Navbar */}
-      <header className="h-14 border-b border-[#272b3a] bg-[#111111] flex items-center justify-between px-6 shrink-0">
-        <div className="flex items-center gap-3">
-          <span className="font-bold text-[var(--color-primary)]">ZenCode_</span>
-          <span className="text-gray-600">|</span>
-          <span className="text-xs text-gray-400 tracking-wider">LIVE SESSION</span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-xs text-gray-400">
-            <span className={`w-2 h-2 rounded-full ${participantJoined ? 'bg-emerald-500 animate-pulse' : 'bg-yellow-400'}`} />
-            {participantJoined ? 'ACTIVE' : 'MENTOR RECONNECTING'}
-          </div>
-          <button
-            onClick={handleLeaveSession}
-            className="px-4 py-1.5 border border-[#2a2d3a] hover:bg-[#2a2d3a] rounded font-bold text-xs transition-all"
-          >
-            LEAVE SESSION
-          </button>
-        </div>
-      </header>
-
-      {!participantJoined && (
-        <div className="border-b border-yellow-500/30 bg-yellow-500/10 px-6 py-2 text-center text-xs text-yellow-300 shrink-0">
-          Mentor is offline. The session is still active, and your editor/chat state will remain available while they reconnect.
-        </div>
-      )}
-
-      {/* Main Layout */}
-      <div className="flex-1 flex overflow-hidden">
-        <Group orientation="horizontal">
-          {/* Left: Notes & Video */}
-          <Panel defaultSize={25} minSize={20}>
-            <div className="flex flex-col h-full bg-[#111111]">
-              <div className="flex-1 p-4 overflow-y-auto border-b border-[#272b3a] flex flex-col">
-                <h3 className="text-xs font-bold text-gray-400 tracking-wider uppercase mb-4 shrink-0">Session Info & Scratchpad</h3>
-                <textarea
-                  className="w-full flex-1 bg-transparent resize-none outline-none text-sm text-gray-300 placeholder-gray-600"
-                  placeholder="Write your notes or paste problem statements here..."
-                />
-              </div>
-              <div className="shrink-0 h-56 bg-[#0a0a0a]">
-                <VideoGrid
-                  localStream={webRTC.localStream}
-                  remoteStream={webRTC.remoteStream}
-                  mediaState={webRTC.mediaState}
-                  remoteMediaState={webRTC.remoteMediaState}
-                  isScreenSharing={webRTC.isScreenSharing}
-                  isRemoteScreenSharing={webRTC.isRemoteScreenSharing}
-                  onToggleAudio={webRTC.toggleAudio}
-                  onToggleVideo={webRTC.toggleVideo}
-                  onToggleScreenShare={webRTC.isScreenSharing ? webRTC.stopScreenShare : webRTC.startScreenShare}
-                  onEndSession={handleLeaveSession}
-                />
-              </div>
-            </div>
-          </Panel>
-
-          <Separator className="w-1 bg-[#272b3a] hover:bg-[var(--color-primary)] transition-colors" />
-
-          {/* Middle: Editor */}
-          <Panel defaultSize={50} minSize={30}>
-            <div className="h-full bg-[#1e1e1e] overflow-hidden">
-              <CodeCollabPanel
-                roomId={roomId!}
-                socketRef={socketRef}
-                initialCode={editorState?.code}
-                initialLanguage={editorState?.language}
-              />
-            </div>
-          </Panel>
-
-          <Separator className="w-1 bg-[#272b3a] hover:bg-[var(--color-primary)] transition-colors" />
-
-          {/* Right: Chat */}
-          <Panel defaultSize={25} minSize={20}>
-            <div className="h-full overflow-hidden">
-              <SessionChat
-                roomId={roomId!}
-                socketRef={socketRef}
-                currentUserId={currentUserId}
-              />
-            </div>
-          </Panel>
-        </Group>
-      </div>
-    </div>
+    <SessionWorkspaceLayout
+      roomId={roomId!}
+      currentUserId={currentUserId}
+      role="student"
+      statusLabel={participantJoined ? 'ACTIVE' : 'MENTOR RECONNECTING'}
+      participantJoined={participantJoined}
+      onEndSession={handleLeaveSession}
+      endLabel="LEAVE SESSION"
+      webRTC={webRTC}
+      socketRef={socketRef}
+      offlineNotice={!participantJoined ? 'Mentor is offline. The session is still active, and your problem, editor, and chat state remain available while they reconnect.' : undefined}
+    />
   );
 };
 

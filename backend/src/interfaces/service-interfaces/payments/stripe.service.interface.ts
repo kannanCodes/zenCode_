@@ -3,7 +3,7 @@ import {
   StripeCheckoutSession, 
   StripeSubscription 
 } from './IStripeExtTypes';
-import { StripeProductData, CheckoutSessionResult } from './IPaymentTypes';
+import { StripeProductData, CheckoutSessionResult, BillingPortalSessionResult } from './IPaymentTypes';
 
 export interface IStripeService {
   createProductAndPrice(plan: {
@@ -14,6 +14,7 @@ export interface IStripeService {
     intervalCount: number;
   }): Promise<StripeProductData>;
   createCheckoutSession(priceId: string, userId: string): Promise<CheckoutSessionResult>;
+  createBillingPortalSession(customerId: string): Promise<BillingPortalSessionResult>;
   constructWebhookEvent(payload: Buffer, signature: string): Promise<StripeEvent>;
   retrieveCheckoutSession(sessionId: string): Promise<StripeCheckoutSession>;
   cancelStripeSubscription(stripeSubscriptionId: string): Promise<StripeSubscription>;

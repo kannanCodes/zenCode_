@@ -73,7 +73,7 @@ export class SubscriptionService implements ISubscriptionService {
     });
   }
 
-  async changePlan(userId: string, newPlanId: string): Promise<ISubscriptionDocument | null> {
+  async changePlan(userId: string, newPlanId: string): Promise<ISubscriptionDocument | { action: 'redirect'; url: string } | null> {
     const sub = await this.subscriptionRepo.findActiveByUser(userId);
 
     if (!sub) {
@@ -141,13 +141,17 @@ export class SubscriptionService implements ISubscriptionService {
       });
     }
 
-    await this.stripeService.changeSubscriptionPriceImmediately(
+    const stripeSub = await this.stripeService.changeSubscriptionPriceImmediately(
       sub.stripeSubscriptionId,
       newPlan.stripePriceId
     );
+    const stripeItem = stripeSub.items.data[0] as unknown as { current_period_end?: number };
 
     return this.subscriptionRepo.updateById(sub._id.toString(), {
       planId: newPlan._id.toString(),
+      endDate: stripeItem.current_period_end
+        ? new Date(stripeItem.current_period_end * 1000)
+        : sub.endDate,
       scheduledPlanId: null,
       scheduledChangeAt: null,
       scheduledChangeType: null,
@@ -195,10 +199,38 @@ export class SubscriptionService implements ISubscriptionService {
     scheduledChangeType: string | null;
     stripeScheduleId: string | null;
   }>): Promise<ISubscriptionDocument | null> {
-    const updatedData: Record<string, unknown> = {
-      ...data,
-      status: data.status as ISubscriptionDocument['status'] | undefined,
-    };
+    const existing = await this.subscriptionRepo.findByStripeSubscriptionId(stripeSubscriptionId);
+    const updatedData: Record<string, unknown> = {};
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined) {
+        updatedData[key] = value;
+      }
+    });
+
+    if (data.status !== undefined) {
+      updatedData.status = data.status as ISubscriptionDocument['status'];
+    }
+
+    if (existing && data.planId) {
+      const scheduledPlanId =
+        existing.scheduledPlanId && typeof existing.scheduledPlanId === 'object'
+          ? (existing.scheduledPlanId as IPlanDocument)._id.toString()
+          : existing.scheduledPlanId?.toString();
+      const currentPlanId =
+        typeof existing.planId === 'object'
+          ? (existing.planId as IPlanDocument)._id.toString()
+          : existing.planId.toString();
+      const stripePlanActuallyChanged = data.planId !== currentPlanId;
+      const scheduledChangeApplied = scheduledPlanId && data.planId === scheduledPlanId;
+
+      if (stripePlanActuallyChanged || scheduledChangeApplied) {
+        updatedData.scheduledPlanId = null;
+        updatedData.scheduledChangeAt = null;
+        updatedData.scheduledChangeType = null;
+        updatedData.stripeScheduleId = null;
+      }
+    }
 
     const updated = await this.subscriptionRepo.updateByStripeId(
       stripeSubscriptionId,

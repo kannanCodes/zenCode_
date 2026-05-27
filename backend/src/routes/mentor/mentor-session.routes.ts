@@ -16,6 +16,24 @@ router.get(
   mentorSessionController.validateSessionAccess
 );
 
+router.get(
+  "/:roomId/workspace",
+  authMiddleware,
+  mentorSessionController.getWorkspace
+);
+
+router.get(
+  "/:roomId/problems",
+  authMiddleware,
+  mentorSessionController.listWorkspaceProblems
+);
+
+router.patch(
+  "/:roomId/problem",
+  authMiddleware,
+  mentorSessionController.selectWorkspaceProblem
+);
+
 router.patch(
   "/:roomId/end",
   authMiddleware,
