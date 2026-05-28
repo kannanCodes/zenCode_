@@ -67,4 +67,25 @@ export class MentorBookingController {
       next(error);
     }
   };
+
+  getDashboardStats = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const mentorId = (req as AuthenticatedRequest).user.id;
+      const stats = await this.bookingService.getDashboardStats(mentorId);
+      return sendSuccess(res, { statusCode: STATUS_CODES.OK, message: 'Dashboard stats fetched', data: stats });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getUpcomingBookings = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const mentorId = (req as AuthenticatedRequest).user.id;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const bookings = await this.bookingService.getUpcomingBookings(mentorId, limit);
+      return sendSuccess(res, { statusCode: STATUS_CODES.OK, message: 'Upcoming bookings fetched', data: bookings });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

@@ -186,6 +186,7 @@ export class MentorSessionService implements IMentorSessionService {
           mentorOnline: false,
           studentOnline: false,
         });
+        await this.bookingRepo.updateOne({ _id: session.bookingId }, { status: BookingStatus.COMPLETED });
       }
 
       throw new AppError(SESSION_MESSAGES.UNAVAILABLE, STATUS_CODES.BAD_REQUEST);
@@ -251,13 +252,19 @@ export class MentorSessionService implements IMentorSessionService {
   }
 
   async endSession(roomId: string, endedBy: string): Promise<IMentorSession | null> {
-    return this.sessionRepo.updateByRoomId(roomId, {
+    const session = await this.sessionRepo.updateByRoomId(roomId, {
       status: MentorSessionStatus.ENDED,
       endedAt: new Date(),
       endedBy: new Types.ObjectId(endedBy),
       mentorOnline: false,
       studentOnline: false,
     });
+
+    if (session) {
+      await this.bookingRepo.updateOne({ _id: session.bookingId }, { status: BookingStatus.COMPLETED });
+    }
+
+    return session;
   }
 
   async validatePeerAccess(roomId: string, senderId: string, targetUserId: string): Promise<IMentorSession> {
@@ -378,6 +385,7 @@ export class MentorSessionService implements IMentorSessionService {
           status: MentorSessionStatus.NO_SHOW,
           endedAt: now,
         });
+        await this.bookingRepo.updateOne({ _id: session.bookingId }, { status: BookingStatus.NO_SHOW });
       } else if (isPastScheduledEnd) {
         await this.sessionRepo.updateByRoomId(session.roomId, {
           status: MentorSessionStatus.EXPIRED,
@@ -385,11 +393,13 @@ export class MentorSessionService implements IMentorSessionService {
           mentorOnline: false,
           studentOnline: false,
         });
+        await this.bookingRepo.updateOne({ _id: session.bookingId }, { status: BookingStatus.COMPLETED });
       } else if (isAbandoned) {
         await this.sessionRepo.updateByRoomId(session.roomId, {
           status: MentorSessionStatus.ABANDONED,
           endedAt: now,
         });
+        await this.bookingRepo.updateOne({ _id: session.bookingId }, { status: BookingStatus.COMPLETED });
       }
     }
   }
