@@ -18,6 +18,7 @@ import MentorSuccessPage from '../features/mentor/pages/MentorSuccessPage';
 import MentorLayout from '../features/mentor/components/MentorLayout';
 import MentorAvailabilityPage from '../features/mentor/pages/MentorAvailabilityPage';
 import MentorBookingsPage from '../features/mentor/pages/MentorBookingsPage';
+import MentorDashboardPage from '../features/mentor/pages/MentorDashboardPage';
 import SessionRoomPage from '../features/mentor/pages/SessionRoomPage';
 import MentorProfilePage from '../features/mentor/pages/MentorProfilePage';
 import AdminProblemListPage from '../features/admin/pages/ProblemListPage';
@@ -199,12 +200,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
-        <Route path="dashboard" element={
-          <div className="text-center mt-20">
-            <h1 className="text-white text-4xl font-bold mb-4">Mentor Dashboard</h1>
-            <p className="text-gray-400">Incoming bookings will appear here.</p>
-          </div>
-        } />
+        <Route path="dashboard" element={<MentorDashboardPage />} />
         <Route path="availability" element={<MentorAvailabilityPage />} />
         <Route path="bookings" element={<MentorBookingsPage />} />
         <Route path="profile" element={<MentorProfilePage />} />

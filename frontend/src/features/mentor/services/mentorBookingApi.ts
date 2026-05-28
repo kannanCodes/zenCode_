@@ -1,5 +1,5 @@
 import api from '../../../shared/lib/axios';
-import type { MentorBooking, MentorSession } from '../types/booking';
+import type { MentorBooking, MentorSession, MentorDashboardStats, DashboardUpcomingSession } from '../types/booking';
 
 export const mentorBookingApi = {
   getMentorBookings: async (): Promise<{ data: MentorBooking[] }> => {
@@ -22,5 +22,15 @@ export const mentorBookingApi = {
   validateSession: async (roomId: string): Promise<{ data: MentorSession }> => {
     const response = await api.get(`/mentor-sessions/${roomId}/validate`);
     return response.data;
-  }
+  },
+
+  getDashboardStats: async (): Promise<{ data: MentorDashboardStats }> => {
+    const response = await api.get('/mentor-bookings/stats');
+    return response.data;
+  },
+
+  getUpcomingBookings: async (limit = 10): Promise<{ data: DashboardUpcomingSession[] }> => {
+    const response = await api.get(`/mentor-bookings/upcoming?limit=${limit}`);
+    return response.data;
+  },
 };

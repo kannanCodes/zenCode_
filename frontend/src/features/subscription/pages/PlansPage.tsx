@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import Swal from 'sweetalert2';
 import type { AppDispatch, RootState } from '../../../store';
 import {
   changePlan,
@@ -62,11 +63,29 @@ const PlansPage = () => {
   // ─── Handlers ────────────────────────────────────────────────────────────────
 
   const handleChangePlan = async (planId: string) => {
+    const newPlan = plans.find(p => p._id === planId);
+    const currentPrice = currentPlanPrice ?? 0;
+    const nextPrice = newPlan?.price ?? currentPrice;
+
+    // Ask for confirmation if it's an upgrade
+    if (nextPrice > currentPrice) {
+      const { isConfirmed } = await Swal.fire({
+        title: 'Confirm Upgrade',
+        html: `You are upgrading to <strong>${newPlan?.name}</strong>.<br/>The prorated difference will be <strong>immediately charged</strong> to your card on file.`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Upgrade now',
+        cancelButtonText: 'Not now',
+        background: '#111111',
+        color: '#e5e7eb',
+        confirmButtonColor: '#4f46e5',
+        cancelButtonColor: '#374151',
+      });
+      if (!isConfirmed) return;
+    }
+
     setChangingPlanId(planId);
     try {
-      const newPlan = plans.find(p => p._id === planId);
-      const currentPrice = currentPlanPrice ?? 0;
-      const nextPrice = newPlan?.price ?? currentPrice;
       await dispatch(changePlan({ planId })).unwrap();
       if (nextPrice > currentPrice) {
         return;

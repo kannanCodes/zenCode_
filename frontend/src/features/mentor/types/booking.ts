@@ -34,3 +34,16 @@ export interface MentorSession {
   mentorOnline: boolean;
   studentOnline: boolean;
 }
+
+export interface MentorDashboardStats {
+  upcomingCount: number;
+  todayCount: number;
+  totalSessions: number;
+  activeStudents: number;
+  completionRate: number;
+}
+
+// Upcoming session with student always populated
+export interface DashboardUpcomingSession extends Omit<MentorBooking, 'studentId'> {
+  studentId: BookingUser;
+}
