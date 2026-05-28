@@ -13,6 +13,8 @@ import AdminLoginPage from '../features/admin/pages/AdminLoginPage';
 import MentorManagementPage from '../features/admin/pages/MentorManagementPage';
 import UserManagementPage from '../features/admin/pages/UserManagementPage'; 
 import AdminDashboardPage from '../features/admin/pages/AdminDashboardPage';
+import SessionMonitoringPage from '../features/admin/pages/SessionMonitoringPage';
+import SessionDetailsPage from '../features/admin/pages/SessionDetailsPage';
 import MentorLoginPage from '../features/mentor/pages/MentorLoginPage';
 import MentorActivationPage from '../features/mentor/pages/MentorActivationPage';
 import MentorSuccessPage from '../features/mentor/pages/MentorSuccessPage';
@@ -183,6 +185,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute redirectTo="/admin/login">
             <ProblemFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/sessions"
+        element={
+          <ProtectedRoute redirectTo="/admin/login">
+            <SessionMonitoringPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/sessions/:id"
+        element={
+          <ProtectedRoute redirectTo="/admin/login">
+            <SessionDetailsPage />
           </ProtectedRoute>
         }
       />

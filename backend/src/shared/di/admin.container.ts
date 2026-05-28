@@ -14,6 +14,9 @@ import { AdminPlanController } from "../../controllers/admin/AdminPlanController
 import { AdminDashboardRepository } from "../../repositories/admin/AdminDashboardRepository";
 import { AdminDashboardService } from "../../services/admin/AdminDashboardService";
 import { AdminDashboardController } from "../../controllers/admin/AdminDashboardController";
+import { AdminSessionRepository } from "../../repositories/admin/AdminSessionRepository";
+import { AdminSessionService } from "../../services/admin/AdminSessionService";
+import { AdminSessionController } from "../../controllers/admin/AdminSessionController";
 import { IAdminAuthService } from "../../interfaces/service-interfaces/admin/IAdminAuthService";
 
 // ── Repositories ───────────────────────────────────────────────────────────────
@@ -46,6 +49,11 @@ export const planService = new PlanService(
 export const adminDashboardRepository = new AdminDashboardRepository();
 export const adminDashboardService = new AdminDashboardService(adminDashboardRepository);
 export const adminDashboardController = new AdminDashboardController(adminDashboardService);
+
+// ── Sessions ─────────────────────────────────────────────────────────────────
+export const adminSessionRepository = new AdminSessionRepository();
+export const adminSessionService = new AdminSessionService(adminSessionRepository);
+export const adminSessionController = new AdminSessionController(adminSessionService);
 
 // ── Controller ─────────────────────────────────────────────────────────────────
 export const adminAuthController = new AdminAuthController(adminAuthService);
