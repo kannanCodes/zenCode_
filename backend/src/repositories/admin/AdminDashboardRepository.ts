@@ -7,6 +7,7 @@ import { Submission, SubmissionStatus } from '../../infrastructure/database/mode
 import { UserRole } from '../../shared/constants/roles';
 import { MentorSessionStatus } from '../../constants/session-status';
 import { BookingStatus } from '../../constants/booking-status';
+import mongoose from 'mongoose';
 import { IAdminDashboardRepository } from '../../interfaces/repository-interfaces/admin/IAdminDashboardRepository';
 import {
   AdminDashboardStatsDto,
@@ -38,6 +39,7 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
       totalSubmissions,
       acceptedSubmissions,
       subscriptionAgg,
+      revenueAgg,
     ] = await Promise.all([
       // Users
       User.countDocuments({}),
@@ -61,7 +63,7 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
       Submission.countDocuments({}),
       Submission.countDocuments({ status: SubmissionStatus.ACCEPTED }),
 
-      // Subscription stats + revenue via join with Plan
+      // Subscription stats via join with Plan
       Subscription.aggregate([
         {
           $lookup: {
@@ -75,7 +77,6 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
         {
           $group: {
             _id: null,
-            totalRevenue: { $sum: '$plan.price' },
             activeCount: {
               $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] },
             },
@@ -97,46 +98,40 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
                 ],
               },
             },
+          },
+        },
+      ]),
+
+      // Revenue from PaymentTransaction
+      mongoose.model('PaymentTransaction').aggregate([
+        { $match: { status: 'succeeded' } },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: '$amount' },
             monthlyRevenue: {
               $sum: {
                 $cond: [
-                  {
-                    $and: [
-                      { $eq: ['$status', 'active'] },
-                      { $eq: ['$plan.billingCycle', 'monthly'] },
-                    ],
-                  },
-                  '$plan.price',
-                  0,
-                ],
-              },
-            },
-            yearlyRevenue: {
-              $sum: {
-                $cond: [
-                  {
-                    $and: [
-                      { $eq: ['$status', 'active'] },
-                      { $eq: ['$plan.billingCycle', 'yearly'] },
-                    ],
-                  },
-                  '$plan.price',
-                  0,
-                ],
-              },
-            },
-          },
-        },
+                  { $gte: ['$createdAt', new Date(now.getFullYear(), now.getMonth(), 1)] },
+                  '$amount',
+                  0
+                ]
+              }
+            }
+          }
+        }
       ]),
     ]);
 
     const subStats = subscriptionAgg[0] ?? {
-      totalRevenue: 0,
       activeCount: 0,
       monthlyCount: 0,
       yearlyCount: 0,
+    };
+
+    const revStats = revenueAgg[0] ?? {
+      totalRevenue: 0,
       monthlyRevenue: 0,
-      yearlyRevenue: 0,
     };
 
     const acceptanceRate =
@@ -146,7 +141,7 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
 
     const avgRevenuePerUser =
       subStats.activeCount > 0
-        ? Math.round((subStats.totalRevenue / subStats.activeCount) * 100) / 100
+        ? Math.round((revStats.totalRevenue / subStats.activeCount) * 100) / 100
         : 0;
 
     return {
@@ -156,10 +151,10 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
       activeSubscriptions: subStats.activeCount,
       monthlySubscriptions: subStats.monthlyCount,
       yearlySubscriptions: subStats.yearlyCount,
-      totalRevenue: subStats.totalRevenue,
-      monthlyRevenue: subStats.monthlyRevenue,
-      yearlyRevenue: subStats.yearlyRevenue,
-      avgRevenuePerUser,
+      totalRevenue: revStats.totalRevenue,
+      monthlyRevenue: revStats.monthlyRevenue,
+      yearlyRevenue: revStats.totalRevenue - revStats.monthlyRevenue,
+      avgRevenuePerUser: totalCandidates > 0 ? Math.round(revStats.totalRevenue / totalCandidates) : 0,
       totalSessions,
       completedSessions,
       cancelledSessions,

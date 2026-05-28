@@ -15,6 +15,7 @@ import UserManagementPage from '../features/admin/pages/UserManagementPage';
 import AdminDashboardPage from '../features/admin/pages/AdminDashboardPage';
 import SessionMonitoringPage from '../features/admin/pages/SessionMonitoringPage';
 import SessionDetailsPage from '../features/admin/pages/SessionDetailsPage';
+import RevenueMonitoringPage from '../features/admin/pages/RevenueMonitoringPage';
 import MentorLoginPage from '../features/mentor/pages/MentorLoginPage';
 import MentorActivationPage from '../features/mentor/pages/MentorActivationPage';
 import MentorSuccessPage from '../features/mentor/pages/MentorSuccessPage';
@@ -44,8 +45,6 @@ import PaymentSuccessPage from '../features/subscription/pages/PaymentSuccessPag
 import PaymentCancelPage from '../features/subscription/pages/PaymentCancelPage';
 import ManageSubscriptionPage from '../features/subscription/pages/ManageSubscriptionPage';
 
-// Notification Page
-import NotificationsPage from '../features/notification/pages/NotificationsPage';
 
 const AppRoutes = () => {
   return (
@@ -65,8 +64,6 @@ const AppRoutes = () => {
       <Route path="/payment/cancel" element={<ProtectedRoute><PaymentCancelPage /></ProtectedRoute>} />
       <Route path="/subscription/manage" element={<ProtectedRoute><ManageSubscriptionPage /></ProtectedRoute>} />
 
-      {/* Notification Routes */}
-      <Route path="/notifications" element={<ProtectedRoute><><Navbar /><NotificationsPage /></></ProtectedRoute>} />
 
       {/* User Dashboard */}
       <Route
@@ -204,6 +201,14 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/admin/revenue"
+        element={
+          <ProtectedRoute redirectTo="/admin/login">
+            <RevenueMonitoringPage />
+          </ProtectedRoute>
+        }
+      />
       <Route 
         path="/admin/plan-management" 
         element={
@@ -230,7 +235,6 @@ const AppRoutes = () => {
         <Route path="availability" element={<MentorAvailabilityPage />} />
         <Route path="bookings" element={<MentorBookingsPage />} />
         <Route path="profile" element={<MentorProfilePage />} />
-        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
       
       {/* Mentor Session (Outside layout, full screen) */}
