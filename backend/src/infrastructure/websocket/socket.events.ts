@@ -32,3 +32,8 @@ export const COLLAB_EVENTS = {
   RUN_RESULT: 'collab:run-result',
   PROBLEM_CHANGED: 'collab:problem-changed',
 } as const;
+
+export const NOTIFICATION_EVENTS = {
+  NEW_NOTIFICATION: 'notification:new',
+  UNREAD_COUNT:     'notification:unread-count',
+} as const;
