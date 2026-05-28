@@ -11,6 +11,9 @@ import { cacheService, tokenService, emailService, passwordService, tokenLifecyc
 import { stripeService, planRepository } from "./payment.container";
 import { PlanService } from "../../services/admin/PlanService";
 import { AdminPlanController } from "../../controllers/admin/AdminPlanController";
+import { AdminDashboardRepository } from "../../repositories/admin/AdminDashboardRepository";
+import { AdminDashboardService } from "../../services/admin/AdminDashboardService";
+import { AdminDashboardController } from "../../controllers/admin/AdminDashboardController";
 import { IAdminAuthService } from "../../interfaces/service-interfaces/admin/IAdminAuthService";
 
 // ── Repositories ───────────────────────────────────────────────────────────────
@@ -38,6 +41,11 @@ export const planService = new PlanService(
   planRepository,
   stripeService
 );
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+export const adminDashboardRepository = new AdminDashboardRepository();
+export const adminDashboardService = new AdminDashboardService(adminDashboardRepository);
+export const adminDashboardController = new AdminDashboardController(adminDashboardService);
 
 // ── Controller ─────────────────────────────────────────────────────────────────
 export const adminAuthController = new AdminAuthController(adminAuthService);
