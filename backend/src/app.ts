@@ -28,6 +28,7 @@ import { webhookController } from './shared/di/payment.container';
 import { appConfig } from './config/appConfig';
 import adminDashboardRoutes from './routes/admin/admin-dashboard.routes';
 import adminSessionRoutes from './routes/admin/admin-session.routes';
+import adminRevenueRoutes from './routes/admin/admin-revenue.routes';
 export const app = express();
 
 app.use(cors({
@@ -53,6 +54,7 @@ app.use('/api/admin', adminUserRoutes);
 app.use('/api/admin', adminMentorRoutes);
 app.use('/api/admin', adminDashboardRoutes);
 app.use('/api/admin', adminSessionRoutes);
+app.use('/api/admin/revenue', adminRevenueRoutes);
 app.use('/api/plans', adminPlanRoutes);
 app.use('/api/mentor/auth', mentorAuthRoutes);
 app.use('/api/mentor/availability', mentorAvailabilityRoutes);
