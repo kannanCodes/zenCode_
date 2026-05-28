@@ -42,6 +42,26 @@ router.get(
 );
 
 /**
+ * mentor dashboard stats
+ */
+router.get(
+  "/stats",
+  authMiddleware,
+  roleGuard(UserRole.MENTOR),
+  mentorBookingController.getDashboardStats
+);
+
+/**
+ * mentor upcoming bookings (next N confirmed)
+ */
+router.get(
+  "/upcoming",
+  authMiddleware,
+  roleGuard(UserRole.MENTOR),
+  mentorBookingController.getUpcomingBookings
+);
+
+/**
  * cancel booking
  */
 router.patch(
