@@ -17,6 +17,9 @@ import { AdminDashboardController } from "../../controllers/admin/AdminDashboard
 import { AdminSessionRepository } from "../../repositories/admin/AdminSessionRepository";
 import { AdminSessionService } from "../../services/admin/AdminSessionService";
 import { AdminSessionController } from "../../controllers/admin/AdminSessionController";
+import { AdminRevenueRepository } from "../../repositories/admin/AdminRevenueRepository";
+import { AdminRevenueService } from "../../services/admin/AdminRevenueService";
+import { AdminRevenueController } from "../../controllers/admin/AdminRevenueController";
 import { IAdminAuthService } from "../../interfaces/service-interfaces/admin/IAdminAuthService";
 
 // ── Repositories ───────────────────────────────────────────────────────────────
@@ -54,6 +57,11 @@ export const adminDashboardController = new AdminDashboardController(adminDashbo
 export const adminSessionRepository = new AdminSessionRepository();
 export const adminSessionService = new AdminSessionService(adminSessionRepository);
 export const adminSessionController = new AdminSessionController(adminSessionService);
+
+// ── Revenue ──────────────────────────────────────────────────────────────────
+export const adminRevenueRepository = new AdminRevenueRepository();
+export const adminRevenueService = new AdminRevenueService(adminRevenueRepository);
+export const adminRevenueController = new AdminRevenueController(adminRevenueService);
 
 // ── Controller ─────────────────────────────────────────────────────────────────
 export const adminAuthController = new AdminAuthController(adminAuthService);
