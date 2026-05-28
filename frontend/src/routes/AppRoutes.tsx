@@ -23,6 +23,7 @@ import MentorProfilePage from '../features/mentor/pages/MentorProfilePage';
 import AdminProblemListPage from '../features/admin/pages/ProblemListPage';
 import ProblemFormPage from '../features/admin/pages/ProblemForm';
 import PlanManagementPage from '../features/admin/pages/PlanManagementPage';
+import Navbar from '../shared/components/Navbar';
 
 // Candidate Mentoring Pages
 import MentorsListPage from '../features/candidate/pages/MentorsListPage';
@@ -38,6 +39,9 @@ import PlansPage from '../features/subscription/pages/PlansPage';
 import PaymentSuccessPage from '../features/subscription/pages/PaymentSuccessPage';
 import PaymentCancelPage from '../features/subscription/pages/PaymentCancelPage';
 import ManageSubscriptionPage from '../features/subscription/pages/ManageSubscriptionPage';
+
+// Notification Page
+import NotificationsPage from '../features/notification/pages/NotificationsPage';
 
 const AppRoutes = () => {
   return (
@@ -56,6 +60,9 @@ const AppRoutes = () => {
       <Route path="/payment/success" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
       <Route path="/payment/cancel" element={<ProtectedRoute><PaymentCancelPage /></ProtectedRoute>} />
       <Route path="/subscription/manage" element={<ProtectedRoute><ManageSubscriptionPage /></ProtectedRoute>} />
+
+      {/* Notification Routes */}
+      <Route path="/notifications" element={<ProtectedRoute><><Navbar /><NotificationsPage /></></ProtectedRoute>} />
 
       {/* User Dashboard */}
       <Route
@@ -201,6 +208,7 @@ const AppRoutes = () => {
         <Route path="availability" element={<MentorAvailabilityPage />} />
         <Route path="bookings" element={<MentorBookingsPage />} />
         <Route path="profile" element={<MentorProfilePage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
       
       {/* Mentor Session (Outside layout, full screen) */}

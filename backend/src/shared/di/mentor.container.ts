@@ -23,6 +23,8 @@ import { cacheService, tokenService, passwordService, tokenLifecycleRepository, 
 import { MentorSessionCronJobs } from "../../infrastructure/cron/mentor-session.cron";
 import { problemRepository } from "./problem.container";
 import { subscriptionService } from "./payment.container";
+import { notificationService } from "./notification.container";
+import { authRepository } from "./auth.container";
 
 // ── Repositories ───────────────────────────────────────────────────────────────
 export const mentorAuthRepository = new MentorAuthRepository();
@@ -52,7 +54,9 @@ export const mentorSlotService = new MentorSlotService(
 
 export const mentorBookingService = new MentorBookingService(
   mentorBookingRepository,
-  mentorSlotService
+  mentorSlotService,
+  notificationService,
+  authRepository
 );
 
 export const mentorSessionService = new MentorSessionService(

@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import subscriptionReducer from './slices/subscriptionSlice';
+import notificationReducer from './slices/notificationSlice';
 
 export const store = configureStore({
   reducer: {
-    subscription: subscriptionReducer,
+    subscription:  subscriptionReducer,
+    notifications: notificationReducer,
   },
 });
 

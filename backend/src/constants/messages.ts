@@ -246,3 +246,11 @@ export const VALIDATION_MESSAGES = {
   PROBLEM_TAG_REQUIRED: 'At least one problem tag is required',
   PROBLEM_ID_REQUIRED: 'Problem ID is required',
 };
+
+export const NOTIFICATION_MESSAGES = {
+  FETCHED: 'Notifications fetched successfully',
+  MARKED_READ: 'Notification marked as read',
+  MARKED_ALL_READ: 'All notifications marked as read',
+  NOT_FOUND: 'Notification not found',
+  UNREAD_COUNT_FETCHED: 'Unread count fetched successfully',
+};
