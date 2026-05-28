@@ -4,6 +4,8 @@ import { ISubscriptionService } from '../../interfaces/service-interfaces/paymen
 import { IPlanRepository } from '../../interfaces/repository-interfaces/admin/IPlanRepository';
 import { logger } from '../../shared/utils/Logger';
 import { sendSuccess, sendError } from '../../shared/http/response';
+import { PaymentTransaction } from '../../infrastructure/database/models/payment-transaction.model';
+import User from '../../infrastructure/database/models/user.model';
 import { STATUS_CODES } from '../../shared/constants/status';
 import { GLOBAL_MESSAGES, PAYMENT_MESSAGES } from '../../constants/messages';
 import { 
@@ -124,12 +126,31 @@ export class WebhookController {
         case 'invoice.payment_failed': {
           const invoiceEvent = event as StripeInvoicePaymentFailedEvent;
           const invoice = invoiceEvent.data.object;
+
           if (invoice.subscription) {
             await this.subscriptionService.updateSubscriptionStatus(
               invoice.subscription as string,
               'past_due'
             );
             logger.warn(`⚠️ Payment failed for subscription: ${invoice.subscription}`);
+          }
+
+          // Log transaction
+          try {
+            const customerId = invoice.customer as string;
+            const user = await User.findOne({ stripeCustomerId: customerId });
+            if (user) {
+              await PaymentTransaction.create({
+                userId: user._id,
+                subscriptionId: invoice.subscription as string,
+                stripeInvoiceId: invoice.id,
+                amount: invoice.amount_due / 100, // Stripe uses cents
+                currency: invoice.currency || 'inr',
+                status: 'failed',
+              });
+            }
+          } catch (err) {
+            logger.error('❌ Failed to log payment transaction (failed):', err);
           }
           break;
         }
@@ -183,6 +204,30 @@ export class WebhookController {
               );
               logger.info(`✅ Subscription renewed: ${stripeSubscriptionId}`);
             }
+          }
+
+          // Log transaction
+          try {
+            const customerId = invoice.customer as string;
+            const user = await User.findOne({ stripeCustomerId: customerId });
+            
+            if (user) {
+              const line = invoice.lines.data[0] as unknown as { price?: { id?: string } };
+              const priceId = line.price?.id;
+              const plan = priceId ? await this.planRepo.findByStripePriceId(priceId) : null;
+
+              await PaymentTransaction.create({
+                userId: user._id,
+                subscriptionId: stripeSubscriptionId as string,
+                planId: plan?._id,
+                stripeInvoiceId: invoice.id,
+                amount: invoice.amount_paid / 100, // Stripe uses cents
+                currency: invoice.currency || 'inr',
+                status: 'succeeded',
+              });
+            }
+          } catch (err) {
+            logger.error('❌ Failed to log payment transaction (succeeded):', err);
           }
           break;
         }
