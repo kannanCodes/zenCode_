@@ -24,8 +24,12 @@ const AdminSidebar = () => {
 
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         <button
-          onClick={() => navigate('/admin/mentors')}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#1a1a1a] hover:text-white transition-colors"
+          onClick={() => navigate('/admin/dashboard')}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+            isActive('/admin/dashboard')
+              ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
+              : 'text-gray-400 hover:bg-[#1a1a1a] hover:text-white'
+          }`}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -50,7 +54,7 @@ const AdminSidebar = () => {
         <button
           onClick={() => navigate('/admin/mentors')}
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-            isActive('/admin/mentors') || isActive('/admin/dashboard')
+            isActive('/admin/mentors')
               ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
               : 'text-gray-400 hover:bg-[#1a1a1a] hover:text-white'
           }`}
