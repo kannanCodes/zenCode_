@@ -18,6 +18,7 @@ const MentorProfilePage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -123,6 +124,20 @@ const MentorProfilePage = () => {
   };
 
   const handleSaveProfile = async () => {
+    // Validation
+    const newErrors: Record<string, string> = {};
+    if (!fullName.trim()) newErrors.fullName = 'Full Name is required';
+    if (!title.trim()) newErrors.title = 'Title is required';
+    if (!bio.trim()) newErrors.bio = 'Bio is required';
+    if (expertise.length === 0) newErrors.expertise = 'At least one skill is required';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      showError('Please fix the validation errors');
+      return;
+    }
+    setErrors({});
+
     try {
       setIsSaving(true);
       const response = await mentorProfileApi.updateMyProfile({
@@ -223,10 +238,14 @@ const MentorProfilePage = () => {
                 <label className="block text-sm text-gray-400 mb-2">Full Name</label>
                 <input
                   value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
+                  onChange={(event) => {
+                    setFullName(event.target.value);
+                    if (errors.fullName) setErrors((e) => ({ ...e, fullName: '' }));
+                  }}
                   disabled={!isEditing}
-                  className="w-full h-11 rounded-lg bg-[#1a1d26] border border-[#2a2d3a] px-3 text-white focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-60"
+                  className={`w-full h-11 rounded-lg bg-[#1a1d26] border ${errors.fullName ? 'border-red-500/50' : 'border-[#2a2d3a]'} px-3 text-white focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-60`}
                 />
+                {errors.fullName && <p className="mt-1 text-xs text-red-400">{errors.fullName}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Experience Level</label>
@@ -247,21 +266,29 @@ const MentorProfilePage = () => {
               <label className="block text-sm text-gray-400 mb-2">Title</label>
               <input
                 value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                  if (errors.title) setErrors((e) => ({ ...e, title: '' }));
+                }}
                 disabled={!isEditing}
-                className="w-full h-11 rounded-lg bg-[#1a1d26] border border-[#2a2d3a] px-3 text-white focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-60"
+                className={`w-full h-11 rounded-lg bg-[#1a1d26] border ${errors.title ? 'border-red-500/50' : 'border-[#2a2d3a]'} px-3 text-white focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-60`}
               />
+              {errors.title && <p className="mt-1 text-xs text-red-400">{errors.title}</p>}
             </div>
 
             <div>
               <label className="block text-sm text-gray-400 mb-2">Bio</label>
               <textarea
                 value={bio}
-                onChange={(event) => setBio(event.target.value)}
+                onChange={(event) => {
+                  setBio(event.target.value);
+                  if (errors.bio) setErrors((e) => ({ ...e, bio: '' }));
+                }}
                 disabled={!isEditing}
                 rows={6}
-                className="w-full rounded-lg bg-[#1a1d26] border border-[#2a2d3a] px-3 py-3 text-white focus:outline-none focus:border-[var(--color-primary)] resize-y disabled:opacity-60"
+                className={`w-full rounded-lg bg-[#1a1d26] border ${errors.bio ? 'border-red-500/50' : 'border-[#2a2d3a]'} px-3 py-3 text-white focus:outline-none focus:border-[var(--color-primary)] resize-y disabled:opacity-60`}
               />
+              {errors.bio && <p className="mt-1 text-xs text-red-400">{errors.bio}</p>}
             </div>
 
             <div>
@@ -284,6 +311,7 @@ const MentorProfilePage = () => {
                   </button>
                 ))}
               </div>
+              {errors.expertise && <p className="mt-1 mb-3 text-xs text-red-400">{errors.expertise}</p>}
 
               {isEditing && (
                 <div className="flex gap-2">

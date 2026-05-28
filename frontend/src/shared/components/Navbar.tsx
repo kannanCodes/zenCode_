@@ -8,6 +8,9 @@ import {
   selectSubscription,
 } from '../../store/slices/subscriptionSlice';
 import { tokenService } from '../lib/token';
+import { notificationSocketManager } from '../lib/notificationSocket';
+import { clearNotifications } from '../../store/slices/notificationSlice';
+import NotificationBell from '../../features/notification/components/NotificationBell';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -51,6 +54,8 @@ const Navbar = () => {
     setDropdownOpen(false);
     tokenService.clear();
     dispatch(clearSubscription());
+    dispatch(clearNotifications());
+    notificationSocketManager.disconnect();
     navigate('/login');
   };
 
@@ -135,6 +140,9 @@ const Navbar = () => {
                   </Link>
                 )
               )}
+
+              {/* Notification Bell */}
+              <NotificationBell />
 
               {/* User Menu */}
               <div className="relative" ref={dropdownRef}>
