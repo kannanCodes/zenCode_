@@ -4,6 +4,7 @@ import { AppError } from "../../shared/utils/AppError";
 import { STATUS_CODES } from "../../shared/constants/status";
 import { AUTH_MESSAGES } from "../../constants/messages";
 import { EXPIRY_TIMES } from "../../shared/utils/expiry.util";
+import { BookingConfirmationEmailData, BookingCancelledEmailData } from "../../dtos/notification/booking-email.dto";
 
 export class EmailService implements IEmailService {
   private _transporter: Transporter;
@@ -87,6 +88,76 @@ export class EmailService implements IEmailService {
             <p>If you didn't request a password reset, please ignore this email.</p>
             <hr style="margin:20px 0;">
             <p style="color:#666;font-size:12px;">zenCode - Real-time Coding Interview Platform</p>
+          </div>`,
+      });
+    } catch {
+      throw new AppError(AUTH_MESSAGES.EMAIL_SEND_FAILED, STATUS_CODES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async sendBookingConfirmation(data: BookingConfirmationEmailData): Promise<void> {
+    const startFormatted = data.startTime.toLocaleString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+    });
+    const endFormatted = data.endTime.toLocaleString('en-US', {
+      hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+    });
+
+    try {
+      await this._transporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: data.to,
+        subject: '✅ Your ZenCode Mentor Session is Confirmed!',
+        html: `
+          <div style="font-family:'JetBrains Mono',Consolas,'Courier New',monospace;padding:32px;max-width:600px;margin:0 auto;background:#0d0d0d;color:#e5e5e5;border-radius:12px;border:1px solid #1c1c1c;">
+            <h2 style="color:#4F46E5;margin-bottom:8px;">Session Confirmed 🎉</h2>
+            <p style="color:#999;margin-bottom:24px;">Hi ${data.recipientName}, your mentor session is booked and confirmed.</p>
+
+            <div style="background:#1a1a2e;border:1px solid #2d2d5a;border-radius:8px;padding:20px;margin-bottom:24px;">
+              <p style="margin:0 0 8px;color:#888;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Session Details</p>
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#888;">Mentor:</span> <strong style="color:#fff;">${data.mentorName}</strong></p>
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#888;">Candidate:</span> <strong style="color:#fff;">${data.candidateName}</strong></p>
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#888;">Time:</span> <strong style="color:#4F46E5;">${startFormatted} – ${endFormatted}</strong></p>
+            </div>
+
+            <p style="color:#999;font-size:13px;margin-bottom:0;">You will receive a session link when your mentor starts the session. Make sure to join on time!</p>
+            <hr style="margin:24px 0;border-color:#1c1c1c;">
+            <p style="color:#444;font-size:11px;">zenCode - Real-time Coding Interview Platform</p>
+          </div>`,
+      });
+    } catch {
+      throw new AppError(AUTH_MESSAGES.EMAIL_SEND_FAILED, STATUS_CODES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async sendBookingCancelled(data: BookingCancelledEmailData): Promise<void> {
+    const startFormatted = data.startTime.toLocaleString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+    });
+
+    try {
+      await this._transporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: data.to,
+        subject: '❌ ZenCode Mentor Session Cancelled',
+        html: `
+          <div style="font-family:'JetBrains Mono',Consolas,'Courier New',monospace;padding:32px;max-width:600px;margin:0 auto;background:#0d0d0d;color:#e5e5e5;border-radius:12px;border:1px solid #1c1c1c;">
+            <h2 style="color:#ef4444;margin-bottom:8px;">Session Cancelled</h2>
+            <p style="color:#999;margin-bottom:24px;">Hi ${data.recipientName}, your upcoming session has been cancelled.</p>
+
+            <div style="background:#1a0a0a;border:1px solid #5a2d2d;border-radius:8px;padding:20px;margin-bottom:24px;">
+              <p style="margin:0 0 8px;color:#888;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Cancelled Session</p>
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#888;">Mentor:</span> <strong style="color:#fff;">${data.mentorName}</strong></p>
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#888;">Candidate:</span> <strong style="color:#fff;">${data.candidateName}</strong></p>
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#888;">Originally scheduled:</span> <strong style="color:#ef4444;">${startFormatted}</strong></p>
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#888;">Cancelled by:</span> <strong style="color:#fff;">${data.cancelledByName}</strong></p>
+            </div>
+
+            <p style="color:#999;font-size:13px;margin-bottom:0;">You can book a new session anytime from your dashboard.</p>
+            <hr style="margin:24px 0;border-color:#1c1c1c;">
+            <p style="color:#444;font-size:11px;">zenCode - Real-time Coding Interview Platform</p>
           </div>`,
       });
     } catch {

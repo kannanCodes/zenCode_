@@ -1,8 +1,13 @@
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { tokenService } from '../../../shared/lib/token';
+import { notificationSocketManager } from '../../../shared/lib/notificationSocket';
+import { clearNotifications } from '../../../store/slices/notificationSlice';
+import type { AppDispatch } from '../../../store';
+import NotificationBell from '../../notification/components/NotificationBell';
 
-const MentorNavbar = () => {
+export const MentorNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -21,9 +26,13 @@ const MentorNavbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdownOpen]);
 
+  const dispatch = useDispatch<AppDispatch>();
+
   const handleLogout = () => {
     setDropdownOpen(false);
     tokenService.clear();
+    dispatch(clearNotifications());
+    notificationSocketManager.disconnect();
     navigate('/mentor/login');
   };
 
@@ -64,6 +73,9 @@ const MentorNavbar = () => {
           </div>
 
           <div className="h-6 w-px bg-[#272b3a] hidden md:block"></div>
+
+          {/* Notification Bell */}
+          <NotificationBell />
 
           {/* User Profile / Dropdown */}
           <div className="relative flex items-center gap-3" ref={dropdownRef}>

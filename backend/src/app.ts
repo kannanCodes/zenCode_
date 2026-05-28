@@ -23,6 +23,7 @@ import paymentRoutes from './routes/payments/payment.routes';
 import subscriptionRoutes from './routes/payments/subscription.routes';
 import submissionRoutes from './routes/problem/submission.routes';
 import messageRoutes from './routes/chat/message.routes';
+import notificationRoutes from './routes/notification/notification.routes';
 import { webhookController } from './shared/di/payment.container';
 import { appConfig } from './config/appConfig';
 export const app = express();
@@ -63,6 +64,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/health', (_req, res) => {
