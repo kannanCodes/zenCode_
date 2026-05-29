@@ -92,4 +92,51 @@ export class MentorAuthController {
       next(error);
     }
   }
+
+  async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email } = req.body;
+      await this._mentorAuthService.forgotPassword(email);
+
+      sendSuccess(res, {
+        statusCode: STATUS_CODES.OK,
+        message: AUTH_MESSAGES.PASSWORD_RESET_LINK_SENT,
+      });
+    } catch (error) {
+      // In a real application, you might want to return success even if the email is not found
+      // to prevent email enumeration. However, to match the requested error behavior:
+      next(error);
+    }
+  }
+
+  async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await this._mentorAuthService.resetPassword(req.body);
+
+      sendSuccess(res, {
+        statusCode: STATUS_CODES.OK,
+        message: AUTH_MESSAGES.PASSWORD_RESET_SUCCESS,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async validateResetToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { token } = req.query;
+
+      if (!token || typeof token !== 'string') {
+        throw new AppError(AUTH_MESSAGES.TOKEN_REQUIRED, STATUS_CODES.BAD_REQUEST);
+      }
+
+      const valid = await this._mentorAuthService.validateResetToken(token);
+      sendSuccess(res, {
+        statusCode: STATUS_CODES.OK,
+        data: { valid },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

@@ -34,7 +34,6 @@ export class CandidateMentorService implements ICandidateMentorService {
     }
 
     const mentorId = user.id || (user._id as unknown as { toString(): string })?.toString();
-    const stats = await this.mentorReviewRepository.calculateMentorStats(mentorId);
 
     return {
       id: mentorId,
@@ -49,8 +48,8 @@ export class CandidateMentorService implements ICandidateMentorService {
         nextAvailableSlot,
       },
       stats: {
-        totalSessions: stats.totalSessions,
-        rating: stats.rating || undefined,
+        totalSessions: user.totalReviews || 0, // Using total reviews as an indicator, or if we have another field for totalSessions we could use it
+        rating: user.averageRating || undefined,
       },
     };
   }
