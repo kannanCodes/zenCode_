@@ -37,4 +37,19 @@ export class MentorReviewController {
       next(error);
     }
   };
+
+  getReviewByBooking = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const studentId = (req as AuthenticatedRequest).user.id;
+      const { bookingId } = req.params as { bookingId: string };
+      const hasReviewed = await this.reviewService.hasStudentReviewedBooking(studentId, bookingId);
+
+      return sendSuccess(res, {
+        statusCode: STATUS_CODES.OK,
+        data: { hasReviewed },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

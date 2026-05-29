@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { mentorAuthController } from "../../shared/di/mentor.container";
 import { validateRequest } from "../../middlewares/validate.middleware";
-import { mentorLoginSchema, activateMentorSchema } from "../../validators/mentor/mentor-auth.validator";
+import { mentorLoginSchema, activateMentorSchema, mentorForgotPasswordSchema, mentorResetPasswordSchema } from "../../validators/mentor/mentor-auth.validator";
 
 const router = Router();
 
@@ -23,5 +23,22 @@ router.post(
 
 router.post("/refresh", mentorAuthController.refresh.bind(mentorAuthController));
 router.post("/logout", mentorAuthController.logout.bind(mentorAuthController));
+
+router.post(
+  "/forgot-password",
+  validateRequest(mentorForgotPasswordSchema),
+  mentorAuthController.forgotPassword.bind(mentorAuthController)
+);
+
+router.post(
+  "/reset-password",
+  validateRequest(mentorResetPasswordSchema),
+  mentorAuthController.resetPassword.bind(mentorAuthController)
+);
+
+router.get(
+  "/reset-password/validate",
+  mentorAuthController.validateResetToken.bind(mentorAuthController)
+);
 
 export default router;

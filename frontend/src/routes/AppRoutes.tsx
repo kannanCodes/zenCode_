@@ -19,6 +19,8 @@ import RevenueMonitoringPage from '../features/admin/pages/RevenueMonitoringPage
 import MentorLoginPage from '../features/mentor/pages/MentorLoginPage';
 import MentorActivationPage from '../features/mentor/pages/MentorActivationPage';
 import MentorSuccessPage from '../features/mentor/pages/MentorSuccessPage';
+import MentorForgotPasswordPage from '../features/mentor/pages/MentorForgotPasswordPage';
+import MentorResetPasswordPage from '../features/mentor/pages/MentorResetPasswordPage';
 import MentorLayout from '../features/mentor/components/MentorLayout';
 import MentorAvailabilityPage from '../features/mentor/pages/MentorAvailabilityPage';
 import MentorBookingsPage from '../features/mentor/pages/MentorBookingsPage';
@@ -220,6 +222,8 @@ const AppRoutes = () => {
 
       {/* Mentor Routes */}
       <Route path="/mentor/login" element={<MentorLoginPage />} />
+      <Route path="/mentor/forgot-password" element={<MentorForgotPasswordPage />} />
+      <Route path="/mentor/reset-password" element={<MentorResetPasswordPage />} />
       <Route path="/mentor/activate" element={<MentorActivationPage />} />
       <Route path="/mentor/activation-success" element={<MentorSuccessPage />} />
       
