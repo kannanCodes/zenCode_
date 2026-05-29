@@ -1,6 +1,5 @@
 import { ICacheService } from '../../interfaces/service-interfaces/auth/ICacheService';
 import { CacheService } from '../../infrastructure/cache/cache.service';
-import { InMemoryCacheService } from '../../infrastructure/cache/in-memory-cache.service';
 import { EmailService } from '../../infrastructure/email/email.service';
 import { TokenService } from '../../services/shared/TokenService';
 import { PasswordService } from '../../infrastructure/security/password.service';
@@ -10,9 +9,7 @@ import { IStorageService } from '../../interfaces/infrastructure-interfaces/stor
 import { S3StorageService } from '../../infrastructure/storage/s3-storage.service';
 
 // ── Shared utilities ───────────────────────────────────────────────────────────
-export const cacheService: ICacheService = process.env.NODE_ENV === 'test'
-  ? new InMemoryCacheService()
-  : new CacheService();
+export const cacheService: ICacheService = new CacheService();
 
 export const emailService = new EmailService();
 export const tokenLifecycleRepository: ITokenLifecycleRepository = new TokenLifecycleRepository(cacheService);

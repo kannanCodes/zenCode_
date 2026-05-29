@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { IAdminRevenueRepository } from '../../interfaces/repository-interfaces/admin/IAdminRevenueRepository';
 import {
   RevenueMetricsDto,
@@ -6,9 +7,9 @@ import {
   PaginatedPaymentsDto,
   RecentPaymentDto,
 } from '../../dtos/admin/admin-revenue.dto';
-import { PaymentTransaction } from '../../infrastructure/database/models/payment-transaction.model';
+import { PaymentTransaction, IPaymentTransaction } from '../../infrastructure/database/models/payment-transaction.model';
 import { Subscription } from '../../infrastructure/database/models/subscription.model';
-import Plan from '../../infrastructure/database/models/plan.model';
+import Plan, { IPlanDocument } from '../../infrastructure/database/models/plan.model';
 
 export class AdminRevenueRepository implements IAdminRevenueRepository {
   async getMetrics(): Promise<RevenueMetricsDto> {
@@ -105,11 +106,11 @@ export class AdminRevenueRepository implements IAdminRevenueRepository {
       revMap.set(r._id?.toString(), r.total);
     }
 
-    return plans.map((p: any) => ({
-      planId: p._id.toString(),
+    return plans.map((p: IPlanDocument) => ({
+      planId: p._id?.toString() || '',
       planName: p.name,
-      activeSubscribers: subCountMap.get(p._id.toString()) || 0,
-      totalRevenue: revMap.get(p._id.toString()) || 0,
+      activeSubscribers: subCountMap.get(p._id?.toString() || '') || 0,
+      totalRevenue: revMap.get(p._id?.toString() || '') || 0,
     }));
   }
 
@@ -127,8 +128,15 @@ export class AdminRevenueRepository implements IAdminRevenueRepository {
         .lean(),
     ]);
 
-    const payments: RecentPaymentDto[] = transactions.map((t: any) => ({
-      id: t._id.toString(),
+    type PopulatedTransaction = IPaymentTransaction & {
+      userId?: { _id?: Types.ObjectId; fullName?: string; email?: string };
+      planId?: { name?: string };
+    };
+
+    const populatedTransactions = transactions as unknown as PopulatedTransaction[];
+
+    const payments: RecentPaymentDto[] = populatedTransactions.map((t) => ({
+      id: t._id?.toString() || '',
       user: {
         id: t.userId?._id?.toString() || '',
         name: t.userId?.fullName || 'Unknown',

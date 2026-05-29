@@ -47,4 +47,104 @@ export class MentorBookingRepository extends BaseRepository<IMentorBooking> impl
       { new: true }
     ).exec();
   }
+
+  async getDashboardStats(mentorId: string) {
+    const mentorObjId = new Types.ObjectId(mentorId);
+    const now = new Date();
+
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(now);
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const [statsResult, activeStudentsResult] = await Promise.all([
+      this.model.aggregate([
+        { $match: { mentorId: mentorObjId } },
+        {
+          $group: {
+            _id: null,
+            totalSessions: {
+              $sum: {
+                $cond: [{ $ne: ['$status', 'cancelled'] }, 1, 0],
+              },
+            },
+            upcomingCount: {
+              $sum: {
+                $cond: [
+                  { $and: [{ $eq: ['$status', 'confirmed'] }, { $gt: ['$startTime', now] }] },
+                  1, 0,
+                ],
+              },
+            },
+            todayCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ['$status', 'confirmed'] },
+                      { $gte: ['$startTime', todayStart] },
+                      { $lte: ['$startTime', todayEnd] },
+                    ],
+                  },
+                  1, 0,
+                ],
+              },
+            },
+            completedCount: {
+              $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
+            },
+            finishedCount: {
+              $sum: {
+                $cond: [
+                  { $in: ['$status', ['completed', 'cancelled', 'no_show', 'expired']] },
+                  1, 0,
+                ],
+              },
+            },
+          },
+        },
+      ]),
+      this.model.distinct('studentId', {
+        mentorId: mentorObjId,
+        createdAt: { $gte: thirtyDaysAgo },
+      }),
+    ]);
+
+    const stats = statsResult[0] ?? {
+      totalSessions: 0,
+      upcomingCount: 0,
+      todayCount: 0,
+      completedCount: 0,
+      finishedCount: 0,
+    };
+
+    const completionRate =
+      stats.finishedCount > 0
+        ? Math.round((stats.completedCount / stats.finishedCount) * 100)
+        : 0;
+
+    return {
+      upcomingCount: stats.upcomingCount,
+      todayCount: stats.todayCount,
+      totalSessions: stats.totalSessions,
+      activeStudents: activeStudentsResult.length,
+      completionRate,
+    };
+  }
+
+  async getUpcomingBookings(mentorId: string, limit = 10): Promise<IMentorBooking[]> {
+    const now = new Date();
+    return this.model
+      .find({
+        mentorId: new Types.ObjectId(mentorId),
+        status: BookingStatus.CONFIRMED,
+        startTime: { $gt: now },
+      })
+      .sort({ startTime: 1 })
+      .limit(limit)
+      .populate('studentId', 'fullName email avatarUrl')
+      .exec();
+  }
 }
