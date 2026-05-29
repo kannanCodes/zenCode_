@@ -9,6 +9,6 @@ export interface ISubscriptionRepository {
   updateStatus(stripeSubId: string, status: string): Promise<ISubscriptionDocument | null>;
   updateById(id: string, data: Record<string, unknown>): Promise<ISubscriptionDocument | null>;
   renewSubscription(stripeSubId: string, newEndDate: Date): Promise<ISubscriptionDocument | null>;
-  updateByStripeId(stripeSubId: string, data: Record<string, any>): Promise<ISubscriptionDocument | null>;
+  updateByStripeId(stripeSubId: string, data: Record<string, unknown>): Promise<ISubscriptionDocument | null>;
   expireOldSubscriptions(): Promise<void>;
 }

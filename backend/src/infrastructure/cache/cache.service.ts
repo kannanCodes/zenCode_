@@ -19,6 +19,10 @@ export class CacheService implements ICacheService {
     return JSON.parse(data) as T;
   }
 
+  async ttl(key: string): Promise<number> {
+    return await redisClient.ttl(key);
+  }
+
   async del(key: string): Promise<void> {
     await redisClient.del(key);
   }

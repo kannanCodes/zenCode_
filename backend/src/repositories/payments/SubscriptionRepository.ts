@@ -51,7 +51,7 @@ export class SubscriptionRepository extends BaseRepository<ISubscriptionDocument
     );
   }
 
-  async updateByStripeId(stripeSubId: string, data: Record<string, any>): Promise<ISubscriptionDocument | null> {
+  async updateByStripeId(stripeSubId: string, data: Record<string, unknown>): Promise<ISubscriptionDocument | null> {
     return this.updateOne(
       { stripeSubscriptionId: stripeSubId },
       data
