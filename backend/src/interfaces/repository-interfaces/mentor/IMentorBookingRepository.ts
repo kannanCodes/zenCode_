@@ -7,4 +7,12 @@ export interface IMentorBookingRepository extends BaseRepository<IMentorBooking>
   getStudentBookings(studentId: string): Promise<IMentorBooking[]>;
   getMentorBookings(mentorId: string): Promise<IMentorBooking[]>;
   cancelBooking(bookingId: string, userId: string, reason?: string): Promise<IMentorBooking | null>;
+  getDashboardStats(mentorId: string): Promise<{
+    upcomingCount: number;
+    todayCount: number;
+    totalSessions: number;
+    activeStudents: number;
+    completionRate: number;
+  }>;
+  getUpcomingBookings(mentorId: string, limit?: number): Promise<IMentorBooking[]>;
 }

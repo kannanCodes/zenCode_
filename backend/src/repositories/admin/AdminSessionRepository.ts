@@ -1,6 +1,13 @@
 import { Types } from 'mongoose';
-import { MentorSession } from '../../infrastructure/database/models/mentor-session.model';
+import { MentorSession, IMentorSession, ConnectionEvent } from '../../infrastructure/database/models/mentor-session.model';
 import { IAdminSessionRepository } from '../../interfaces/repository-interfaces/admin/IAdminSessionRepository';
+
+type PopulatedMentorSession = Omit<IMentorSession, 'studentId' | 'mentorId' | 'problemId'> & {
+  _id: Types.ObjectId;
+  studentId?: { _id: Types.ObjectId; fullName: string; email: string };
+  mentorId?: { _id: Types.ObjectId; fullName: string; email: string };
+  problemId?: { _id: Types.ObjectId; title: string };
+};
 import {
   AdminSessionQueryDto,
   AdminSessionPaginatedResponse,
@@ -15,7 +22,7 @@ export class AdminSessionRepository implements IAdminSessionRepository {
     const limit = Math.max(1, Math.min(100, query.limit || 10));
     const skip = (page - 1) * limit;
 
-    const filter: Record<string, any> = {};
+    const filter: Record<string, unknown> = {};
 
     if (query.status && query.status !== 'ALL') {
       filter.status = query.status;
@@ -40,7 +47,7 @@ export class AdminSessionRepository implements IAdminSessionRepository {
         .lean(),
     ]);
 
-    const mappedSessions: AdminSessionListDto[] = sessions.map((session: any) => ({
+    const mappedSessions: AdminSessionListDto[] = (sessions as unknown as PopulatedMentorSession[]).map((session) => ({
       id: session._id.toString(),
       roomId: session.roomId,
       candidateName: session.studentId?.fullName || 'Unknown',
@@ -62,7 +69,7 @@ export class AdminSessionRepository implements IAdminSessionRepository {
   async getSessionDetails(id: string): Promise<AdminSessionDetailsDto | null> {
     if (!Types.ObjectId.isValid(id)) return null;
 
-    const session: any = await MentorSession.findById(id)
+    const session = await MentorSession.findById(id)
       .populate('studentId', 'fullName email')
       .populate('mentorId', 'fullName email')
       .populate('problemId', 'title')
@@ -70,16 +77,18 @@ export class AdminSessionRepository implements IAdminSessionRepository {
 
     if (!session) return null;
 
+    const populatedSession = session as unknown as PopulatedMentorSession;
+
     const candidate = {
-      id: session.studentId?._id?.toString() || '',
-      name: session.studentId?.fullName || 'Unknown',
-      email: session.studentId?.email || '',
+      id: populatedSession.studentId?._id?.toString() || '',
+      name: populatedSession.studentId?.fullName || 'Unknown',
+      email: populatedSession.studentId?.email || '',
     };
 
     const mentor = {
-      id: session.mentorId?._id?.toString() || '',
-      name: session.mentorId?.fullName || 'Unknown',
-      email: session.mentorId?.email || '',
+      id: populatedSession.mentorId?._id?.toString() || '',
+      name: populatedSession.mentorId?.fullName || 'Unknown',
+      email: populatedSession.mentorId?.email || '',
     };
 
     const timeline: AdminSessionTimelineEventDto[] = [];
@@ -92,49 +101,49 @@ export class AdminSessionRepository implements IAdminSessionRepository {
       description: 'Session Scheduled',
     });
 
-    if (session.studentJoinedAt) {
+    if (populatedSession.studentJoinedAt) {
       timeline.push({
-        id: `c-join-${session._id}`,
+        id: `c-join-${populatedSession._id}`,
         type: 'candidate_joined',
-        timestamp: session.studentJoinedAt.toISOString(),
+        timestamp: populatedSession.studentJoinedAt.toISOString(),
         actor: candidate.name,
         description: 'Candidate joined',
       });
     }
 
-    if (session.mentorJoinedAt) {
+    if (populatedSession.mentorJoinedAt) {
       timeline.push({
-        id: `m-join-${session._id}`,
+        id: `m-join-${populatedSession._id}`,
         type: 'mentor_joined',
-        timestamp: session.mentorJoinedAt.toISOString(),
+        timestamp: populatedSession.mentorJoinedAt.toISOString(),
         actor: mentor.name,
         description: 'Mentor joined',
       });
     }
 
-    if (session.startedAt) {
+    if (populatedSession.startedAt) {
       timeline.push({
-        id: `start-${session._id}`,
+        id: `start-${populatedSession._id}`,
         type: 'started',
-        timestamp: session.startedAt.toISOString(),
+        timestamp: populatedSession.startedAt.toISOString(),
         actor: 'System',
         description: 'Session Started',
       });
     }
 
-    if (session.endedAt) {
+    if (populatedSession.endedAt) {
       timeline.push({
-        id: `end-${session._id}`,
+        id: `end-${populatedSession._id}`,
         type: 'ended',
-        timestamp: session.endedAt.toISOString(),
+        timestamp: populatedSession.endedAt.toISOString(),
         actor: 'System',
         description: 'Session Ended',
       });
     }
 
     // Process connection events
-    if (Array.isArray(session.connectionEvents)) {
-      session.connectionEvents.forEach((ev: any, index: number) => {
+    if (Array.isArray(populatedSession.connectionEvents)) {
+      populatedSession.connectionEvents.forEach((ev: ConnectionEvent, index: number) => {
         if (ev.type !== 'heartbeat') {
           let actor = 'System';
           if (ev.userId === candidate.id) actor = candidate.name;
@@ -152,7 +161,7 @@ export class AdminSessionRepository implements IAdminSessionRepository {
           }
 
           timeline.push({
-            id: `conn-${index}-${session._id}`,
+            id: `conn-${index}-${populatedSession._id}`,
             type,
             timestamp: ev.timestamp.toISOString(),
             actor,
@@ -165,26 +174,26 @@ export class AdminSessionRepository implements IAdminSessionRepository {
     timeline.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     let actualDurationMinutes = null;
-    if (session.startedAt && session.endedAt) {
-      const ms = new Date(session.endedAt).getTime() - new Date(session.startedAt).getTime();
+    if (populatedSession.startedAt && populatedSession.endedAt) {
+      const ms = new Date(populatedSession.endedAt).getTime() - new Date(populatedSession.startedAt).getTime();
       actualDurationMinutes = Math.round(ms / 60000);
     }
 
     return {
-      id: session._id.toString(),
-      roomId: session.roomId,
+      id: populatedSession._id.toString(),
+      roomId: populatedSession.roomId,
       candidate,
       mentor,
-      problem: session.problemId ? {
-        id: session.problemId._id.toString(),
-        title: session.problemId.title,
+      problem: populatedSession.problemId ? {
+        id: populatedSession.problemId._id.toString(),
+        title: populatedSession.problemId.title,
       } : null,
-      status: session.status,
+      status: populatedSession.status,
       timing: {
-        scheduledStart: session.scheduledStart.toISOString(),
-        scheduledEnd: session.scheduledEnd.toISOString(),
-        startedAt: session.startedAt ? session.startedAt.toISOString() : null,
-        endedAt: session.endedAt ? session.endedAt.toISOString() : null,
+        scheduledStart: populatedSession.scheduledStart.toISOString(),
+        scheduledEnd: populatedSession.scheduledEnd.toISOString(),
+        startedAt: populatedSession.startedAt ? populatedSession.startedAt.toISOString() : null,
+        endedAt: populatedSession.endedAt ? populatedSession.endedAt.toISOString() : null,
         actualDurationMinutes,
       },
       timeline,
