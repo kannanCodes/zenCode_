@@ -12,6 +12,7 @@ import ConsoleOutput from '../components/ConsoleOutput';
 import TestResultPanel from '../components/TestResultPanel';
 import axios from 'axios';
 import { submissionService } from '../services/submission.service';
+import AiHintPanel from '../components/AiHintPanel';
 
 
 
@@ -51,6 +52,7 @@ const ProblemDetailPage = () => {
   const [executionError, setExecutionError] = useState<string>('');
   const [activeBottomTab, setActiveBottomTab] = useState<'testcases' | 'results' | 'console'>('testcases');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showHintPanel, setShowHintPanel] = useState(false);
 
   // Compute available languages dynamically for render
   const availableLanguages = problem
@@ -326,15 +328,29 @@ const ProblemDetailPage = () => {
 
           {/* AI Hint Button */}
           <button
-            className="h-9 px-3 rounded-lg border border-[#2a2d3a] text-gray-400 hover:text-white hover:border-gray-500 transition-all"
+            onClick={() => setShowHintPanel(v => !v)}
+            className={`h-9 px-3 rounded-lg border transition-all flex items-center justify-center ${
+              showHintPanel
+                ? 'border-[#2d5fff] bg-[#2d5fff]/10 text-[#2d5fff] drop-shadow-[0_0_8px_rgba(45,95,255,0.2)]'
+                : 'border-[#2a2d3a] text-gray-400 hover:text-gray-200 hover:border-gray-500'
+            }`}
             title="Get AI Hint"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a3 3 0 0 1 3 3v1h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v1a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-1H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h1v-1a3 3 0 0 1 3-3h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2zm0 6H9a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-3zm-2.5 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM14 14v2h-4v-2h4z" />
             </svg>
           </button>
         </div>
       </div>
+
+      {/* AI Hint Panel */}
+      {showHintPanel && id && (
+        <AiHintPanel problemId={id} onClose={() => setShowHintPanel(false)} />
+      )}
 
       {/* Main Content with Resizable Panels */}
       <div className="flex-1 overflow-hidden">

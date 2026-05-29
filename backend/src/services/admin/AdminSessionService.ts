@@ -7,6 +7,7 @@ import {
 } from '../../dtos/admin/admin-session.dto';
 import { AppError } from '../../shared/utils/AppError';
 import { STATUS_CODES } from '../../shared/constants/status';
+import { BOOKING_MESSAGES } from '../../constants/messages';
 
 export class AdminSessionService implements IAdminSessionService {
   constructor(private readonly _sessionRepo: IAdminSessionRepository) {}
@@ -18,7 +19,7 @@ export class AdminSessionService implements IAdminSessionService {
   async getSessionDetails(id: string): Promise<AdminSessionDetailsDto> {
     const session = await this._sessionRepo.getSessionDetails(id);
     if (!session) {
-      throw new AppError('Session not found', STATUS_CODES.NOT_FOUND);
+      throw new AppError(BOOKING_MESSAGES.SESSION_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
     return session;
   }

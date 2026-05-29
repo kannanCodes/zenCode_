@@ -188,10 +188,11 @@ export const SLOT_MESSAGES = {
 export const BOOKING_MESSAGES = {
   PAST_SLOT: 'Cannot book past slots',
   INVALID_SLOT: 'Invalid slot selected',
-  ALREADY_BOOKED: 'This slot is already booked',
+  ALREADY_BOOKED: 'Slot is already booked',
   NOT_FOUND: 'Booking not found',
-  ALREADY_CANCELLED: 'Booking already cancelled',
   CANCELLATION_WINDOW_CLOSED: 'Cannot cancel within 2 hours of session',
+  ALREADY_CANCELLED: 'Booking is already cancelled',
+  SESSION_NOT_FOUND: 'Session not found',
   CREATED: 'Booking created successfully',
   FETCHED: 'Bookings fetched successfully',
   MENTOR_FETCHED: 'Mentor bookings fetched successfully',
