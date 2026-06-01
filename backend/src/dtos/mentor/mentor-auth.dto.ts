@@ -12,3 +12,13 @@ export interface MentorLoginInput {
 export interface MentorLoginResponse {
   accessToken: string;
 }
+
+export interface MentorForgotPasswordInput {
+  email: string;
+}
+
+export interface MentorResetPasswordInput {
+  token: string;
+  password: string;
+  confirmPassword: string;
+}

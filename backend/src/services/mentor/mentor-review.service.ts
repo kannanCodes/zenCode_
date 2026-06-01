@@ -26,8 +26,8 @@ export class MentorReviewService implements IMentorReviewService {
       throw new AppError(REVIEW_MESSAGES.UNAUTHORIZED_BOOKING, STATUS_CODES.FORBIDDEN);
     }
 
-    if (booking.status === BookingStatus.CANCELLED || booking.status === BookingStatus.NO_SHOW) {
-      throw new AppError(REVIEW_MESSAGES.CANNOT_REVIEW_CANCELLED_OR_NO_SHOW, STATUS_CODES.BAD_REQUEST);
+    if (booking.status !== BookingStatus.COMPLETED) {
+      throw new AppError('You can only review completed sessions', STATUS_CODES.BAD_REQUEST);
     }
 
     if (booking.endTime > new Date()) {
@@ -39,22 +39,14 @@ export class MentorReviewService implements IMentorReviewService {
       throw new AppError(REVIEW_MESSAGES.ALREADY_REVIEWED, STATUS_CODES.CONFLICT);
     }
 
-    const review = await this.reviewRepo.create({
-      bookingId: new Types.ObjectId(data.bookingId) as unknown as Types.ObjectId,
-      mentorId: booking.mentorId,
-      studentId: new Types.ObjectId(studentId) as unknown as Types.ObjectId,
-      rating: data.rating,
-      feedback: data.feedback,
-      isPublic: data.isPublic !== false,
-    });
-
-    // Mark the booking as COMPLETED if it isn't already
-    if (booking.status !== BookingStatus.COMPLETED) {
-      await this.bookingRepo.updateOne(
-        { _id: booking._id },
-        { status: BookingStatus.COMPLETED }
-      );
-    }
+    // Call atomic repository method
+    const review = await this.reviewRepo.createReviewAndUpdateRating(
+      studentId,
+      data.bookingId,
+      booking.mentorId.toString(),
+      data.rating,
+      data.feedback || ''
+    );
 
     return review;
   }
@@ -73,5 +65,12 @@ export class MentorReviewService implements IMentorReviewService {
         createdAt: r.createdAt.toISOString(),
       };
     });
+  }
+
+  async hasStudentReviewedBooking(studentId: string, bookingId: string): Promise<boolean> {
+    const existing = await this.reviewRepo.getReviewByBookingId(bookingId);
+    if (!existing) return false;
+    // Verify the review belongs to this student (guard against IDs from other students)
+    return existing.studentId.toString() === studentId;
   }
 }

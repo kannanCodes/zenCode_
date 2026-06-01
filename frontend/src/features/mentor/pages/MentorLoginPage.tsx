@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -118,6 +118,14 @@ const MentorLoginPage = () => {
               {errors.password && (
                 <span className="text-red-500 text-sm">{errors.password.message}</span>
               )}
+              <div className="flex justify-end">
+                <Link
+                  to="/mentor/forgot-password"
+                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
 
             {/* Login Button */}

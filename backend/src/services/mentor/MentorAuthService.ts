@@ -3,7 +3,7 @@ import { IMentorAuthRepository } from "../../interfaces/repository-interfaces/me
 import { IAdminMentorRepository } from "../../interfaces/repository-interfaces/admin/IAdminMentorRepository";
 import { ICacheService } from "../../interfaces/service-interfaces/auth/ICacheService";
 import { ITokenService } from "../../interfaces/service-interfaces/auth/ITokenService";
-import { ActivateMentorInput, MentorLoginInput } from "../../dtos/mentor/mentor-auth.dto";
+import { ActivateMentorInput, MentorLoginInput, MentorResetPasswordInput } from "../../dtos/mentor/mentor-auth.dto";
 import { AppError } from "../../shared/utils/AppError";
 import { STATUS_CODES } from "../../shared/constants/status";
 import { AUTH_MESSAGES, MENTOR_MESSAGES } from "../../constants/messages";
@@ -13,6 +13,11 @@ import { parseExpiryToSeconds } from "../../shared/utils/expiry.util";
 import { REFRESH_TOKEN_EXPIRY } from "../../constants/token.constants";
 import { UserRole } from "../../shared/constants/roles";
 import { ITokenLifecycleRepository } from "../../interfaces/repository-interfaces/auth/ITokenLifecycleRepository";
+import { IEmailService } from "../../interfaces/service-interfaces/auth/IEmailService";
+import crypto from 'crypto';
+import { EXPIRY_TIMES } from "../../shared/utils/expiry.util";
+import { appConfig } from "../../config/appConfig";
+import { FRONTEND_ROUTES } from "../../shared/constants/frontend-routes";
 
 export class MentorAuthService implements IMentorAuthService {
   constructor(
@@ -21,7 +26,8 @@ export class MentorAuthService implements IMentorAuthService {
     private readonly _cacheService: ICacheService,
     private readonly _tokenService: ITokenService,
     private readonly _passwordService: IPasswordService,
-    private readonly _tokenLifecycleRepository: ITokenLifecycleRepository
+    private readonly _tokenLifecycleRepository: ITokenLifecycleRepository,
+    private readonly _emailService: IEmailService
   ) {}
 
   async activateMentor(input: ActivateMentorInput): Promise<void> {
@@ -151,5 +157,73 @@ export class MentorAuthService implements IMentorAuthService {
     } catch {
       return;
     }
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const mentor = await this._mentorAuthRepository.findMentorByEmail(email);
+
+    if (!mentor) {
+      throw new AppError(AUTH_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
+    }
+
+    if (mentor.isBlocked) {
+      throw new AppError(AUTH_MESSAGES.USER_BLOCKED, STATUS_CODES.FORBIDDEN);
+    }
+
+    if (!mentor.isEmailVerified) {
+      throw new AppError(MENTOR_MESSAGES.NOT_ACTIVATED, STATUS_CODES.FORBIDDEN);
+    }
+
+    if (mentor.mentorStatus !== 'ACTIVE') {
+      throw new AppError(MENTOR_MESSAGES.ACCOUNT_DISABLED, STATUS_CODES.FORBIDDEN);
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    await this._tokenLifecycleRepository.issuePasswordResetToken({
+      hashedToken,
+      userId: mentor.id,
+      ttlSeconds: EXPIRY_TIMES.PASSWORD_RESET.SECONDS,
+    });
+
+    // MENTOR_RESET_PASSWORD is a new constant we will add
+    const resetLink = `${appConfig.frontendUrl}${FRONTEND_ROUTES.MENTOR_RESET_PASSWORD}?token=${rawToken}`;
+    await this._emailService.sendPasswordResetLink(mentor.email, resetLink);
+  }
+
+  async resetPassword(input: MentorResetPasswordInput): Promise<void> {
+    const { token, password, confirmPassword } = input;
+
+    if (password !== confirmPassword) {
+      throw new AppError(AUTH_MESSAGES.PASSWORDS_DO_NOT_MATCH, STATUS_CODES.BAD_REQUEST);
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const userId = await this._tokenLifecycleRepository.getPasswordResetUserId(hashedToken);
+    const isTokenValid = await this._tokenLifecycleRepository.isPasswordResetTokenValid(hashedToken);
+
+    if (!userId || !isTokenValid) {
+      throw new AppError(AUTH_MESSAGES.INVALID_TOKEN, STATUS_CODES.BAD_REQUEST);
+    }
+
+    const mentor = await this._mentorAuthRepository.findById(userId);
+    if (!mentor) {
+      throw new AppError(AUTH_MESSAGES.INVALID_TOKEN, STATUS_CODES.BAD_REQUEST);
+    }
+    
+    if (mentor.isBlocked || !mentor.isEmailVerified || mentor.mentorStatus !== 'ACTIVE') {
+      throw new AppError(MENTOR_MESSAGES.INVALID_OPERATION, STATUS_CODES.FORBIDDEN);
+    }
+
+    const hashedPassword = await this._passwordService.hash(password);
+    await this._adminMentorRepository.activateMentor(userId, hashedPassword); // we can reuse activateMentor as it sets the password, or implement updatePassword
+    
+    await this._tokenLifecycleRepository.consumePasswordResetToken(hashedToken);
+  }
+
+  async validateResetToken(token: string): Promise<boolean> {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    return this._tokenLifecycleRepository.isPasswordResetTokenValid(hashedToken);
   }
 }

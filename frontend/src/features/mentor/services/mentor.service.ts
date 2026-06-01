@@ -29,4 +29,19 @@ export const mentorService = {
           const response = await api.post<LoginResponse>('/mentor/auth/login', data);
           return response.data.data;
      },
+
+     forgotPassword: async (data: { email: string }) => {
+          const response = await api.post('/mentor/auth/forgot-password', data);
+          return response.data;
+     },
+
+     resetPassword: async (data: any) => {
+          const response = await api.post('/mentor/auth/reset-password', data);
+          return response.data;
+     },
+
+     validateResetToken: async (token: string): Promise<boolean> => {
+          const response = await api.get(`/mentor/auth/reset-password/validate?token=${token}`);
+          return response.data.data.valid;
+     },
 };

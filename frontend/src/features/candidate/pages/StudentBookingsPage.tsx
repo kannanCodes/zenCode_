@@ -5,6 +5,7 @@ import { showError, showSuccess } from '../../../shared/utils/toast.util';
 import api from '../../../shared/lib/axios';
 import ReviewModal from '../../../shared/components/session/ReviewModal';
 import Navbar from '../../../shared/components/Navbar';
+import { mentorReviewApi } from '../services/review.service';
 
 interface Booking {
   _id: string;
@@ -67,6 +68,8 @@ const StudentBookingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  // Tracks which booking IDs have already been reviewed by this student
+  const [reviewedBookingIds, setReviewedBookingIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -79,7 +82,28 @@ const StudentBookingsPage = () => {
       try {
         const res = await candidateBookingApi.getMyBookings();
         if (!cancelled) {
-          setBookings(Array.isArray(res.data) ? res.data : []);
+          const all: Booking[] = Array.isArray(res.data) ? res.data : [];
+          setBookings(all);
+
+          // For each completed booking, check if student already reviewed it
+          const completedIds = all
+            .filter(b => b.status === 'completed' && !isAfterNow(b.endTime))
+            .map(b => b._id);
+
+          if (completedIds.length > 0) {
+            const checks = await Promise.allSettled(
+              completedIds.map(id =>
+                mentorReviewApi.checkIfBookingReviewed(id).then(reviewed => ({ id, reviewed }))
+              )
+            );
+            const reviewed = new Set<string>();
+            for (const result of checks) {
+              if (result.status === 'fulfilled' && result.value.reviewed) {
+                reviewed.add(result.value.id);
+              }
+            }
+            if (!cancelled) setReviewedBookingIds(reviewed);
+          }
         }
       } catch (err) {
         if (!cancelled) {
@@ -282,9 +306,29 @@ const StudentBookingsPage = () => {
                           </div>
                         </div>
                       </div>
-                      <span className={`px-2 py-1 rounded border text-xs font-bold capitalize ${getStatusMeta(booking, nowMs).className}`}>
-                        {getStatusMeta(booking, nowMs).label}
-                      </span>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`px-2 py-1 rounded border text-xs font-bold capitalize ${getStatusMeta(booking, nowMs).className}`}>
+                          {getStatusMeta(booking, nowMs).label}
+                        </span>
+                        {/* ── Bug 1 fix: only show for completed sessions whose end time has passed ── */}
+                        {booking.status === 'completed' && !isAfterNow(booking.endTime, nowMs) &&
+                         !reviewedBookingIds.has(booking._id) && (
+                          <button
+                            onClick={() => setSearchParams({ reviewBookingId: booking._id })}
+                            className="text-xs font-bold text-[var(--color-primary)] hover:text-blue-400 transition-colors underline"
+                          >
+                            Leave Review
+                          </button>
+                        )}
+                        {reviewedBookingIds.has(booking._id) && (
+                          <span className="text-xs text-green-500 font-medium flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Reviewed
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}
@@ -298,7 +342,11 @@ const StudentBookingsPage = () => {
             bookingId={reviewBooking._id}
             mentorName={getMentorName(reviewBooking)}
             onClose={() => setSearchParams({})}
-            onSubmitted={() => setSearchParams({})}
+            onSubmitted={() => {
+              // Bug 2 fix: mark locally as reviewed so button hides immediately
+              setReviewedBookingIds(prev => new Set([...prev, reviewBooking._id]));
+              setSearchParams({});
+            }}
           />
         )}
       </div>
