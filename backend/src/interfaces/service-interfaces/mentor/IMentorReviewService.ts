@@ -4,4 +4,5 @@ import { IMentorReview } from "../../../infrastructure/database/models/mentor-re
 export interface IMentorReviewService {
   createReview(studentId: string, data: CreateReviewInput): Promise<IMentorReview>;
   getMentorPublicReviews(mentorId: string): Promise<ReviewResponse[]>;
+  hasStudentReviewedBooking(studentId: string, bookingId: string): Promise<boolean>;
 }

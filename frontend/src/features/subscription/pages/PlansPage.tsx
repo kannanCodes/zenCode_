@@ -167,7 +167,7 @@ const PlansPage = () => {
                   month: 'long', day: 'numeric', year: 'numeric',
                 })}
               </span>
-              . Use Change Plan if you want to switch before the next billing cycle.
+              .{plans.length > 1 ? ' Use Change Plan if you want to switch before the next billing cycle.' : ''}
             </div>
           )}
 

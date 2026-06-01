@@ -19,7 +19,7 @@ import { MentorProfileRepository } from "../../repositories/mentor/mentor-profil
 import { MentorProfileService } from "../../services/mentor/mentor-profile.service";
 import { MentorProfileController } from "../../controllers/mentor/mentor-profile.controller";
 import { adminMentorRepository } from "./admin.container";
-import { cacheService, tokenService, passwordService, tokenLifecycleRepository, storageService } from "./shared.container";
+import { cacheService, tokenService, passwordService, tokenLifecycleRepository, storageService, emailService } from "./shared.container";
 import { MentorSessionCronJobs } from "../../infrastructure/cron/mentor-session.cron";
 import { problemRepository } from "./problem.container";
 import { subscriptionService } from "./payment.container";
@@ -41,7 +41,8 @@ export const mentorAuthService = new MentorAuthService(
   cacheService,
   tokenService,
   passwordService,
-  tokenLifecycleRepository
+  tokenLifecycleRepository,
+  emailService
 );
 
 export const mentorAvailabilityService = new MentorAvailabilityService(

@@ -21,7 +21,12 @@ export const mentorReviewApi = {
   },
 
   getMentorReviews: async (mentorId: string): Promise<ReviewResponse[]> => {
-    const res = await api.get(`/candidates/mentors/${mentorId}/reviews`);
+    const res = await api.get(`/mentor-reviews/mentor/${mentorId}`);
     return res.data.data;
+  },
+
+  checkIfBookingReviewed: async (bookingId: string): Promise<boolean> => {
+    const res = await api.get(`/mentor-reviews/booking/${bookingId}`);
+    return res.data.data.hasReviewed;
   },
 };
