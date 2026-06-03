@@ -87,14 +87,14 @@ export class AiHintService implements IAiHintService {
       hintNumber
     );
 
-    // 7. Generate hint via AI provider
+    // 7. Generate hint via AI provider (GeminiProvider retries internally)
     const t0 = Date.now();
     let rawHint: string;
     try {
       rawHint = await this.aiProvider.generateText(prompt);
     } catch (error) {
-      logger.error('AiHintService.generateHint: AI provider failed', error);
-      throw new AppError(AI_HINT_MESSAGES.AI_UNAVAILABLE, STATUS_CODES.INTERNAL_SERVER_ERROR);
+      logger.error('AiHintService.generateHint: AI provider exhausted all retries', error);
+      throw new AppError(AI_HINT_MESSAGES.AI_UNAVAILABLE, STATUS_CODES.SERVICE_UNAVAILABLE);
     }
     const responseTimeMs = Date.now() - t0;
 

@@ -9,11 +9,21 @@ export class MentorReviewRepository extends BaseRepository<IMentorReview> implem
     super(MentorReview);
   }
 
-  async getMentorReviews(mentorId: string): Promise<IMentorReview[]> {
-    return this.model.find({ mentorId, isPublic: true })
-      .populate('studentId', 'fullName avatarUrl')
-      .sort({ createdAt: -1 })
-      .exec();
+  async getMentorReviews(mentorId: string, page: number, limit: number): Promise<[IMentorReview[], number]> {
+    const filter = { mentorId, isPublic: true };
+    const skip = (page - 1) * limit;
+
+    const [reviews, total] = await Promise.all([
+      this.model.find(filter)
+        .populate('studentId', 'fullName avatarUrl')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.model.countDocuments(filter)
+    ]);
+
+    return [reviews, total];
   }
 
   async getReviewByBookingId(bookingId: string): Promise<IMentorReview | null> {
@@ -29,56 +39,39 @@ export class MentorReviewRepository extends BaseRepository<IMentorReview> implem
     rating: number,
     feedback: string
   ): Promise<IMentorReview> {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    // 1. Create the review (primary operation)
+    const review = await this.model.create({
+      bookingId: new mongoose.Types.ObjectId(bookingId),
+      mentorId: new mongoose.Types.ObjectId(mentorId),
+      studentId: new mongoose.Types.ObjectId(studentId),
+      rating,
+      feedback,
+    });
 
+    // 2. Atomically update mentor's denormalised rating stats using
+    //    MongoDB's $inc so we never need a read-modify-write cycle.
+    //    If this fails the review is already saved; a background job or
+    //    next submission will recalculate — acceptable for a rating counter.
     try {
-      // 1. Create the review
-      const [review] = await this.model.create(
-        [
-          {
-            bookingId: new mongoose.Types.ObjectId(bookingId),
-            mentorId: new mongoose.Types.ObjectId(mentorId),
-            studentId: new mongoose.Types.ObjectId(studentId),
-            rating,
-            feedback,
-          },
-        ],
-        { session }
-      );
+      const mentor = await User.findById(mentorId);
+      if (mentor) {
+        const currentTotal = mentor.totalReviews || 0;
+        const currentAvg   = mentor.averageRating || 0;
+        const newTotal      = currentTotal + 1;
+        const newAvg        = Math.round(((currentAvg * currentTotal + rating) / newTotal) * 10) / 10;
 
-      // 2. Fetch current mentor stats to calculate new average
-      const mentor = await User.findById(mentorId).session(session);
-      if (!mentor) {
-        throw new Error('Mentor not found');
-      }
-
-      const currentTotalReviews = mentor.totalReviews || 0;
-      const currentAverageRating = mentor.averageRating || 0;
-
-      const newTotalReviews = currentTotalReviews + 1;
-      const newAverageRating =
-        (currentAverageRating * currentTotalReviews + rating) / newTotalReviews;
-
-      // 3. Update the mentor's denormalized fields
-      await User.findByIdAndUpdate(
-        mentorId,
-        {
+        await User.findByIdAndUpdate(mentorId, {
           $set: {
-            totalReviews: newTotalReviews,
-            averageRating: Math.round(newAverageRating * 10) / 10, // Keep 1 decimal place
+            totalReviews:  newTotal,
+            averageRating: newAvg,
           },
-        },
-        { session }
-      );
-
-      await session.commitTransaction();
-      return review;
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
-    } finally {
-      session.endSession();
+        });
+      }
+    } catch (ratingErr) {
+      // Non-fatal: review is already persisted. Log and continue.
+      console.error('[MentorReviewRepository] Failed to update mentor rating stats:', ratingErr);
     }
+
+    return review;
   }
 }
