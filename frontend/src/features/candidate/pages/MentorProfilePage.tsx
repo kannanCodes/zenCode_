@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { candidateMentorApi } from '../services/mentor.service';
@@ -73,6 +73,12 @@ const MentorProfilePage = () => {
   const [reviews, setReviews] = useState<ReviewResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  
   const [selectedDate, setSelectedDate] = useState(formatDateValue(new Date()));
   const [availableSlots, setAvailableSlots] = useState<MentorSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<MentorSlot | null>(null);
@@ -93,13 +99,15 @@ const MentorProfilePage = () => {
         const [mentorRes, availRes, reviewsRes] = await Promise.all([
           candidateMentorApi.getMentorDetails(mentorId),
           candidateMentorApi.getMentorAvailability(mentorId).catch(() => ({ data: null })),
-          mentorReviewApi.getMentorReviews(mentorId).catch(() => []), // Fallback to empty if fails
+          mentorReviewApi.getMentorReviews(mentorId, 1, 5).catch(() => ({ data: [], meta: { page: 1, limit: 5, total: 0, totalPages: 0 } })), // Fallback to empty if fails
         ]);
         
         if (!cancelled) {
           setMentor(mentorRes.data);
           setAvailability(availRes.data);
-          setReviews(reviewsRes);
+          setReviews(reviewsRes.data);
+          setHasMore(reviewsRes.meta.page < reviewsRes.meta.totalPages);
+          setPage(1);
           // Auto-select first date that has configured availability
           const firstDate = findFirstAvailableDate(availRes.data?.weeklyAvailability);
           setSelectedDate(firstDate);
@@ -118,6 +126,38 @@ const MentorProfilePage = () => {
     fetchProfile();
     return () => { cancelled = true; };
   }, [mentorId, navigate]);
+
+  const loadMoreReviews = useCallback(async () => {
+    if (!mentorId || isLoadingMore || !hasMore) return;
+    
+    try {
+      setIsLoadingMore(true);
+      const nextPage = page + 1;
+      const res = await mentorReviewApi.getMentorReviews(mentorId, nextPage, 5);
+      
+      setReviews((prev) => [...prev, ...res.data]);
+      setHasMore(res.meta.page < res.meta.totalPages);
+      setPage(nextPage);
+    } catch (error) {
+      console.error(error);
+      showError('Failed to load more reviews');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [mentorId, page, hasMore, isLoadingMore]);
+
+  const lastReviewElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (isLoadingMore) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        void loadMoreReviews();
+      }
+    });
+    
+    if (node) observerRef.current.observe(node);
+  }, [isLoadingMore, hasMore, loadMoreReviews]);
 
   useEffect(() => {
     if (!mentorId || !availability?.weeklyAvailability) {
@@ -286,6 +326,15 @@ const MentorProfilePage = () => {
                       <p className="text-sm text-gray-400 leading-relaxed italic">"{review.feedback}"</p>
                     </div>
                   ))}
+
+                  {isLoadingMore && (
+                    <div className="flex justify-center py-4">
+                      <div className="w-6 h-6 border-2 border-[#2a2d3a] border-t-[var(--color-primary)] rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                  {hasMore && !isLoadingMore && (
+                    <div ref={lastReviewElementRef} className="h-4" />
+                  )}
                 </div>
               </div>
             )}

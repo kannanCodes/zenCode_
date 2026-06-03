@@ -26,12 +26,15 @@ export class MentorReviewController {
   getMentorPublicReviews = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const mentorId = req.params.mentorId as string;
-      const reviews = await this.reviewService.getMentorPublicReviews(mentorId);
+      const page = parseInt(req.query.page as string, 10) || 1;
+      const limit = parseInt(req.query.limit as string, 10) || 5;
+
+      const paginatedReviews = await this.reviewService.getMentorPublicReviews(mentorId, page, limit);
 
       return sendSuccess(res, {
         statusCode: STATUS_CODES.OK,
         message: REVIEW_MESSAGES.FETCHED,
-        data: reviews,
+        data: paginatedReviews,
       });
     } catch (error) {
       next(error);

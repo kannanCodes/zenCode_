@@ -4,7 +4,7 @@ import { IMentorReview } from "../../../infrastructure/database/models/mentor-re
 
 
 export interface IMentorReviewRepository extends BaseRepository<IMentorReview> {
-  getMentorReviews(mentorId: string): Promise<IMentorReview[]>;
+  getMentorReviews(mentorId: string, page: number, limit: number): Promise<[IMentorReview[], number]>;
   getReviewByBookingId(bookingId: string): Promise<IMentorReview | null>;
   createReviewAndUpdateRating(
     studentId: string,

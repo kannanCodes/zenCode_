@@ -58,8 +58,11 @@ export class CandidateMentorController {
   async getMentorReviews(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const mentorId = req.params.mentorId as string;
-      const reviews = await this.candidateMentorService.getMentorPublicReviews(mentorId);
-      sendSuccess(res, { statusCode: STATUS_CODES.OK, data: reviews });
+      const page = parseInt(req.query.page as string, 10) || 1;
+      const limit = parseInt(req.query.limit as string, 10) || 5;
+
+      const paginatedReviews = await this.candidateMentorService.getMentorPublicReviews(mentorId, page, limit);
+      sendSuccess(res, { statusCode: STATUS_CODES.OK, data: paginatedReviews });
     } catch (error) {
       next(error);
     }

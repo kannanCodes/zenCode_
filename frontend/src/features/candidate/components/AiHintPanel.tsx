@@ -21,7 +21,9 @@ const AiHintPanel = ({ problemId, onClose }: AiHintPanelProps) => {
   const [remainingDaily, setRemainingDaily] = useState<number>(MAX_DAILY);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAiUnavailable, setIsAiUnavailable] = useState(false); // retriable 503/network failure
   const [isPremiumRequired, setIsPremiumRequired] = useState(false);
+  const [premiumMessage, setPremiumMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
   // Fetch initial status when panel opens
@@ -41,10 +43,21 @@ const AiHintPanel = ({ problemId, onClose }: AiHintPanelProps) => {
           setCooldown(data.cooldownRemainingSeconds);
         }
       } catch (err: unknown) {
-        if (axios.isAxiosError(err) && err.response?.status === 403) {
-          if (isMounted) setIsPremiumRequired(true);
+        if (axios.isAxiosError(err)) {
+          const status = err.response?.status;
+          if (status === 403) {
+            // No subscription, expired subscription, or feature not in plan
+            if (isMounted) {
+              setIsPremiumRequired(true);
+              setPremiumMessage(err.response?.data?.message ?? null);
+            }
+          } else if (status === 401) {
+            // Session expired — let global interceptor handle it
+          } else if (isMounted) {
+            setError('Failed to load hint status. Please try again.');
+          }
         } else if (isMounted) {
-          setError('Failed to load hint status.');
+          setError('Failed to load hint status. Please try again.');
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -93,6 +106,7 @@ const AiHintPanel = ({ problemId, onClose }: AiHintPanelProps) => {
 
     setIsLoading(true);
     setError(null);
+    setIsAiUnavailable(false);
 
     try {
       const data: AiHintResponse = await aiHintService.getHint(problemId);
@@ -107,17 +121,26 @@ const AiHintPanel = ({ problemId, onClose }: AiHintPanelProps) => {
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
-        const msg = err.response?.data?.message ?? 'Something went wrong.';
+        const msg = err.response?.data?.message;
         if (status === 403) {
+          // Subscription required, expired, or feature not in plan — show upgrade gate
           setIsPremiumRequired(true);
+          setPremiumMessage(msg ?? null);
+          setError(null);
         } else if (status === 429) {
-          setError(msg);
+          setError(msg ?? 'Too many requests. Please wait before requesting another hint.');
           setCooldown(COOLDOWN_SECONDS);
+        } else if (status === 400) {
+          setError(msg ?? 'Unable to generate hint for this problem.');
+        } else if (!status || status >= 500) {
+          // 503 from backend (AI downstream failure) or network error — retriable
+          setIsAiUnavailable(true);
         } else {
-          setError(msg);
+          setError(msg ?? 'Something went wrong. Please try again.');
         }
       } else {
-        setError('AI service is temporarily unavailable. Please try again.');
+        // Network error / no response — retriable
+        setIsAiUnavailable(true);
       }
     } finally {
       setIsLoading(false);
@@ -126,6 +149,7 @@ const AiHintPanel = ({ problemId, onClose }: AiHintPanelProps) => {
 
   const hintsUsed = MAX_PER_PROBLEM - remainingProblem;
   const isExhausted = remainingProblem <= 0 && hints.length > 0;
+  // Allow requesting when AI was unavailable (user can retry)
   const canRequest = !isLoading && !isPremiumRequired && !isExhausted && cooldown === 0;
 
   return (
@@ -177,20 +201,49 @@ const AiHintPanel = ({ problemId, onClose }: AiHintPanelProps) => {
         {/* Premium lock state */}
         {isPremiumRequired ? (
           <div className="flex flex-col items-center text-center py-12 px-4">
-            <div className="w-16 h-16 bg-yellow-500/10 rounded-2xl flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+            {/* Icon — amber for expired, yellow for no sub / feature denied */}
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 ${
+              premiumMessage?.toLowerCase().includes('expired')
+                ? 'bg-orange-500/10'
+                : 'bg-yellow-500/10'
+            }`}>
+              {premiumMessage?.toLowerCase().includes('expired') ? (
+                <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              )}
             </div>
-            <h3 className="text-white font-semibold text-lg mb-2">Premium Required</h3>
-            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-              AI Hints are available to premium subscribers only. Upgrade to unlock intelligent, mentor-style guidance.
+
+            {/* Title — contextual based on reason */}
+            <h3 className="text-white font-semibold text-lg mb-2">
+              {premiumMessage?.toLowerCase().includes('expired')
+                ? 'Subscription Expired'
+                : premiumMessage?.toLowerCase().includes('plan')
+                ? 'Feature Not in Your Plan'
+                : 'Subscription Required'}
+            </h3>
+
+            {/* Backend message — shown verbatim so user knows exactly why */}
+            <p className="text-gray-400 text-sm mb-2 leading-relaxed">
+              {premiumMessage ?? 'AI Hints are available to premium subscribers only.'}
             </p>
+            <p className="text-gray-600 text-xs mb-6 leading-relaxed">
+              {premiumMessage?.toLowerCase().includes('expired')
+                ? 'Renew your subscription to continue using AI-powered hints.'
+                : premiumMessage?.toLowerCase().includes('plan')
+                ? 'Upgrade your plan to unlock intelligent, mentor-style guidance.'
+                : 'Subscribe to a premium plan to unlock intelligent, mentor-style guidance.'}
+            </p>
+
             <button
               onClick={() => navigate('/plans')}
               className="px-6 py-2.5 bg-[#2d5fff] hover:bg-blue-500 text-white font-medium rounded-lg transition-colors text-sm"
             >
-              Upgrade to Premium →
+              {premiumMessage?.toLowerCase().includes('expired') ? 'Renew Subscription →' : 'View Plans →'}
             </button>
           </div>
         ) : hints.length === 0 ? (
@@ -242,9 +295,51 @@ const AiHintPanel = ({ problemId, onClose }: AiHintPanelProps) => {
           </div>
         )}
 
-        {/* Error message */}
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+        {/* AI unavailable — retriable (503 / network error) */}
+        {isAiUnavailable && !isPremiumRequired && (
+          <div className="bg-[#111] border border-orange-500/20 rounded-xl p-4">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-8 h-8 bg-orange-500/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                  <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" strokeWidth={2} strokeLinecap="round" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-orange-300 text-sm font-medium">AI is temporarily unavailable</p>
+                <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">
+                  Gemini couldn't generate a hint right now. This is usually transient — try again in a moment.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={requestHint}
+              disabled={isLoading}
+              className="w-full h-8 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 text-orange-300 text-xs font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-orange-300/30 border-t-orange-300 rounded-full animate-spin" />
+                  Retrying...
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Try Again
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Other errors — non-retriable (e.g. 400 bad request) */}
+        {error && !isPremiumRequired && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
+            <svg className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             <p className="text-red-400 text-sm">{error}</p>
           </div>
         )}
@@ -274,7 +369,7 @@ const AiHintPanel = ({ problemId, onClose }: AiHintPanelProps) => {
             {isLoading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Generating hint...
+                {isAiUnavailable ? 'Retrying...' : 'Generating hint...'}
               </>
             ) : cooldown > 0 ? (
               <>
@@ -285,6 +380,13 @@ const AiHintPanel = ({ problemId, onClose }: AiHintPanelProps) => {
               </>
             ) : isExhausted ? (
               'All hints used'
+            ) : isAiUnavailable ? (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Retry
+              </>
             ) : hints.length === 0 ? (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
