@@ -13,3 +13,18 @@ export interface ReviewResponse {
   studentAvatar?: string;
   createdAt: string;
 }
+
+export interface ListReviewsQuery {
+  page: number;
+  limit: number;
+}
+
+export interface PaginatedReviewsResponse {
+  data: ReviewResponse[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}

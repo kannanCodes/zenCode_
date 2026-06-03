@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { mentorProfileApi } from '../services/mentorProfileApi';
 import type { MentorExperienceLevel, MentorProfile } from '../types/profile';
 import { showError, showSuccess } from '../../../shared/utils/toast.util';
@@ -24,6 +24,12 @@ const MentorProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -35,14 +41,18 @@ const MentorProfilePage = () => {
 
         const [profileRes, reviewsRes] = await Promise.all([
           mentorProfileApi.getMyProfile(),
-          currentMentorId ? mentorReviewApi.getMentorReviews(currentMentorId).catch(() => []) : Promise.resolve([])
+          currentMentorId 
+            ? mentorReviewApi.getMentorReviews(currentMentorId, 1, 5).catch(() => ({ data: [], meta: { page: 1, limit: 5, total: 0, totalPages: 0 } })) 
+            : Promise.resolve({ data: [], meta: { page: 1, limit: 5, total: 0, totalPages: 0 } })
         ]);
 
         if (cancelled) return;
 
         const data = profileRes.data;
         setProfile(data);
-        setReviews(reviewsRes);
+        setReviews(reviewsRes.data);
+        setHasMore(reviewsRes.meta.page < reviewsRes.meta.totalPages);
+        setPage(1);
         setFullName(data?.fullName || '');
         setTitle(data?.title || '');
         setBio(data?.bio || '');
@@ -64,6 +74,38 @@ const MentorProfilePage = () => {
       cancelled = true;
     };
   }, []);
+
+  const loadMoreReviews = useCallback(async () => {
+    if (!profile?.id || isLoadingMore || !hasMore) return;
+    
+    try {
+      setIsLoadingMore(true);
+      const nextPage = page + 1;
+      const res = await mentorReviewApi.getMentorReviews(profile.id, nextPage, 5);
+      
+      setReviews((prev) => [...prev, ...res.data]);
+      setHasMore(res.meta.page < res.meta.totalPages);
+      setPage(nextPage);
+    } catch (error) {
+      console.error(error);
+      showError('Failed to load more reviews');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [profile?.id, page, hasMore, isLoadingMore]);
+
+  const lastReviewElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (isLoadingMore) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        void loadMoreReviews();
+      }
+    });
+    
+    if (node) observerRef.current.observe(node);
+  }, [isLoadingMore, hasMore, loadMoreReviews]);
 
   const initials = useMemo(() => {
     const value = fullName || profile?.fullName || 'M';
@@ -273,6 +315,15 @@ const MentorProfilePage = () => {
                       <p className="text-sm text-gray-400 leading-relaxed italic">"{review.feedback}"</p>
                     </div>
                   ))}
+                  
+                  {isLoadingMore && (
+                    <div className="flex justify-center py-4">
+                      <div className="w-6 h-6 border-2 border-[#2a2d3a] border-t-[var(--color-primary)] rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                  {hasMore && !isLoadingMore && (
+                    <div ref={lastReviewElementRef} className="h-4" />
+                  )}
                 </div>
               ) : (
                 <div className="bg-[#1a1d26] p-6 rounded-xl border border-[#2a2d3a] text-center">
