@@ -15,13 +15,23 @@ export interface ReviewResponse {
   createdAt: string;
 }
 
+export interface PaginatedReviewsResponse {
+  data: ReviewResponse[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export const mentorReviewApi = {
   submitReview: async (payload: ReviewPayload): Promise<void> => {
-    await api.post('/mentor-reviews', payload);
+    await api.post('/mentor-reviews', payload, { suppressGlobalErrorToast: true });
   },
 
-  getMentorReviews: async (mentorId: string): Promise<ReviewResponse[]> => {
-    const res = await api.get(`/mentor-reviews/mentor/${mentorId}`);
+  getMentorReviews: async (mentorId: string, page = 1, limit = 5): Promise<PaginatedReviewsResponse> => {
+    const res = await api.get(`/mentor-reviews/mentor/${mentorId}?page=${page}&limit=${limit}`);
     return res.data.data;
   },
 

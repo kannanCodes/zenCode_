@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import { IMentorReviewService } from "../../interfaces/service-interfaces/mentor/IMentorReviewService";
 import { IMentorReviewRepository } from "../../interfaces/repository-interfaces/mentor/IMentorReviewRepository";
 import { IMentorBookingRepository } from "../../interfaces/repository-interfaces/mentor/IMentorBookingRepository";
-import { CreateReviewInput, ReviewResponse } from "../../dtos/mentor/mentor-review.dto";
+import { CreateReviewInput, ReviewResponse, PaginatedReviewsResponse } from "../../dtos/mentor/mentor-review.dto";
 import { IMentorReview } from "../../infrastructure/database/models/mentor-review.model";
 import { AppError } from "../../shared/utils/AppError";
 import { STATUS_CODES } from "../../shared/constants/status";
@@ -51,10 +51,10 @@ export class MentorReviewService implements IMentorReviewService {
     return review;
   }
 
-  async getMentorPublicReviews(mentorId: string): Promise<ReviewResponse[]> {
-    const reviews = await this.reviewRepo.getMentorReviews(mentorId);
+  async getMentorPublicReviews(mentorId: string, page: number, limit: number): Promise<PaginatedReviewsResponse> {
+    const [reviews, total] = await this.reviewRepo.getMentorReviews(mentorId, page, limit);
     
-    return reviews.map(r => {
+    const mappedReviews = reviews.map(r => {
       const student = r.studentId as unknown as { fullName?: string; avatarUrl?: string };
       return {
         id: r._id as unknown as string,
@@ -65,6 +65,16 @@ export class MentorReviewService implements IMentorReviewService {
         createdAt: r.createdAt.toISOString(),
       };
     });
+
+    return {
+      data: mappedReviews,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async hasStudentReviewedBooking(studentId: string, bookingId: string): Promise<boolean> {

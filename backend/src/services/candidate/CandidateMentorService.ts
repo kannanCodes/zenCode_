@@ -8,7 +8,7 @@ import {
   PaginatedPublicMentorsResponse,
   PublicMentorResponse,
 } from "../../dtos/candidate/candidate-mentor.dto";
-import type { ReviewResponse } from "../../dtos/mentor/mentor-review.dto";
+import type { ReviewResponse, PaginatedReviewsResponse } from "../../dtos/mentor/mentor-review.dto";
 import { IUser } from "../../infrastructure/database/models/user.model";
 import { IMentorAvailability } from "../../infrastructure/database/models/mentor-availability.model";
 
@@ -94,19 +94,29 @@ export class CandidateMentorService implements ICandidateMentorService {
     return this.mentorAvailabilityRepository.findByMentorId(mentorId);
   }
 
-  async getMentorPublicReviews(mentorId: string): Promise<ReviewResponse[]> {
-    return this.mentorReviewRepository.getMentorReviews(mentorId).then(reviews =>
-      reviews.map(r => {
-        const student = r.studentId as unknown as { fullName?: string; avatarUrl?: string };
-        return {
-          id: r._id as unknown as string,
-          rating: r.rating,
-          feedback: r.feedback,
-          studentName: student?.fullName,
-          studentAvatar: student?.avatarUrl,
-          createdAt: r.createdAt.toISOString(),
-        };
-      })
-    );
+  async getMentorPublicReviews(mentorId: string, page: number, limit: number): Promise<PaginatedReviewsResponse> {
+    const [reviews, total] = await this.mentorReviewRepository.getMentorReviews(mentorId, page, limit);
+
+    const mappedReviews = reviews.map(r => {
+      const student = r.studentId as unknown as { fullName?: string; avatarUrl?: string };
+      return {
+        id: r._id as unknown as string,
+        rating: r.rating,
+        feedback: r.feedback,
+        studentName: student?.fullName,
+        studentAvatar: student?.avatarUrl,
+        createdAt: r.createdAt.toISOString(),
+      };
+    });
+
+    return {
+      data: mappedReviews,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 }
