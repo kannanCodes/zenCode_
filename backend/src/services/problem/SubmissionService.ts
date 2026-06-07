@@ -10,6 +10,7 @@ import { STATUS_CODES } from "../../shared/constants/status";
 import { SUBMISSION_MESSAGES, PROBLEM_MESSAGES } from "../../constants/messages";
 import { SUBMISSION_CONSTANTS } from "../../constants/submission.constants";
 import { Types } from "mongoose";
+import { updateUserStreak } from "../../utils/updateUserStreak";
 
 export class SubmissionService implements ISubmissionService {
   constructor(
@@ -89,6 +90,11 @@ export class SubmissionService implements ISubmissionService {
         memory: result.memory || undefined,
         testResults: result.testResults ? (result.testResults as ITestResult[]) : [],
       });
+
+      // Fire-and-forget streak update — only on accepted, idempotent per day
+      if (status === SubmissionStatus.ACCEPTED) {
+        void updateUserStreak(userId);
+      }
 
       return updated!;
     } catch (error: unknown) {

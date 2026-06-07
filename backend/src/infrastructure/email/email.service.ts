@@ -52,10 +52,10 @@ export class EmailService implements IEmailService {
       await this._transporter.sendMail({
         from: process.env.SMTP_FROM,
         to: data.email,
-        subject: 'Activate Your ZenCode Mentor Account',
+        subject: 'Activate Your zenCode Mentor Account',
         html: `
           <div style="font-family:'JetBrains Mono',Consolas,'Courier New',monospace;padding:20px;">
-            <h2>Welcome to ZenCode, ${data.fullName}!</h2>
+            <h2>Welcome to zenCode, ${data.fullName}!</h2>
             <p>You've been invited to join as a mentor. Click the link below to set up your account:</p>
             <a href="${data.inviteLink}" style="display:inline-block;margin:20px 0;padding:12px 24px;background:#2D5FFF;color:white;text-decoration:none;border-radius:6px;">
               Activate Account
@@ -76,7 +76,7 @@ export class EmailService implements IEmailService {
       await this._transporter.sendMail({
         from: process.env.SMTP_FROM,
         to: email,
-        subject: 'Reset Your ZenCode Password',
+        subject: 'Reset Your zenCode Password',
         html: `
           <div style="font-family:'JetBrains Mono',Consolas,'Courier New',monospace;padding:20px;">
             <h2>Password Reset Request</h2>
@@ -97,18 +97,20 @@ export class EmailService implements IEmailService {
 
   async sendBookingConfirmation(data: BookingConfirmationEmailData): Promise<void> {
     const startFormatted = data.startTime.toLocaleString('en-US', {
+      timeZone: 'UTC',
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-      hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+      hour: '2-digit', minute: '2-digit',
     });
     const endFormatted = data.endTime.toLocaleString('en-US', {
-      hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+      timeZone: 'UTC',
+      hour: '2-digit', minute: '2-digit',
     });
 
     try {
       await this._transporter.sendMail({
         from: process.env.SMTP_FROM,
         to: data.to,
-        subject: '✅ Your ZenCode Mentor Session is Confirmed!',
+        subject: '✅ Your zenCode Mentor Session is Confirmed!',
         html: `
           <div style="font-family:'JetBrains Mono',Consolas,'Courier New',monospace;padding:32px;max-width:600px;margin:0 auto;background:#0d0d0d;color:#e5e5e5;border-radius:12px;border:1px solid #1c1c1c;">
             <h2 style="color:#4F46E5;margin-bottom:8px;">Session Confirmed 🎉</h2>
@@ -133,15 +135,16 @@ export class EmailService implements IEmailService {
 
   async sendBookingCancelled(data: BookingCancelledEmailData): Promise<void> {
     const startFormatted = data.startTime.toLocaleString('en-US', {
+      timeZone: 'UTC',
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-      hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+      hour: '2-digit', minute: '2-digit',
     });
 
     try {
       await this._transporter.sendMail({
         from: process.env.SMTP_FROM,
         to: data.to,
-        subject: '❌ ZenCode Mentor Session Cancelled',
+        subject: '❌ zenCode Mentor Session Cancelled',
         html: `
           <div style="font-family:'JetBrains Mono',Consolas,'Courier New',monospace;padding:32px;max-width:600px;margin:0 auto;background:#0d0d0d;color:#e5e5e5;border-radius:12px;border:1px solid #1c1c1c;">
             <h2 style="color:#ef4444;margin-bottom:8px;">Session Cancelled</h2>

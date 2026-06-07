@@ -1,10 +1,16 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { tokenService } from '../../../shared/lib/token';
-import { showSuccess,showError } from '../../../shared/utils/toast.util';
+import { showSuccess, showError } from '../../../shared/utils/toast.util';
+import { fetchSubscription } from '../../../store/slices/subscriptionSlice';
+import { fetchUnreadCount } from '../../../store/slices/notificationSlice';
+import { notificationSocketManager } from '../../../shared/lib/notificationSocket';
+import type { AppDispatch } from '../../../store';
 
 const GoogleCallbackPage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const [searchParams] = useSearchParams();
 
   const isProcessedKey = useRef(false);
@@ -17,13 +23,19 @@ const GoogleCallbackPage = () => {
 
     if (token) {
       tokenService.setAccessToken(token);
+
+      // Hydrate subscription + notifications immediately (no refresh needed)
+      dispatch(fetchSubscription());
+      dispatch(fetchUnreadCount());
+      notificationSocketManager.connect();
+
       showSuccess('Login successful');
       navigate('/dashboard', { replace: true });
     } else {
       showError('Google authentication failed');
       navigate('/login', { replace: true });
     }
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, dispatch]);
 
   return (
     <div className="min-h-screen bg-[var(--color-background-dark)] flex items-center justify-center">

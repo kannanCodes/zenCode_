@@ -10,15 +10,24 @@ import AppRoutes from './routes/AppRoutes';
 function App() {
   const dispatch = useDispatch<AppDispatch>();
 
+  // ── On mount: hydrate state if user is already logged in ──────────────────
   useEffect(() => {
     if (tokenService.getAccessToken()) {
-      // Hydrate subscription state
       dispatch(fetchSubscription());
-      // Hydrate notification unread count
       dispatch(fetchUnreadCount());
-      // Initialize persistent notification socket
       notificationSocketManager.connect();
     }
+  }, [dispatch]);
+
+  // ── On tab focus: re-sync subscription (handles Stripe redirect edge cases) ─
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && tokenService.getAccessToken()) {
+        dispatch(fetchSubscription());
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [dispatch]);
 
   return <AppRoutes />;
