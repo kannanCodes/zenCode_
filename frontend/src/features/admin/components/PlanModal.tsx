@@ -135,7 +135,7 @@ const PlanModal = ({ plan, onClose, onSave }: PlanModalProps) => {
             <input
               {...register('name')}
               type="text"
-              placeholder="e.g. ZenCode Premium"
+              placeholder="e.g. zenCode Premium"
               className={`w-full rounded-lg bg-[#1a1a1a] border ${
                 errors.name ? 'border-red-500' : 'border-[#2a2d3a]'
               } text-white placeholder-gray-600 focus:border-[var(--color-primary)] focus:ring-0 focus:outline-none transition-all h-12 px-4`}

@@ -251,7 +251,7 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
         description:
           userRole === UserRole.MENTOR
             ? `${fullName} was registered as a mentor`
-            : `${fullName} joined ZenCode`,
+            : `${fullName} joined zenCode`,
         actorName: fullName,
         timestamp: (user.createdAt ?? new Date()).toISOString(),
       });

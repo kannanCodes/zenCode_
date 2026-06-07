@@ -19,7 +19,7 @@ const AdminSidebar = () => {
   return (
     <div className="w-64 bg-[#0a0a0a] border-r border-[#1c1c1c] flex flex-col h-screen sticky top-0 shrink-0">
       <div className="p-6 border-b border-[#1c1c1c]">
-        <span className="text-xl font-bold text-[var(--color-primary)]">ZenCode</span>
+        <span className="text-xl font-bold text-[var(--color-primary)]">zenCode</span>
       </div>
 
       <nav className="flex-1 p-4 space-y-4 overflow-y-auto">

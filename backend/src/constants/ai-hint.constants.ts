@@ -4,7 +4,7 @@ export const AI_HINT = {
   COOLDOWN_SECONDS: parseInt(process.env.AI_HINT_COOLDOWN_SECONDS ?? '10', 10),
   MAX_OUTPUT_TOKENS: 120,
   TEMPERATURE: 0.4,
-  MODEL: process.env.AI_MODEL ?? 'gemini-3.5-flash',
+  MODEL: process.env.AI_MODEL ?? 'gemini-1.5-flash',
   COOLDOWN_CACHE_PREFIX: 'ai_hint_cooldown:',
   MAX_HINT_OUTPUT_LENGTH: 500,
 } as const;
