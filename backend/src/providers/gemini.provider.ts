@@ -1,12 +1,12 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { IAiProvider } from '../interfaces/providers/IAiProvider';
 import { AI_HINT, AI_HINT_MESSAGES } from '../constants/ai-hint.constants';
 import { AppError } from '../shared/utils/AppError';
 import { STATUS_CODES } from '../shared/constants/status';
 import { logger } from '../shared/utils/Logger';
 
-const RETRY_ATTEMPTS = 3;
-const RETRY_BASE_DELAY_MS = 200; // 200ms → 400ms → 800ms
+const RETRY_ATTEMPTS = 5;
+const RETRY_BASE_DELAY_MS = 500; // 500ms → 1000ms → 2000ms → 4000ms
 
 // Waits for `ms` milliseconds, with ±20% random jitter to spread retries
 // and avoid a thundering-herd effect when multiple requests retry together.
@@ -34,11 +34,12 @@ function isRetriable(error: unknown): boolean {
     }
   }
 
-  return true; // default: retry unknown errors
+  return false; // default: do NOT retry unknown errors
 }
 
 export class GeminiProvider implements IAiProvider {
   private readonly client: GoogleGenerativeAI;
+  private readonly model: ReturnType<GoogleGenerativeAI['getGenerativeModel']>;
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -46,6 +47,19 @@ export class GeminiProvider implements IAiProvider {
       throw new Error('GEMINI_API_KEY is not configured');
     }
     this.client = new GoogleGenerativeAI(apiKey);
+    // Cache the model instance — no need to re-create on every request
+    this.model = this.client.getGenerativeModel({
+      model: AI_HINT.MODEL,
+      generationConfig: {
+        temperature: AI_HINT.TEMPERATURE,
+      },
+      safetySettings: [
+        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+      ],
+    });
   }
 
   async generateText(prompt: string): Promise<string> {
@@ -53,14 +67,7 @@ export class GeminiProvider implements IAiProvider {
 
     for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
       try {
-        const model = this.client.getGenerativeModel({
-          model: AI_HINT.MODEL,
-          generationConfig: {
-            temperature: AI_HINT.TEMPERATURE,
-          },
-        });
-
-        const result = await model.generateContent(prompt);
+        const result = await this.model.generateContent(prompt);
         const text = result.response.text();
 
         if (!text || !text.trim()) {

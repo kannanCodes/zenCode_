@@ -42,7 +42,7 @@ const MentorSuccessPage = () => {
 
         {/* Footer */}
         <p className="text-xs text-gray-600 mt-12">
-          ZenCode Systems // Secure
+          zenCode Systems // Secure
         </p>
       </div>
     </div>

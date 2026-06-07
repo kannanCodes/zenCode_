@@ -13,6 +13,7 @@ import TestResultPanel from '../components/TestResultPanel';
 import axios from 'axios';
 import { submissionService } from '../services/submission.service';
 import AiHintPanel from '../components/AiHintPanel';
+import { dashboardService } from '../services/dashboard.service';
 
 
 
@@ -45,14 +46,15 @@ const ProblemDetailPage = () => {
 
   const [problem, setProblem] = useState<Problem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('python');
-  const [code, setCode] = useState(DEFAULT_CODE.python);
+  const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('javascript');
+  const [code, setCode] = useState(DEFAULT_CODE.javascript);
   const [isRunning, setIsRunning] = useState(false);
   const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
   const [executionError, setExecutionError] = useState<string>('');
   const [activeBottomTab, setActiveBottomTab] = useState<'testcases' | 'results' | 'console'>('testcases');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showHintPanel, setShowHintPanel] = useState(false);
+  const [streakCount, setStreakCount] = useState<number | null>(null);
 
   // Compute available languages dynamically for render
   const availableLanguages = problem
@@ -72,6 +74,13 @@ const ProblemDetailPage = () => {
       loadProblem(id);
     }
   }, [id]);
+
+  // Fetch streak on mount for the floating badge
+  useEffect(() => {
+    dashboardService.getDashboard()
+      .then((d) => setStreakCount(d.streak.current))
+      .catch(() => { /* non-fatal */ });
+  }, []);
 
   const loadProblem = async (problemId: string) => {
     setIsLoading(true);
@@ -456,7 +465,7 @@ const ProblemDetailPage = () => {
       <div className="h-10 bg-[#0a0a0a] border-t border-[#1c1c1c] flex items-center px-4 flex-shrink-0">
         <button
           onClick={() => navigate('/problems')}
-          className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2"
+          className="text-sm font-medium bg-[var(--color-primary)] text-white hover:bg-blue-600 transition-colors flex items-center gap-2 px-4 py-1.5 rounded-md"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -464,6 +473,16 @@ const ProblemDetailPage = () => {
           Back to Problems
         </button>
       </div>
+
+      {/* ── Floating Streak Badge ────────────────────────────── */}
+      {streakCount !== null && (
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 px-3 py-2 bg-[#0f1117] border border-[#2a2d3a] rounded-xl shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-orange-400" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13.5 2c0 0-7.5 8-7.5 13a7.5 7.5 0 0015 0c0-3.5-2-7-3.5-9.5-.5 1.5-1 3-2.5 4 .5-3-.5-5.5-1.5-7.5z"/>
+          </svg>
+          <span className="text-white font-bold text-sm">{streakCount}</span>
+        </div>
+      )}
     </div>
   );
 };

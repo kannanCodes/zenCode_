@@ -1,258 +1,132 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import LandingPage from '../features/user/pages/LandingPage';
-import ProblemListPage from '../features/candidate/pages/ProblemListPage';
-import ProblemDetailPage from '../features/candidate/pages/ProblemDetailPage';
-import SubmissionsPage from '../features/candidate/pages/SubmissionsPage';
-import RegisterPage from '../features/user/pages/RegisterPage';
-import OTPVerificationPage from '../features/user/pages/OTPVerificationPage';
-import LoginPage from '../features/user/pages/LoginPage';
-import GoogleCallbackPage from '../features/user/pages/GoogleCallbackPage';
-import ForgotPasswordPage from '../features/user/pages/ForgotPasswordPage';
-import ResetPasswordPage from '../features/user/pages/ResetPasswordPage';
-import AdminLoginPage from '../features/admin/pages/AdminLoginPage';
-import MentorManagementPage from '../features/admin/pages/MentorManagementPage';
-import UserManagementPage from '../features/admin/pages/UserManagementPage'; 
-import AdminDashboardPage from '../features/admin/pages/AdminDashboardPage';
-import SessionMonitoringPage from '../features/admin/pages/SessionMonitoringPage';
-import SessionDetailsPage from '../features/admin/pages/SessionDetailsPage';
-import RevenueMonitoringPage from '../features/admin/pages/RevenueMonitoringPage';
-import MentorLoginPage from '../features/mentor/pages/MentorLoginPage';
-import MentorActivationPage from '../features/mentor/pages/MentorActivationPage';
-import MentorSuccessPage from '../features/mentor/pages/MentorSuccessPage';
-import MentorForgotPasswordPage from '../features/mentor/pages/MentorForgotPasswordPage';
-import MentorResetPasswordPage from '../features/mentor/pages/MentorResetPasswordPage';
-import MentorLayout from '../features/mentor/components/MentorLayout';
-import MentorAvailabilityPage from '../features/mentor/pages/MentorAvailabilityPage';
-import MentorBookingsPage from '../features/mentor/pages/MentorBookingsPage';
-import MentorDashboardPage from '../features/mentor/pages/MentorDashboardPage';
-import SessionRoomPage from '../features/mentor/pages/SessionRoomPage';
-import MentorProfilePage from '../features/mentor/pages/MentorProfilePage';
-import AdminProblemListPage from '../features/admin/pages/ProblemListPage';
-import ProblemFormPage from '../features/admin/pages/ProblemForm';
-import PlanManagementPage from '../features/admin/pages/PlanManagementPage';
-import Navbar from '../shared/components/Navbar';
 
-// Candidate Mentoring Pages
-import MentorsListPage from '../features/candidate/pages/MentorsListPage';
-import CandidateMentorProfilePage from '../features/candidate/pages/MentorProfilePage';
-import StudentBookingsPage from '../features/candidate/pages/StudentBookingsPage';
-import StudentSessionRoomPage from '../features/candidate/pages/StudentSessionRoomPage';
+// ── Lazy-loaded pages (each becomes a separate JS chunk) ─────────────────────
+// User Auth
+const LandingPage              = lazy(() => import('../features/user/pages/LandingPage'));
+const RegisterPage             = lazy(() => import('../features/user/pages/RegisterPage'));
+const OTPVerificationPage      = lazy(() => import('../features/user/pages/OTPVerificationPage'));
+const LoginPage                = lazy(() => import('../features/user/pages/LoginPage'));
+const GoogleCallbackPage       = lazy(() => import('../features/user/pages/GoogleCallbackPage'));
+const ForgotPasswordPage       = lazy(() => import('../features/user/pages/ForgotPasswordPage'));
+const ResetPasswordPage        = lazy(() => import('../features/user/pages/ResetPasswordPage'));
+
+// Candidate
+const ProblemListPage          = lazy(() => import('../features/candidate/pages/ProblemListPage'));
+const ProblemDetailPage        = lazy(() => import('../features/candidate/pages/ProblemDetailPage'));
+const SubmissionsPage          = lazy(() => import('../features/candidate/pages/SubmissionsPage'));
+const DashboardPage            = lazy(() => import('../features/candidate/pages/DashboardPage'));
+const MentorsListPage          = lazy(() => import('../features/candidate/pages/MentorsListPage'));
+const CandidateMentorProfilePage = lazy(() => import('../features/candidate/pages/MentorProfilePage'));
+const StudentBookingsPage      = lazy(() => import('../features/candidate/pages/StudentBookingsPage'));
+const StudentSessionRoomPage   = lazy(() => import('../features/candidate/pages/StudentSessionRoomPage'));
+
+// Admin
+const AdminLoginPage           = lazy(() => import('../features/admin/pages/AdminLoginPage'));
+const AdminDashboardPage       = lazy(() => import('../features/admin/pages/AdminDashboardPage'));
+const MentorManagementPage     = lazy(() => import('../features/admin/pages/MentorManagementPage'));
+const UserManagementPage       = lazy(() => import('../features/admin/pages/UserManagementPage'));
+const SessionMonitoringPage    = lazy(() => import('../features/admin/pages/SessionMonitoringPage'));
+const SessionDetailsPage       = lazy(() => import('../features/admin/pages/SessionDetailsPage'));
+const RevenueMonitoringPage    = lazy(() => import('../features/admin/pages/RevenueMonitoringPage'));
+const AdminProblemListPage     = lazy(() => import('../features/admin/pages/ProblemListPage'));
+const ProblemFormPage          = lazy(() => import('../features/admin/pages/ProblemForm'));
+const PlanManagementPage       = lazy(() => import('../features/admin/pages/PlanManagementPage'));
+
+// Mentor
+const MentorLoginPage          = lazy(() => import('../features/mentor/pages/MentorLoginPage'));
+const MentorActivationPage     = lazy(() => import('../features/mentor/pages/MentorActivationPage'));
+const MentorSuccessPage        = lazy(() => import('../features/mentor/pages/MentorSuccessPage'));
+const MentorForgotPasswordPage = lazy(() => import('../features/mentor/pages/MentorForgotPasswordPage'));
+const MentorResetPasswordPage  = lazy(() => import('../features/mentor/pages/MentorResetPasswordPage'));
+const MentorAvailabilityPage   = lazy(() => import('../features/mentor/pages/MentorAvailabilityPage'));
+const MentorBookingsPage       = lazy(() => import('../features/mentor/pages/MentorBookingsPage'));
+const MentorDashboardPage      = lazy(() => import('../features/mentor/pages/MentorDashboardPage'));
+const SessionRoomPage          = lazy(() => import('../features/mentor/pages/SessionRoomPage'));
+const MentorProfilePage        = lazy(() => import('../features/mentor/pages/MentorProfilePage'));
+import MentorLayout from '../features/mentor/components/MentorLayout'; // not lazy — shared layout
+
+// Subscription
+const PlansPage                = lazy(() => import('../features/subscription/pages/PlansPage'));
+const PaymentSuccessPage       = lazy(() => import('../features/subscription/pages/PaymentSuccessPage'));
+const PaymentCancelPage        = lazy(() => import('../features/subscription/pages/PaymentCancelPage'));
+const ManageSubscriptionPage   = lazy(() => import('../features/subscription/pages/ManageSubscriptionPage'));
+
+const NotFoundPage             = lazy(() => import('../features/user/pages/NotFoundPage'));
 
 import ProtectedRoute from '../shared/components/ProtectedRoute';
 
-
-// Subscription Pages
-import PlansPage from '../features/subscription/pages/PlansPage';
-import PaymentSuccessPage from '../features/subscription/pages/PaymentSuccessPage';
-import PaymentCancelPage from '../features/subscription/pages/PaymentCancelPage';
-import ManageSubscriptionPage from '../features/subscription/pages/ManageSubscriptionPage';
-
+// ── Page-load spinner shown while lazy chunks are fetching ───────────────────
+const PageLoader = () => (
+  <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="w-10 h-10 border-4 border-[#2a2d3a] border-t-[var(--color-primary)] rounded-full animate-spin" />
+  </div>
+);
 
 const AppRoutes = () => {
   return (
-    <Routes>
-      {/* Public - User Auth */}
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/verify-otp" element={<OTPVerificationPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/auth/google/success" element={<GoogleCallbackPage />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Public - User Auth */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-otp" element={<OTPVerificationPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/auth/google/success" element={<GoogleCallbackPage />} />
 
-      {/* Subscription Routes */}
-      <Route path="/plans" element={<ProtectedRoute><PlansPage /></ProtectedRoute>} />
-      <Route path="/payment/success" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
-      <Route path="/payment/cancel" element={<ProtectedRoute><PaymentCancelPage /></ProtectedRoute>} />
-      <Route path="/subscription/manage" element={<ProtectedRoute><ManageSubscriptionPage /></ProtectedRoute>} />
+        {/* Subscription Routes */}
+        <Route path="/plans" element={<ProtectedRoute><PlansPage /></ProtectedRoute>} />
+        <Route path="/payment/success" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
+        <Route path="/payment/cancel" element={<ProtectedRoute><PaymentCancelPage /></ProtectedRoute>} />
+        <Route path="/subscription/manage" element={<ProtectedRoute><ManageSubscriptionPage /></ProtectedRoute>} />
 
+        {/* User Dashboard */}
+        <Route path="/problems" element={<ProtectedRoute><ProblemListPage /></ProtectedRoute>} />
+        <Route path="/problems/:id" element={<ProtectedRoute><ProblemDetailPage /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+        <Route path="/submissions" element={<ProtectedRoute><SubmissionsPage /></ProtectedRoute>} />
 
-      {/* User Dashboard */}
-      <Route
-        path="/problems"
-        element={
-          <ProtectedRoute>
-            <ProblemListPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/problems/:id"
-        element={
-          <ProtectedRoute>
-            <ProblemDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Navigate to="/problems" replace />
-          </ProtectedRoute>
-        }
-      />
+        {/* Candidate / Mentoring Routes */}
+        <Route path="/candidate/mentors" element={<ProtectedRoute><MentorsListPage /></ProtectedRoute>} />
+        <Route path="/candidate/mentors/:mentorId" element={<ProtectedRoute><CandidateMentorProfilePage /></ProtectedRoute>} />
+        <Route path="/candidate/bookings" element={<ProtectedRoute><StudentBookingsPage /></ProtectedRoute>} />
+        <Route path="/candidate/session/:roomId" element={<ProtectedRoute><StudentSessionRoomPage /></ProtectedRoute>} />
 
-      <Route
-        path="/submissions"
-        element={
-          <ProtectedRoute>
-            <SubmissionsPage />
-          </ProtectedRoute>
-        }
-      />
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin/dashboard" element={<ProtectedRoute redirectTo="/admin/login"><AdminDashboardPage /></ProtectedRoute>} />
+        <Route path="/admin/mentors" element={<ProtectedRoute redirectTo="/admin/login"><MentorManagementPage /></ProtectedRoute>} />
+        <Route path="/admin/users" element={<ProtectedRoute redirectTo="/admin/login"><UserManagementPage /></ProtectedRoute>} />
+        <Route path="/admin/problems" element={<ProtectedRoute redirectTo="/admin/login"><AdminProblemListPage /></ProtectedRoute>} />
+        <Route path="/admin/problems/create" element={<ProtectedRoute redirectTo="/admin/login"><ProblemFormPage /></ProtectedRoute>} />
+        <Route path="/admin/problems/edit/:id" element={<ProtectedRoute redirectTo="/admin/login"><ProblemFormPage /></ProtectedRoute>} />
+        <Route path="/admin/sessions" element={<ProtectedRoute redirectTo="/admin/login"><SessionMonitoringPage /></ProtectedRoute>} />
+        <Route path="/admin/sessions/:id" element={<ProtectedRoute redirectTo="/admin/login"><SessionDetailsPage /></ProtectedRoute>} />
+        <Route path="/admin/revenue" element={<ProtectedRoute redirectTo="/admin/login"><RevenueMonitoringPage /></ProtectedRoute>} />
+        <Route path="/admin/plan-management" element={<ProtectedRoute redirectTo="/admin/login"><PlanManagementPage /></ProtectedRoute>} />
 
-      {/* Candidate / Mentoring Routes */}
-      <Route
-        path="/candidate/mentors"
-        element={
-          <ProtectedRoute>
-            <MentorsListPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/candidate/mentors/:mentorId"
-        element={
-          <ProtectedRoute>
-            <CandidateMentorProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/candidate/bookings"
-        element={
-          <ProtectedRoute>
-            <StudentBookingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/candidate/session/:roomId"
-        element={
-          <ProtectedRoute>
-            <StudentSessionRoomPage />
-          </ProtectedRoute>
-        }
-      />
+        {/* Mentor Routes */}
+        <Route path="/mentor/login" element={<MentorLoginPage />} />
+        <Route path="/mentor/forgot-password" element={<MentorForgotPasswordPage />} />
+        <Route path="/mentor/reset-password" element={<MentorResetPasswordPage />} />
+        <Route path="/mentor/activate" element={<MentorActivationPage />} />
+        <Route path="/mentor/activation-success" element={<MentorSuccessPage />} />
 
-      {/* Admin Routes */}
-      <Route path="/admin/login" element={<AdminLoginPage />} />
-      <Route
-        path="/admin/mentors"
-        element={
-          <ProtectedRoute redirectTo="/admin/login">
-            <MentorManagementPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/dashboard"
-        element={
-          <ProtectedRoute redirectTo="/admin/login">
-            <AdminDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/users"
-        element={
-          <ProtectedRoute redirectTo="/admin/login">
-            <UserManagementPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/problems"
-        element={
-          <ProtectedRoute redirectTo="/admin/login">
-            <AdminProblemListPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/problems/create"
-        element={
-          <ProtectedRoute redirectTo="/admin/login">
-            <ProblemFormPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/problems/edit/:id"
-        element={
-          <ProtectedRoute redirectTo="/admin/login">
-            <ProblemFormPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/sessions"
-        element={
-          <ProtectedRoute redirectTo="/admin/login">
-            <SessionMonitoringPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/sessions/:id"
-        element={
-          <ProtectedRoute redirectTo="/admin/login">
-            <SessionDetailsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/revenue"
-        element={
-          <ProtectedRoute redirectTo="/admin/login">
-            <RevenueMonitoringPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route 
-        path="/admin/plan-management" 
-        element={
-          <ProtectedRoute redirectTo="/admin/login">
-            <PlanManagementPage />
-          </ProtectedRoute>
-        } 
-      />
+        <Route path="/mentor" element={<ProtectedRoute redirectTo="/mentor/login"><MentorLayout /></ProtectedRoute>}>
+          <Route path="dashboard" element={<MentorDashboardPage />} />
+          <Route path="availability" element={<MentorAvailabilityPage />} />
+          <Route path="bookings" element={<MentorBookingsPage />} />
+          <Route path="profile" element={<MentorProfilePage />} />
+        </Route>
 
-      {/* Mentor Routes */}
-      <Route path="/mentor/login" element={<MentorLoginPage />} />
-      <Route path="/mentor/forgot-password" element={<MentorForgotPasswordPage />} />
-      <Route path="/mentor/reset-password" element={<MentorResetPasswordPage />} />
-      <Route path="/mentor/activate" element={<MentorActivationPage />} />
-      <Route path="/mentor/activation-success" element={<MentorSuccessPage />} />
-      
-      <Route
-        path="/mentor"
-        element={
-          <ProtectedRoute redirectTo="/mentor/login">
-            <MentorLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="dashboard" element={<MentorDashboardPage />} />
-        <Route path="availability" element={<MentorAvailabilityPage />} />
-        <Route path="bookings" element={<MentorBookingsPage />} />
-        <Route path="profile" element={<MentorProfilePage />} />
-      </Route>
-      
-      {/* Mentor Session (Outside layout, full screen) */}
-      <Route
-        path="/mentor/session/:roomId"
-        element={
-          <ProtectedRoute redirectTo="/mentor/login">
-            <SessionRoomPage />
-          </ProtectedRoute>
-        }
-      />
+        {/* Mentor Session (Outside layout, full screen) */}
+        <Route path="/mentor/session/:roomId" element={<ProtectedRoute redirectTo="/mentor/login"><SessionRoomPage /></ProtectedRoute>} />
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Suspense>
   );
 };
 

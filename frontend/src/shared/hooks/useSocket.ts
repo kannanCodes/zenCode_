@@ -80,18 +80,18 @@ export function useSocket(options: UseSocketOptions) {
 
     // --- Connection events ---
     socket.on('connect', () => {
-      console.log('[Socket] Connected:', socket.id);
+      if (import.meta.env.DEV) console.log('[Socket] Connected:', socket.id);
       joinRoom(socket, roomId);
       startHeartbeat(socket, roomId);
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('[Socket] Disconnected:', reason);
+      if (import.meta.env.DEV) console.log('[Socket] Disconnected:', reason);
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
     });
 
     socket.on('reconnect', () => {
-      console.log('[Socket] Reconnected — rejoining room:', roomId);
+      if (import.meta.env.DEV) console.log('[Socket] Reconnected — rejoining room:', roomId);
       // Auto-rejoin on reconnect restores room membership + gets latest editor state
       joinRoom(socket, roomId);
       startHeartbeat(socket, roomId);
