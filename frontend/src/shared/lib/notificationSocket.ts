@@ -35,11 +35,11 @@ class NotificationSocketManager {
     });
 
     this.socket.on('connect', () => {
-      console.log('[NotificationSocket] Connected:', this.socket?.id);
+      if (import.meta.env.DEV) console.log('[NotificationSocket] Connected:', this.socket?.id);
     });
 
     this.socket.on('disconnect', (reason: string) => {
-      console.log('[NotificationSocket] Disconnected:', reason);
+      if (import.meta.env.DEV) console.log('[NotificationSocket] Disconnected:', reason);
     });
 
     this.socket.on('connect_error', (err: Error) => {

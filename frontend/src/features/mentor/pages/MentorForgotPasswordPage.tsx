@@ -207,7 +207,7 @@ const MentorForgotPasswordPage = () => {
             </form>
 
             <div className="mt-6 pt-6 border-t border-[#2a2d3a] text-center text-xs text-gray-500">
-              Protected by ZenCode security protocols.
+              Protected by zenCode security protocols.
             </div>
           </div>
         </div>

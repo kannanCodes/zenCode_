@@ -137,7 +137,7 @@ const ForgotPasswordPage = () => {
             </form>
 
             <div className="mt-6 pt-6 border-t border-[var(--color-border-dark)] text-center text-xs text-gray-500">
-                Protected by ZenCode security protocols.
+                Protected by zenCode security protocols.
               </div>
           </div>
         </div>

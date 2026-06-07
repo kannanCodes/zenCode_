@@ -28,8 +28,9 @@ const Navbar = () => {
   const navLinks = isAuthenticated
     ? [
         { label: 'Problems', to: '/problems' },
-        { label: 'Mentors', to: '/candidate/mentors' },
-        { label: 'My Sessions', to: '/candidate/bookings' },
+        { label: 'Mock Interview', to: '/candidate/mentors' },
+        { label: 'Schedule', to: '/candidate/bookings' },
+        { label: 'Dashboard', to: '/dashboard' },
       ]
     : [
         { label: 'Problems', to: '/problems' },
@@ -75,7 +76,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="text-xl font-bold text-[var(--color-primary)]">
-          ZenCode
+          zenCode
         </Link>
 
         {/* Nav Links */}
@@ -159,7 +160,7 @@ const Navbar = () => {
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-52 rounded-xl bg-[#111111] border border-[#272b3a] shadow-2xl py-2 flex flex-col z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                     <Link
-                      to="/problems"
+                      to="/dashboard"
                       onClick={() => setDropdownOpen(false)}
                       className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
                     >

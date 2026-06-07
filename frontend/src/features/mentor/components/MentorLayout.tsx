@@ -46,8 +46,8 @@ export const MentorNavbar = () => {
     <nav className="fixed top-0 z-50 w-full border-b border-[#1c1c1c] bg-[var(--color-background-dark)]/95 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/mentor/dashboard" className="text-xl font-bold text-[var(--color-primary)]">
-          ZenCode_
+        <Link to="/mentor/dashboard" className="text-xl font-bold text-white tracking-wide">
+          zenCode_
         </Link>
 
         {/* Right Side */}
@@ -79,9 +79,11 @@ export const MentorNavbar = () => {
 
           {/* User Profile / Dropdown */}
           <div className="relative flex items-center gap-3" ref={dropdownRef}>
-            <div className="hidden md:flex flex-col items-end">
-              <span className="text-sm font-bold text-white leading-tight">Mentor</span>
-              <span className="text-xs text-gray-500 leading-tight">ZenCode</span>
+            <div className="flex flex-col items-end hidden sm:flex">
+              <span className="text-xs text-gray-500 leading-tight">zenCode</span>
+              <span className="text-[10px] font-mono text-[var(--color-primary)] uppercase tracking-widest bg-[var(--color-primary)]/10 px-1.5 py-0.5 rounded mt-0.5">
+                Mentor
+              </span>
             </div>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}

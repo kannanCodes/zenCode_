@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { candidateBookingApi } from '../services/booking.service';
 import { showError, showSuccess } from '../../../shared/utils/toast.util';
@@ -70,6 +70,9 @@ const StudentBookingsPage = () => {
   const [nowMs, setNowMs] = useState(() => Date.now());
   // Tracks which booking IDs have already been reviewed by this student
   const [reviewedBookingIds, setReviewedBookingIds] = useState<Set<string>>(new Set());
+  const [visiblePastCount, setVisiblePastCount] = useState(5);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const observer = useRef<IntersectionObserver | null>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -123,6 +126,23 @@ const StudentBookingsPage = () => {
     return () => window.clearInterval(timer);
   }, []);
 
+  const observerTarget = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore) {
+          setIsLoadingMore(true);
+          setTimeout(() => {
+            setVisiblePastCount((prev) => prev + 5);
+            setIsLoadingMore(false);
+          }, 600); // 600ms artificial delay to show the loader
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [isLoadingMore]
+  );
+
   const handleEnterSession = async (bookingId: string) => {
     try {
       // Re-uses mentor-session endpoint, but the backend verifies access based on candidate role.
@@ -174,6 +194,8 @@ const StudentBookingsPage = () => {
   const pastBookings = bookings
     .filter((booking) => !upcomingBookings.some((upcoming) => upcoming._id === booking._id))
     .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+
+  const visiblePastBookings = pastBookings.slice(0, visiblePastCount);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -287,50 +309,57 @@ const StudentBookingsPage = () => {
                     No past sessions.
                   </div>
                 ) : (
-                  pastBookings.map((booking) => (
-                    <div key={booking._id} className="bg-[#1a1d26] border border-[#2a2d3a] rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-                      <div>
-                        <h3 className="text-lg font-bold mb-1">Session with {getMentorName(booking)}</h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-400">
-                          <div className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            {formatDate(booking.startTime)}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+                  <>
+                    {visiblePastBookings.map((booking) => (
+                      <div key={booking._id} className="bg-[#1a1d26] border border-[#2a2d3a] rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 hover:border-[#3a3d4a] transition-colors">
+                        <div>
+                          <h3 className="text-lg font-bold mb-1">Session with {getMentorName(booking)}</h3>
+                          <div className="flex items-center gap-4 text-sm text-gray-400">
+                            <div className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              {formatDate(booking.startTime)}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <span className={`px-2 py-1 rounded border text-xs font-bold capitalize ${getStatusMeta(booking, nowMs).className}`}>
-                          {getStatusMeta(booking, nowMs).label}
-                        </span>
-                        {/* ── Bug 1 fix: only show for completed sessions whose end time has passed ── */}
-                        {booking.status === 'completed' && !isAfterNow(booking.endTime, nowMs) &&
-                         !reviewedBookingIds.has(booking._id) && (
-                          <button
-                            onClick={() => setSearchParams({ reviewBookingId: booking._id })}
-                            className="text-xs font-bold text-[var(--color-primary)] hover:text-blue-400 transition-colors underline"
-                          >
-                            Leave Review
-                          </button>
-                        )}
-                        {reviewedBookingIds.has(booking._id) && (
-                          <span className="text-xs text-green-500 font-medium flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                            </svg>
-                            Reviewed
+                        <div className="flex flex-col items-end gap-2">
+                          <span className={`px-2 py-1 rounded border text-xs font-bold capitalize ${getStatusMeta(booking, nowMs).className}`}>
+                            {getStatusMeta(booking, nowMs).label}
                           </span>
-                        )}
+                          {/* ── Bug 1 fix: only show for completed sessions whose end time has passed ── */}
+                          {booking.status === 'completed' && !isAfterNow(booking.endTime, nowMs) &&
+                           !reviewedBookingIds.has(booking._id) && (
+                            <button
+                              onClick={() => setSearchParams({ reviewBookingId: booking._id })}
+                              className="text-xs font-bold text-[var(--color-primary)] hover:text-blue-400 transition-colors underline"
+                            >
+                              Leave Review
+                            </button>
+                          )}
+                          {reviewedBookingIds.has(booking._id) && (
+                            <span className="text-xs text-green-500 font-medium flex items-center gap-1">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Reviewed
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                    {visiblePastCount < pastBookings.length && (
+                      <div ref={observerTarget} className="flex justify-center py-4">
+                        <div className={`w-8 h-8 border-2 border-[#2a2d3a] border-t-[var(--color-primary)] rounded-full animate-spin transition-opacity duration-300 ${isLoadingMore ? 'opacity-100' : 'opacity-0'}`}></div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </section>

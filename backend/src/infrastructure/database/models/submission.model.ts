@@ -81,6 +81,8 @@ const SubmissionSchema = new Schema(
 );
 
 SubmissionSchema.index({ userId: 1, problemId: 1 });
+SubmissionSchema.index({ userId: 1, createdAt: -1 }); // heatmap & recent submissions
+
 
 export const Submission = model<ISubmission>("Submission", SubmissionSchema);
 export default Submission;

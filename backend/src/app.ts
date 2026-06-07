@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import passport from './config/passport';
 
 import { errorMiddleware } from './middlewares/error.middleware';
@@ -30,7 +31,13 @@ import adminDashboardRoutes from './routes/admin/admin-dashboard.routes';
 import adminSessionRoutes from './routes/admin/admin-session.routes';
 import adminRevenueRoutes from './routes/admin/admin-revenue.routes';
 import aiHintRoutes from './routes/ai-hint/ai-hint.routes';
+import dashboardRoutes from './routes/dashboard/dashboard.routes';
 export const app = express();
+
+// ─── Security Headers ────────────────────────────────────────────────────────
+app.use(helmet({
+  crossOriginEmbedderPolicy: false, // disable for WebRTC / socket.io compatibility
+}));
 
 app.use(cors({
   origin: [appConfig.frontendUrl],
@@ -57,6 +64,7 @@ app.use('/api/admin', adminDashboardRoutes);
 app.use('/api/admin', adminSessionRoutes);
 app.use('/api/admin/revenue', adminRevenueRoutes);
 app.use('/api/ai-hints', aiHintRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/plans', adminPlanRoutes);
 app.use('/api/mentor/auth', mentorAuthRoutes);
 app.use('/api/mentor/availability', mentorAvailabilityRoutes);
@@ -79,5 +87,9 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', env: appConfig.nodeEnv });
 });
 
+// ─── 404 handler for unknown API routes ─────────────────────────────────────
+app.use(/^\/api\//, (_req, res) => {
+  res.status(404).json({ success: false, message: 'Route not found' });
+});
 
 app.use(errorMiddleware);

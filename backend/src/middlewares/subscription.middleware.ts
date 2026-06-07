@@ -14,26 +14,26 @@ export class SubscriptionMiddleware {
     private readonly planRepo: IPlanRepository
   ) {}
 
+  /** Shared: validates that the user has an active, non-expired subscription. */
+  private async _validateSubscription(userId: string) {
+    const subscription = await this.subscriptionService.getActiveSubscription(userId);
+
+    if (!subscription) {
+      throw new AppError(SUBSCRIPTION_MESSAGES.REQUIRED, STATUS_CODES.FORBIDDEN);
+    }
+
+    if (new Date(subscription.endDate) < new Date()) {
+      throw new AppError(SUBSCRIPTION_MESSAGES.EXPIRED, STATUS_CODES.FORBIDDEN);
+    }
+
+    return subscription;
+  }
+
   requireFeatureAccess = (feature: PlanFeature) => {
     return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
       try {
         const userId = req.user!.id;
-
-        const subscription = await this.subscriptionService.getActiveSubscription(userId);
-
-        if (!subscription) {
-          throw new AppError(
-            SUBSCRIPTION_MESSAGES.REQUIRED,
-            STATUS_CODES.FORBIDDEN
-          );
-        }
-
-        if (new Date(subscription.endDate) < new Date()) {
-          throw new AppError(
-            SUBSCRIPTION_MESSAGES.EXPIRED,
-            STATUS_CODES.FORBIDDEN
-          );
-        }
+        const subscription = await this._validateSubscription(userId);
 
         // subscription.planId is populated by findActiveByUser
         const planId =
@@ -48,10 +48,7 @@ export class SubscriptionMiddleware {
         }
 
         if (!plan.access?.[feature]) {
-          throw new AppError(
-            SUBSCRIPTION_MESSAGES.FEATURE_DENIED,
-            STATUS_CODES.FORBIDDEN
-          );
+          throw new AppError(SUBSCRIPTION_MESSAGES.FEATURE_DENIED, STATUS_CODES.FORBIDDEN);
         }
 
         next();
@@ -63,24 +60,7 @@ export class SubscriptionMiddleware {
 
   requireSubscription = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = req.user!.id;
-
-      const subscription = await this.subscriptionService.getActiveSubscription(userId);
-
-      if (!subscription) {
-        throw new AppError(
-          SUBSCRIPTION_MESSAGES.REQUIRED,
-          STATUS_CODES.FORBIDDEN
-        );
-      }
-
-      if (new Date(subscription.endDate) < new Date()) {
-        throw new AppError(
-          SUBSCRIPTION_MESSAGES.EXPIRED,
-          STATUS_CODES.FORBIDDEN
-        );
-      }
-
+      await this._validateSubscription(req.user!.id);
       next();
     } catch (error) {
       next(error);
