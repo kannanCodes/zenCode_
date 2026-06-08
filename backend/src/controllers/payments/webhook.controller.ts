@@ -6,6 +6,7 @@ import { logger } from '../../shared/utils/Logger';
 import { sendSuccess, sendError } from '../../shared/http/response';
 import { PaymentTransaction } from '../../infrastructure/database/models/payment-transaction.model';
 import User from '../../infrastructure/database/models/user.model';
+import { Subscription } from '../../infrastructure/database/models/subscription.model';
 import { STATUS_CODES } from '../../shared/constants/status';
 import { GLOBAL_MESSAGES, PAYMENT_MESSAGES } from '../../constants/messages';
 import { 
@@ -138,10 +139,11 @@ export class WebhookController {
           // Log transaction
           try {
             const customerId = invoice.customer as string;
-            const user = await User.findOne({ stripeCustomerId: customerId });
-            if (user) {
+            const sub = await Subscription.findOne({ stripeSubscriptionId: invoice.subscription as string });
+            
+            if (sub) {
               await PaymentTransaction.create({
-                userId: user._id,
+                userId: sub.userId,
                 subscriptionId: invoice.subscription as string,
                 stripeInvoiceId: invoice.id,
                 amount: invoice.amount_due / 100, // Stripe uses cents
@@ -209,15 +211,15 @@ export class WebhookController {
           // Log transaction
           try {
             const customerId = invoice.customer as string;
-            const user = await User.findOne({ stripeCustomerId: customerId });
+            const sub = await Subscription.findOne({ stripeSubscriptionId: stripeSubscriptionId as string });
             
-            if (user) {
+            if (sub) {
               const line = invoice.lines.data[0] as unknown as { price?: { id?: string } };
               const priceId = line.price?.id;
               const plan = priceId ? await this.planRepo.findByStripePriceId(priceId) : null;
 
               await PaymentTransaction.create({
-                userId: user._id,
+                userId: sub.userId,
                 subscriptionId: stripeSubscriptionId as string,
                 planId: plan?._id,
                 stripeInvoiceId: invoice.id,
