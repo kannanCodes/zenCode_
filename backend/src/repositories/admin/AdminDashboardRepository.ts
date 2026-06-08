@@ -298,24 +298,20 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
         { $sort: { _id: 1 } },
       ]),
 
-      // Daily revenue (subscriptions created × plan price) — last 30 days
-      Subscription.aggregate([
-        { $match: { createdAt: { $gte: thirtyDaysAgo } } },
-        {
-          $lookup: {
-            from: 'plans',
-            localField: 'planId',
-            foreignField: '_id',
-            as: 'plan',
-          },
+      // Daily revenue (successful payments) — last 30 days
+      mongoose.model('PaymentTransaction').aggregate([
+        { 
+          $match: { 
+            createdAt: { $gte: thirtyDaysAgo },
+            status: 'succeeded'
+          } 
         },
-        { $unwind: '$plan' },
         {
           $group: {
             _id: {
               $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
             },
-            revenue: { $sum: '$plan.price' },
+            revenue: { $sum: '$amount' },
           },
         },
         { $sort: { _id: 1 } },
