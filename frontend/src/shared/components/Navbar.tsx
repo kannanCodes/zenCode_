@@ -82,7 +82,7 @@ const Navbar = () => {
   };
 
   const planName =
-    subscription && typeof subscription.planId === 'object'
+    subscription && typeof subscription.planId === 'object' && subscription.planId !== null
       ? subscription.planId.name
       : 'Premium';
   const planNameLower = planName.toLowerCase();
