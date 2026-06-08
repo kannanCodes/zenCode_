@@ -20,23 +20,44 @@ const Navbar = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isAuthenticated = !!tokenService.getAccessToken();
+  const payload = isAuthenticated ? tokenService.getTokenPayload() : null;
+  const userRole = payload?.role as string | undefined;
+
   const isPremium = useSelector(selectIsPremium);
   const subscription = useSelector(selectSubscription);
   const isHydrated = useSelector(selectIsHydrated);
   // While token exists but subscription is still loading, show nothing to prevent flash
-  const showBadge = isAuthenticated && isHydrated;
-  const navLinks = isAuthenticated
-    ? [
+  const showBadge = isAuthenticated && isHydrated && userRole === 'candidate';
+  
+  let navLinks = [];
+  if (isAuthenticated) {
+    if (userRole === 'candidate') {
+      navLinks = [
         { label: 'Problems', to: '/problems' },
         { label: 'Mock Interview', to: '/candidate/mentors' },
         { label: 'Schedule', to: '/candidate/bookings' },
         { label: 'Dashboard', to: '/dashboard' },
-      ]
-    : [
+      ];
+    } else if (userRole === 'mentor') {
+      navLinks = [
+        { label: 'Mentor Dashboard', to: '/mentor/dashboard' },
+      ];
+    } else if (userRole === 'admin') {
+      navLinks = [
+        { label: 'Admin Dashboard', to: '/admin/dashboard' },
+      ];
+    } else {
+      navLinks = [
+        { label: 'Dashboard', to: '/dashboard' },
+      ];
+    }
+  } else {
+    navLinks = [
         { label: 'Problems', to: '/problems' },
         { label: 'Mentors', to: '/login' },
         { label: 'Mock Interviews', to: '/login' },
-      ];
+    ];
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -159,41 +180,65 @@ const Navbar = () => {
 
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-52 rounded-xl bg-[#111111] border border-[#272b3a] shadow-2xl py-2 flex flex-col z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setDropdownOpen(false)}
-                      className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
-                    >
-                      Dashboard
-                    </Link>
-                    <Link
-                      to="/submissions"
-                      onClick={() => setDropdownOpen(false)}
-                      className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
-                    >
-                      My Submissions
-                    </Link>
-                    <Link
-                      to="/candidate/mentors"
-                      onClick={() => setDropdownOpen(false)}
-                      className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
-                    >
-                      Mentors
-                    </Link>
-                    <Link
-                      to="/candidate/bookings"
-                      onClick={() => setDropdownOpen(false)}
-                      className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
-                    >
-                      My Sessions
-                    </Link>
-                    <Link
-                      to="/subscription/manage"
-                      onClick={() => setDropdownOpen(false)}
-                      className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
-                    >
-                      Manage Subscription
-                    </Link>
+                    {userRole === 'candidate' ? (
+                      <>
+                        <Link
+                          to="/dashboard"
+                          onClick={() => setDropdownOpen(false)}
+                          className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
+                        >
+                          Dashboard
+                        </Link>
+                        <Link
+                          to="/submissions"
+                          onClick={() => setDropdownOpen(false)}
+                          className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
+                        >
+                          My Submissions
+                        </Link>
+                        <Link
+                          to="/candidate/mentors"
+                          onClick={() => setDropdownOpen(false)}
+                          className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
+                        >
+                          Mentors
+                        </Link>
+                        <Link
+                          to="/candidate/bookings"
+                          onClick={() => setDropdownOpen(false)}
+                          className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
+                        >
+                          My Sessions
+                        </Link>
+                        <Link
+                          to="/subscription/manage"
+                          onClick={() => setDropdownOpen(false)}
+                          className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
+                        >
+                          Manage Subscription
+                        </Link>
+                      </>
+                    ) : userRole === 'mentor' ? (
+                      <>
+                        <Link
+                          to="/mentor/dashboard"
+                          onClick={() => setDropdownOpen(false)}
+                          className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
+                        >
+                          Mentor Dashboard
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          to="/admin/dashboard"
+                          onClick={() => setDropdownOpen(false)}
+                          className="px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1d26] hover:text-white transition-colors"
+                        >
+                          Admin Dashboard
+                        </Link>
+                      </>
+                    )}
                     <div className="h-px bg-[#272b3a] my-1" />
                     <button
                       onClick={handleLogout}

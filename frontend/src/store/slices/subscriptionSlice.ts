@@ -23,12 +23,13 @@ const deriveIsPremium = (sub: Subscription | null): boolean => {
 const derivePlanId = (sub: Subscription | null): string | null => {
   if (!sub) return null;
   if (typeof sub.planId === 'string') return sub.planId;
+  if (!sub.planId) return null; // plan was deleted — populate returns null
   return sub.planId._id;
 };
 
 const derivePlanPrice = (sub: Subscription | null): number | null => {
   if (!sub) return null;
-  if (typeof sub.planId === 'object') return sub.planId.price;
+  if (typeof sub.planId === 'object' && sub.planId !== null) return sub.planId.price;
   return null;
 };
 
@@ -235,7 +236,7 @@ export const selectHasFeatureAccess =
     const { subscription, isPremium } = state.subscription;
     if (!isPremium) return false;
 
-    if (typeof subscription?.planId === 'object') {
+    if (typeof subscription?.planId === 'object' && subscription.planId !== null) {
       return subscription.planId.access?.[feature] === true;
     }
 

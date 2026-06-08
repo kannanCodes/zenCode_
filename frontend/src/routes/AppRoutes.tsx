@@ -77,35 +77,35 @@ const AppRoutes = () => {
         <Route path="/auth/google/success" element={<GoogleCallbackPage />} />
 
         {/* Subscription Routes */}
-        <Route path="/plans" element={<ProtectedRoute><PlansPage /></ProtectedRoute>} />
-        <Route path="/payment/success" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
-        <Route path="/payment/cancel" element={<ProtectedRoute><PaymentCancelPage /></ProtectedRoute>} />
-        <Route path="/subscription/manage" element={<ProtectedRoute><ManageSubscriptionPage /></ProtectedRoute>} />
+        <Route path="/plans" element={<ProtectedRoute allowedRoles={['candidate']}><PlansPage /></ProtectedRoute>} />
+        <Route path="/payment/success" element={<ProtectedRoute allowedRoles={['candidate']}><PaymentSuccessPage /></ProtectedRoute>} />
+        <Route path="/payment/cancel" element={<ProtectedRoute allowedRoles={['candidate']}><PaymentCancelPage /></ProtectedRoute>} />
+        <Route path="/subscription/manage" element={<ProtectedRoute allowedRoles={['candidate']}><ManageSubscriptionPage /></ProtectedRoute>} />
 
         {/* User Dashboard */}
-        <Route path="/problems" element={<ProtectedRoute><ProblemListPage /></ProtectedRoute>} />
-        <Route path="/problems/:id" element={<ProtectedRoute><ProblemDetailPage /></ProtectedRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-        <Route path="/submissions" element={<ProtectedRoute><SubmissionsPage /></ProtectedRoute>} />
+        <Route path="/problems" element={<ProtectedRoute allowedRoles={['candidate']}><ProblemListPage /></ProtectedRoute>} />
+        <Route path="/problems/:id" element={<ProtectedRoute allowedRoles={['candidate']}><ProblemDetailPage /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['candidate']}><DashboardPage /></ProtectedRoute>} />
+        <Route path="/submissions" element={<ProtectedRoute allowedRoles={['candidate']}><SubmissionsPage /></ProtectedRoute>} />
 
         {/* Candidate / Mentoring Routes */}
-        <Route path="/candidate/mentors" element={<ProtectedRoute><MentorsListPage /></ProtectedRoute>} />
-        <Route path="/candidate/mentors/:mentorId" element={<ProtectedRoute><CandidateMentorProfilePage /></ProtectedRoute>} />
-        <Route path="/candidate/bookings" element={<ProtectedRoute><StudentBookingsPage /></ProtectedRoute>} />
-        <Route path="/candidate/session/:roomId" element={<ProtectedRoute><StudentSessionRoomPage /></ProtectedRoute>} />
+        <Route path="/candidate/mentors" element={<ProtectedRoute allowedRoles={['candidate']}><MentorsListPage /></ProtectedRoute>} />
+        <Route path="/candidate/mentors/:mentorId" element={<ProtectedRoute allowedRoles={['candidate']}><CandidateMentorProfilePage /></ProtectedRoute>} />
+        <Route path="/candidate/bookings" element={<ProtectedRoute allowedRoles={['candidate']}><StudentBookingsPage /></ProtectedRoute>} />
+        <Route path="/candidate/session/:roomId" element={<ProtectedRoute allowedRoles={['candidate']}><StudentSessionRoomPage /></ProtectedRoute>} />
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route path="/admin/dashboard" element={<ProtectedRoute redirectTo="/admin/login"><AdminDashboardPage /></ProtectedRoute>} />
-        <Route path="/admin/mentors" element={<ProtectedRoute redirectTo="/admin/login"><MentorManagementPage /></ProtectedRoute>} />
-        <Route path="/admin/users" element={<ProtectedRoute redirectTo="/admin/login"><UserManagementPage /></ProtectedRoute>} />
-        <Route path="/admin/problems" element={<ProtectedRoute redirectTo="/admin/login"><AdminProblemListPage /></ProtectedRoute>} />
-        <Route path="/admin/problems/create" element={<ProtectedRoute redirectTo="/admin/login"><ProblemFormPage /></ProtectedRoute>} />
-        <Route path="/admin/problems/edit/:id" element={<ProtectedRoute redirectTo="/admin/login"><ProblemFormPage /></ProtectedRoute>} />
-        <Route path="/admin/sessions" element={<ProtectedRoute redirectTo="/admin/login"><SessionMonitoringPage /></ProtectedRoute>} />
-        <Route path="/admin/sessions/:id" element={<ProtectedRoute redirectTo="/admin/login"><SessionDetailsPage /></ProtectedRoute>} />
-        <Route path="/admin/revenue" element={<ProtectedRoute redirectTo="/admin/login"><RevenueMonitoringPage /></ProtectedRoute>} />
-        <Route path="/admin/plan-management" element={<ProtectedRoute redirectTo="/admin/login"><PlanManagementPage /></ProtectedRoute>} />
+        <Route path="/admin/dashboard" element={<ProtectedRoute redirectTo="/admin/login" allowedRoles={['admin']}><AdminDashboardPage /></ProtectedRoute>} />
+        <Route path="/admin/mentors" element={<ProtectedRoute redirectTo="/admin/login" allowedRoles={['admin']}><MentorManagementPage /></ProtectedRoute>} />
+        <Route path="/admin/users" element={<ProtectedRoute redirectTo="/admin/login" allowedRoles={['admin']}><UserManagementPage /></ProtectedRoute>} />
+        <Route path="/admin/problems" element={<ProtectedRoute redirectTo="/admin/login" allowedRoles={['admin']}><AdminProblemListPage /></ProtectedRoute>} />
+        <Route path="/admin/problems/create" element={<ProtectedRoute redirectTo="/admin/login" allowedRoles={['admin']}><ProblemFormPage /></ProtectedRoute>} />
+        <Route path="/admin/problems/edit/:id" element={<ProtectedRoute redirectTo="/admin/login" allowedRoles={['admin']}><ProblemFormPage /></ProtectedRoute>} />
+        <Route path="/admin/sessions" element={<ProtectedRoute redirectTo="/admin/login" allowedRoles={['admin']}><SessionMonitoringPage /></ProtectedRoute>} />
+        <Route path="/admin/sessions/:id" element={<ProtectedRoute redirectTo="/admin/login" allowedRoles={['admin']}><SessionDetailsPage /></ProtectedRoute>} />
+        <Route path="/admin/revenue" element={<ProtectedRoute redirectTo="/admin/login" allowedRoles={['admin']}><RevenueMonitoringPage /></ProtectedRoute>} />
+        <Route path="/admin/plan-management" element={<ProtectedRoute redirectTo="/admin/login" allowedRoles={['admin']}><PlanManagementPage /></ProtectedRoute>} />
 
         {/* Mentor Routes */}
         <Route path="/mentor/login" element={<MentorLoginPage />} />
@@ -114,7 +114,7 @@ const AppRoutes = () => {
         <Route path="/mentor/activate" element={<MentorActivationPage />} />
         <Route path="/mentor/activation-success" element={<MentorSuccessPage />} />
 
-        <Route path="/mentor" element={<ProtectedRoute redirectTo="/mentor/login"><MentorLayout /></ProtectedRoute>}>
+        <Route path="/mentor" element={<ProtectedRoute redirectTo="/mentor/login" allowedRoles={['mentor']}><MentorLayout /></ProtectedRoute>}>
           <Route path="dashboard" element={<MentorDashboardPage />} />
           <Route path="availability" element={<MentorAvailabilityPage />} />
           <Route path="bookings" element={<MentorBookingsPage />} />
@@ -122,7 +122,7 @@ const AppRoutes = () => {
         </Route>
 
         {/* Mentor Session (Outside layout, full screen) */}
-        <Route path="/mentor/session/:roomId" element={<ProtectedRoute redirectTo="/mentor/login"><SessionRoomPage /></ProtectedRoute>} />
+        <Route path="/mentor/session/:roomId" element={<ProtectedRoute redirectTo="/mentor/login" allowedRoles={['mentor']}><SessionRoomPage /></ProtectedRoute>} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

@@ -1,7 +1,24 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../../../shared/components/Navbar';
+import { tokenService } from '../../../shared/lib/token';
 
 const LandingPage = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = tokenService.getAccessToken();
+    if (token) {
+      const payload = tokenService.getTokenPayload();
+      const role = payload?.role as string | undefined;
+      if (role === 'mentor') {
+        navigate('/mentor/dashboard', { replace: true });
+      } else if (role === 'admin') {
+        navigate('/admin/dashboard', { replace: true });
+      }
+    }
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
