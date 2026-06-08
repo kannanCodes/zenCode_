@@ -10,6 +10,7 @@ export const appConfig = {
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   backendUrl: process.env.BACKEND_URL || 'http://localhost:5001',
   redis: {
+    url: process.env.REDIS_URL || undefined,
     host: process.env.REDIS_HOST || "localhost",
     port: Number(process.env.REDIS_PORT || 6379),
     password: process.env.REDIS_PASSWORD || undefined,
