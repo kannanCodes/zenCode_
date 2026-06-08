@@ -91,6 +91,20 @@ export class WebhookController {
             endDate,
           });
 
+          try {
+            await PaymentTransaction.create({
+              userId,
+              subscriptionId: stripeSubscriptionId,
+              planId: plan._id,
+              stripeInvoiceId: typeof session.invoice === 'string' ? session.invoice : `checkout-${session.id}`,
+              amount: (session.amount_total || 0) / 100,
+              currency: session.currency || 'inr',
+              status: 'succeeded',
+            });
+          } catch (err) {
+            logger.error('❌ Failed to log initial payment transaction:', err);
+          }
+
           logger.info(`✅ Subscription created for user: ${userId}`);
           break;
         }
@@ -206,6 +220,10 @@ export class WebhookController {
               );
               logger.info(`✅ Subscription renewed: ${stripeSubscriptionId}`);
             }
+          }
+
+          if (billingReason === 'subscription_create') {
+            break; // Already handled by checkout.session.completed
           }
 
           // Log transaction
