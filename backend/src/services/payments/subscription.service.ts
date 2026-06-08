@@ -95,11 +95,32 @@ export class SubscriptionService implements ISubscriptionService {
     }
 
     const currentPlan =
-      typeof sub.planId === 'object'
+      typeof sub.planId === 'object' && sub.planId !== null
         ? (sub.planId as IPlanDocument)
-        : await this.planRepo.findById(sub.planId.toString());
+        : sub.planId ? await this.planRepo.findById(sub.planId.toString()) : null;
 
-    if (!currentPlan || !currentPlan.stripePriceId) {
+    if (!currentPlan) {
+      // The current plan was deleted from the database.
+      // We can't compare prices, so we treat it as an immediate upgrade.
+      const stripeSub = await this.stripeService.changeSubscriptionPriceImmediately(
+        sub.stripeSubscriptionId,
+        newPlan.stripePriceId
+      );
+      const stripeItem = stripeSub.items.data[0] as unknown as { current_period_end?: number };
+
+      return this.subscriptionRepo.updateById(sub._id.toString(), {
+        planId: newPlan._id.toString(),
+        endDate: stripeItem.current_period_end
+          ? new Date(stripeItem.current_period_end * 1000)
+          : sub.endDate,
+        scheduledPlanId: null,
+        scheduledChangeAt: null,
+        scheduledChangeType: null,
+        stripeScheduleId: null,
+      });
+    }
+
+    if (!currentPlan.stripePriceId) {
       throw new AppError(SUBSCRIPTION_MESSAGES.PLAN_NOT_CONFIGURED, STATUS_CODES.NOT_FOUND);
     }
 
