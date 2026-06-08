@@ -11,7 +11,7 @@ type FilterType = 'all' | 'unread';
 const NotificationDropdown = ({ onClose }: Props) => {
   const { notifications, unreadCount, isLoading, hasMore, markAsRead, markAllRead, loadMore } = useNotifications();
   const [filter, setFilter] = useState<FilterType>('all');
-  const [page, setPage] = useState(1);
+  const [, setPage] = useState(1);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // Filter notifications locally
