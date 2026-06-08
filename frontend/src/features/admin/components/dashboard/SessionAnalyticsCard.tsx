@@ -45,7 +45,6 @@ const SessionAnalyticsCard = ({
 
   // Build bar chart
   const max = Math.max(...data.map((d) => d.value), 1);
-  const barWidth = data.length > 0 ? 100 / data.length : 10;
 
   return (
     <div className="rounded-xl border border-cyan-500/10 bg-[#0f0f0f] p-5 flex flex-col h-full">
