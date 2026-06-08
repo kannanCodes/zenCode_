@@ -25,6 +25,12 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
+      - name: Create Frontend Env File
+        working-directory: ./frontend
+        run: |
+          echo "VITE_API_URL=https://zencode.site/api" >> .env
+          echo "VITE_SOCKET_URL=https://zencode.site" >> .env
+
       - name: Build Frontend
         working-directory: ./frontend
         run: npm run build
