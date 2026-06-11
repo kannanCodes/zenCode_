@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ zenCode
+# 🖥️ zenCode
 
 **Master Coding Interviews with Real-Time Practice**
 
