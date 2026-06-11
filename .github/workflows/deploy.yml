@@ -54,7 +54,7 @@ jobs:
       # --- 3. DEPLOY VIA SSH & RSYNC ---
       - name: Deploy to AWS EC2
         uses: easingthemes/ssh-deploy@v4.1.8
-        env:
+        with:
           SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY }}
           ARGS: "-rlgoDzvc -i"
           REMOTE_HOST: ${{ secrets.AWS_HOST }}
