@@ -4,6 +4,7 @@ import { adminService } from '../services/admin.service';
 import { tokenService } from '../../../shared/lib/token';
 import { showSuccess, showError } from '../../../shared/utils/toast.util';
 import AdminSidebar from '../components/AdminSidebar';
+import AdminTable from '../components/AdminTable';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
@@ -247,144 +248,122 @@ const ProblemListPage = () => {
         </div>
 
         <div className="flex-1 overflow-auto p-6">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
-            </div>
-          ) : problems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64">
-              <svg className="w-16 h-16 text-gray-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <AdminTable
+            columns={[
+              { key: 'title', label: 'Problem Title' },
+              { key: 'difficulty', label: 'Difficulty' },
+              { key: 'tags', label: 'Tags' },
+              { key: 'status', label: 'Status' },
+              { key: 'createdBy', label: 'Created By' },
+              { key: 'actions', label: 'Actions' },
+            ]}
+            data={problems}
+            keyExtractor={(problem) => problem._id}
+            isLoading={isLoading}
+            emptyText="No problems found"
+            emptyIcon={
+              <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              <p className="text-gray-500">No problems found</p>
-            </div>
-          ) : (
-            <div className="bg-[#0f0f0f] border border-[#2a2d3a] rounded-xl overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-[#2a2d3a]">
-                    <th className="text-left p-4 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                      Problem Title
-                    </th>
-                    <th className="text-left p-4 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                      Difficulty
-                    </th>
-                    <th className="text-left p-4 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                      Tags
-                    </th>
-                    <th className="text-left p-4 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                      Status
-                    </th>
-                    <th className="text-left p-4 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                      Created By
-                    </th>
-                    <th className="text-left p-4 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {problems.map((problem) => (
-                    <tr key={problem._id} className="border-b border-[#2a2d3a] hover:bg-[#1a1a1a] transition-colors">
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[var(--color-primary)] font-medium">
-                            {problem.title}
-                          </span>
-                          {problem.isPremium && (
-                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400">
-                              Premium
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getDifficultyColor(
-                            problem.difficulty
-                          )}`}
-                        >
-                          {problem.difficulty}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex flex-wrap gap-2">
-                          {problem.tags.slice(0, 2).map((tag, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-1 rounded text-xs font-medium bg-gray-700 text-gray-300"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {problem.tags.length > 2 && (
-                            <span className="px-2 py-1 rounded text-xs font-medium bg-gray-700 text-gray-300">
-                              +{problem.tags.length - 2}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
-                            problem.isActive
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-red-500/20 text-red-400'
-                          }`}
-                        >
-                          <span
-                            className={`w-2 h-2 rounded-full ${
-                              problem.isActive ? 'bg-green-400' : 'bg-red-400'
-                            }`}
-                          ></span>
-                          {problem.isActive ? 'Active' : 'Disabled'}
-                        </span>
-                      </td>
-                      <td className="p-4 text-gray-400">
-                        {problem.createdBy ? (
-                          <span>Admin</span>
-                        ) : (
-                          <span className="text-gray-600">—</span>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => navigate(`/admin/problems/edit/${problem._id}`)}
-                            className="p-2 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all"
-                            title="Edit"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleToggleActive(problem._id, problem.isActive)}
-                            className={`p-2 rounded-lg border transition-all ${
-                              problem.isActive
-                                ? 'border-red-500 text-red-500 hover:bg-red-500/10'
-                                : 'border-green-500 text-green-500 hover:bg-green-500/10'
-                            }`}
-                            title={problem.isActive ? 'Deactivate' : 'Activate'}
-                          >
-                            {problem.isActive ? (
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                              </svg>
-                            ) : (
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+            }
+            renderRow={(problem) => (
+              <tr className="border-b border-[#2a2d3a] hover:bg-[#1a1a1a] transition-colors">
+                <td className="p-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[var(--color-primary)] font-medium">
+                      {problem.title}
+                    </span>
+                    {problem.isPremium && (
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400">
+                        Premium
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="p-4">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getDifficultyColor(
+                      problem.difficulty
+                    )}`}
+                  >
+                    {problem.difficulty}
+                  </span>
+                </td>
+                <td className="p-4">
+                  <div className="flex flex-wrap gap-2">
+                    {problem.tags.slice(0, 2).map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-1 rounded text-xs font-medium bg-gray-700 text-gray-300"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {problem.tags.length > 2 && (
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-gray-700 text-gray-300">
+                        +{problem.tags.length - 2}
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="p-4">
+                  <span
+                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
+                      problem.isActive
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'bg-red-500/20 text-red-400'
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        problem.isActive ? 'bg-green-400' : 'bg-red-400'
+                      }`}
+                    ></span>
+                    {problem.isActive ? 'Active' : 'Disabled'}
+                  </span>
+                </td>
+                <td className="p-4 text-gray-400">
+                  {problem.createdBy ? (
+                    <span>Admin</span>
+                  ) : (
+                    <span className="text-gray-600">—</span>
+                  )}
+                </td>
+                <td className="p-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => navigate(`/admin/problems/edit/${problem._id}`)}
+                      className="p-2 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all"
+                      title="Edit"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleToggleActive(problem._id, problem.isActive)}
+                      className={`p-2 rounded-lg border transition-all ${
+                        problem.isActive
+                          ? 'border-red-500 text-red-500 hover:bg-red-500/10'
+                          : 'border-green-500 text-green-500 hover:bg-green-500/10'
+                      }`}
+                      title={problem.isActive ? 'Deactivate' : 'Activate'}
+                    >
+                      {problem.isActive ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )}
+          />
 
           {!isLoading && problems.length > 0 && (
             <div className="mt-6 flex items-center justify-between">
