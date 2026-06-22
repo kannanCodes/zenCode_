@@ -5,6 +5,7 @@ import { tokenService } from '../../../shared/lib/token';
 import { showSuccess, showError } from '../../../shared/utils/toast.util';
 import axios from 'axios';
 import AdminSidebar from '../components/AdminSidebar';
+import AdminTable from '../components/AdminTable';
 
 interface User {
   _id: string;
@@ -214,90 +215,70 @@ const UserManagementPage = () => {
 
         {/* Table */}
         <div className="flex-1 overflow-auto p-6">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
-            </div>
-          ) : users.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64">
-              <svg className="w-16 h-16 text-gray-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <AdminTable
+            columns={[
+              { key: 'name', label: 'Name' },
+              { key: 'email', label: 'Email' },
+              { key: 'status', label: 'Status' },
+              { key: 'createdAt', label: 'Created Date' },
+              { key: 'actions', label: 'Actions' },
+            ]}
+            data={users}
+            keyExtractor={(user) => user._id}
+            isLoading={isLoading}
+            emptyText="No users found"
+            emptyIcon={
+              <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
-              <p className="text-gray-500">No users found</p>
-            </div>
-          ) : (
-            <div className="bg-[#0f0f0f] border border-[#2a2d3a] rounded-xl overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-[#2a2d3a]">
-                    <th className="text-left p-4 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                      Name
-                    </th>
-                    <th className="text-left p-4 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                      Email
-                    </th>
-                    <th className="text-left p-4 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                      Status
-                    </th>
-                    <th className="text-left p-4 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                      Created Date
-                    </th>
-                    <th className="text-left p-4 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user) => (
-                    <tr key={user._id} className="border-b border-[#2a2d3a] hover:bg-[#1a1a1a] transition-colors">
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-10 h-10 rounded-lg ${getAvatarColor(
-                              user.fullName
-                            )} flex items-center justify-center text-white font-bold text-sm`}
-                          >
-                            {getInitials(user.fullName)}
-                          </div>
-                          <span className="text-white font-medium">{user.fullName}</span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-gray-400">{user.email}</td>
-                      <td className="p-4">
-                        <span
-                          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
-                            user.isBlocked
-                              ? 'bg-red-500/20 text-red-400'
-                              : 'bg-green-500/20 text-green-400'
-                          }`}
-                        >
-                          <span
-                            className={`w-2 h-2 rounded-full ${
-                              user.isBlocked ? 'bg-red-400' : 'bg-green-400'
-                            }`}
-                          ></span>
-                          {user.isBlocked ? 'Blocked' : 'Active'}
-                        </span>
-                      </td>
-                      <td className="p-4 text-gray-400">{formatDate(user.createdAt)}</td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => handleBlockToggle(user._id, user.isBlocked)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            user.isBlocked
-                              ? 'border border-green-500 text-green-500 hover:bg-green-500/10'
-                              : 'border border-red-500 text-red-500 hover:bg-red-500/10'
-                          }`}
-                        >
-                          {user.isBlocked ? 'Unblock' : 'Block'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+            }
+            renderRow={(user) => (
+              <tr className="border-b border-[#2a2d3a] hover:bg-[#1a1a1a] transition-colors">
+                <td className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-lg ${getAvatarColor(
+                        user.fullName
+                      )} flex items-center justify-center text-white font-bold text-sm`}
+                    >
+                      {getInitials(user.fullName)}
+                    </div>
+                    <span className="text-white font-medium">{user.fullName}</span>
+                  </div>
+                </td>
+                <td className="p-4 text-gray-400">{user.email}</td>
+                <td className="p-4">
+                  <span
+                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
+                      user.isBlocked
+                        ? 'bg-red-500/20 text-red-400'
+                        : 'bg-green-500/20 text-green-400'
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        user.isBlocked ? 'bg-red-400' : 'bg-green-400'
+                      }`}
+                    ></span>
+                    {user.isBlocked ? 'Blocked' : 'Active'}
+                  </span>
+                </td>
+                <td className="p-4 text-gray-400">{formatDate(user.createdAt)}</td>
+                <td className="p-4">
+                  <button
+                    onClick={() => handleBlockToggle(user._id, user.isBlocked)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      user.isBlocked
+                        ? 'border border-green-500 text-green-500 hover:bg-green-500/10'
+                        : 'border border-red-500 text-red-500 hover:bg-red-500/10'
+                    }`}
+                  >
+                    {user.isBlocked ? 'Unblock' : 'Block'}
+                  </button>
+                </td>
+              </tr>
+            )}
+          />
 
           {!isLoading && users.length > 0 && (
             <div className="mt-6 text-center text-sm text-gray-500">
