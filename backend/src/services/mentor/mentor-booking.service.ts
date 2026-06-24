@@ -1,4 +1,4 @@
-import { isAfter, differenceInHours, format } from 'date-fns';
+import { isAfter, differenceInHours } from 'date-fns';
 import { IMentorBookingService, MentorDashboardStats } from '../../interfaces/service-interfaces/mentor/IMentorBookingService';
 import { Types } from 'mongoose';
 import { IMentorBookingRepository } from '../../interfaces/repository-interfaces/mentor/IMentorBookingRepository';
@@ -130,7 +130,11 @@ export class MentorBookingService implements IMentorBookingService {
       }
 
       const bookingId    = (booking._id as { toString(): string }).toString();
-      const formattedTime = format(startTime, 'MMM d, yyyy \'at\' h:mm a');
+      const formattedTime = startTime.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        month: 'short', day: 'numeric', year: 'numeric',
+        hour: 'numeric', minute: '2-digit',
+      }) + ' IST';
 
       // Candidate: "Your session is confirmed"
       void this.notificationService.create({
@@ -192,7 +196,11 @@ export class MentorBookingService implements IMentorBookingService {
         return;
       }
 
-      const formattedTime    = format(booking.startTime, 'MMM d, yyyy \'at\' h:mm a');
+      const formattedTime = booking.startTime.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        month: 'short', day: 'numeric', year: 'numeric',
+        hour: 'numeric', minute: '2-digit',
+      }) + ' IST';
       const cancelledByName  = cancelledBy.fullName;
 
       const sharedData = {

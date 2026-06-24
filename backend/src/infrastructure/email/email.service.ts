@@ -96,15 +96,16 @@ export class EmailService implements IEmailService {
   }
 
   async sendBookingConfirmation(data: BookingConfirmationEmailData): Promise<void> {
-    const startFormatted = data.startTime.toLocaleString('en-US', {
-      timeZone: 'UTC',
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    });
-    const endFormatted = data.endTime.toLocaleString('en-US', {
-      timeZone: 'UTC',
-      hour: '2-digit', minute: '2-digit',
-    });
+    const formatIST = (date: Date, opts: Intl.DateTimeFormatOptions): string =>
+      date.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', ...opts });
+
+    const startFormatted =
+      formatIST(data.startTime, {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      }) + ' IST';
+    const endFormatted =
+      formatIST(data.endTime, { hour: '2-digit', minute: '2-digit' }) + ' IST';
 
     try {
       await this._transporter.sendMail({
@@ -134,11 +135,14 @@ export class EmailService implements IEmailService {
   }
 
   async sendBookingCancelled(data: BookingCancelledEmailData): Promise<void> {
-    const startFormatted = data.startTime.toLocaleString('en-US', {
-      timeZone: 'UTC',
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    });
+    const formatIST = (date: Date, opts: Intl.DateTimeFormatOptions): string =>
+      date.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', ...opts });
+
+    const startFormatted =
+      formatIST(data.startTime, {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      }) + ' IST';
 
     try {
       await this._transporter.sendMail({
