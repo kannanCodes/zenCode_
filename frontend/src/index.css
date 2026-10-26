@@ -39,3 +39,559 @@
     linear-gradient(to bottom, rgba(128, 128, 128, 0.07) 1px, transparent 1px);
   background-size: 24px 24px;
 }
+
+/* ==========================================================================
+   zenCode Landing Page Scoped Styles (Paper-White Theme)
+   ========================================================================== */
+
+.zen-landing {
+  --paper: #EFEFEC;
+  --card: #F8F8F6;
+  --ink: #111111;
+  --mute: #5E5E5E;
+  --line: #D3D3CE;
+  --blue: #2B4BFF;
+  --sun: #E9A800;
+  --edbg: #0E0E0E;
+  --edtx: #E4E4E4;
+
+  box-sizing: border-box;
+  background-color: #EFEFEC !important;
+  color: #111111 !important;
+  font-family: "Bricolage Grotesque", system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  font-weight: 400;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+.zen-landing * {
+  box-sizing: border-box;
+}
+
+.zen-landing a {
+  color: inherit;
+}
+
+.zen-landing :focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.zen-landing .wrap {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.zen-landing nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 0;
+}
+
+.zen-landing .logo {
+  font-weight: 800;
+  font-size: 22px;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+}
+
+.zen-landing .logo svg {
+  width: 26px;
+  height: 26px;
+}
+
+.zen-landing nav .links {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  font-size: 15px;
+}
+
+.zen-landing nav .links a {
+  text-decoration: none;
+  color: var(--mute);
+  transition: color 0.15s;
+}
+
+.zen-landing nav .links a:hover {
+  color: var(--ink);
+}
+
+.zen-landing .btn {
+  display: inline-block;
+  background: var(--ink);
+  color: var(--paper) !important;
+  padding: 13px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1.5px solid var(--ink);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  transition: transform 0.15s, background-color 0.15s, color 0.15s;
+  line-height: 1.2;
+}
+
+.zen-landing .btn:hover {
+  transform: translateY(-2px);
+}
+
+.zen-landing .btn.ghost {
+  background: none;
+  color: var(--ink) !important;
+}
+
+.zen-landing .btn[disabled] {
+  opacity: 0.4;
+  cursor: default;
+  transform: none;
+}
+
+.zen-landing .hero {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 56px;
+  align-items: center;
+  padding: 56px 0 96px;
+}
+
+.zen-landing h1 {
+  font-size: clamp(44px, 6.4vw, 84px);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0;
+}
+
+.zen-landing h1 .enso {
+  position: relative;
+  display: inline-block;
+  padding: 0 0.12em;
+}
+
+.zen-landing h1 .enso svg {
+  position: absolute;
+  left: -12%;
+  top: -22%;
+  width: 124%;
+  height: 144%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.zen-landing h1 .enso path {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 900;
+  stroke-dashoffset: 900;
+  animation: zen-draw 1.6s 0.4s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+}
+
+@keyframes zen-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.zen-landing .hero p.lead {
+  margin: 28px 0 34px;
+  font-size: 19px;
+  color: var(--mute);
+  max-width: 44ch;
+}
+
+.zen-landing .cta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.zen-landing .fine {
+  margin-top: 18px;
+  font-size: 14px;
+  color: var(--mute);
+}
+
+.zen-landing .editor {
+  background: var(--edbg);
+  color: var(--edtx);
+  border-radius: 18px;
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  transform: rotate(1.2deg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.zen-landing .bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #2a2a2a;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9a9a9a;
+}
+
+.zen-landing .who {
+  display: flex;
+  gap: 14px;
+}
+
+.zen-landing .who i {
+  font-style: normal;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zen-landing .who i::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.zen-landing .who .a {
+  color: var(--sun);
+}
+
+.zen-landing .who .b {
+  color: #7C93FF;
+}
+
+.zen-landing pre {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14.5px;
+  line-height: 1.75;
+  font-weight: 400;
+  padding: 20px 20px 24px;
+  min-height: 300px;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  margin: 0;
+  background: transparent;
+}
+
+.zen-landing .ln {
+  display: block;
+  min-height: 1.75em;
+}
+
+.zen-landing .ln b {
+  font-weight: 400;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+.zen-landing .ln .k {
+  color: #C79BFF;
+}
+
+.zen-landing .ln .f {
+  color: #7FD1FF;
+}
+
+.zen-landing .ln.a::after,
+.zen-landing .ln.b::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1.15em;
+  vertical-align: text-bottom;
+  animation: zen-blink 1s steps(1) infinite;
+}
+
+.zen-landing .ln.a::after {
+  background: var(--sun);
+}
+
+.zen-landing .ln.b::after {
+  background: #7C93FF;
+}
+
+@keyframes zen-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.zen-landing .ed-foot {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid #2a2a2a;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9a9a9a;
+}
+
+.zen-landing .ok {
+  color: #ffffff;
+}
+
+.zen-landing section {
+  padding: 84px 0;
+  border-top: 1px solid var(--line);
+}
+
+.zen-landing h2 {
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  max-width: 20ch;
+  color: var(--ink);
+  margin: 0;
+}
+
+.zen-landing .steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 52px;
+  counter-reset: s;
+}
+
+.zen-landing .step {
+  padding: 0 32px 0 0;
+  position: relative;
+}
+
+.zen-landing .step::before {
+  counter-increment: s;
+  content: counter(s);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+.zen-landing .step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 22px;
+  left: 56px;
+  right: 12px;
+  border-top: 2px dashed var(--line);
+}
+
+.zen-landing .step h3 {
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.zen-landing .step p {
+  color: var(--mute);
+  max-width: 32ch;
+  margin: 0;
+}
+
+.zen-landing .feat {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  margin-top: 48px;
+}
+
+.zen-landing .feat .f {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 32px;
+}
+
+.zen-landing .feat .f.big {
+  grid-row: span 2;
+  border-radius: 22px 80px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.zen-landing .feat .f.sm {
+  border-radius: 22px 22px 22px 60px;
+}
+
+.zen-landing .feat .f h3 {
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.zen-landing .feat .f p {
+  color: var(--mute);
+  max-width: 44ch;
+  margin: 0;
+}
+
+.zen-landing .hints {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zen-landing .hint {
+  background: var(--edbg);
+  color: var(--edtx);
+  border-left: 3px solid var(--blue);
+  padding: 12px 16px;
+  border-radius: 0 12px 12px 0;
+  font-size: 15px;
+  animation: zen-slide 0.35s ease-out;
+}
+
+@keyframes zen-slide {
+  from {
+    transform: translateX(-14px);
+    opacity: 0;
+  }
+}
+
+.zen-landing .hints-empty {
+  border: 1.5px dashed var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: var(--mute);
+  font-size: 15px;
+}
+
+.zen-landing .hint-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.zen-landing .hint-row output {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+.zen-landing .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.zen-landing .chips span {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--line);
+  padding: 5px 12px;
+  border-radius: 999px;
+  color: var(--ink);
+}
+
+.zen-landing .heat {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(5, 1fr);
+  gap: 4px;
+  margin-top: 18px;
+  width: fit-content;
+}
+
+.zen-landing .heat i {
+  width: 14px;
+  height: 14px;
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--line);
+  display: block;
+}
+
+.zen-landing .heat i.l1 {
+  background: color-mix(in srgb, var(--blue) 30%, var(--line));
+}
+
+.zen-landing .heat i.l2 {
+  background: color-mix(in srgb, var(--blue) 60%, var(--line));
+}
+
+.zen-landing .heat i.l3 {
+  background: var(--blue);
+}
+
+.zen-landing .end {
+  text-align: center;
+  padding: 110px 0 90px;
+}
+
+.zen-landing .end h2 {
+  margin: 0 auto 28px;
+  max-width: 16ch;
+}
+
+@media (max-width: 900px) {
+  .zen-landing .hero {
+    grid-template-columns: 1fr;
+    padding-bottom: 64px;
+  }
+
+  .zen-landing .editor {
+    transform: none;
+  }
+
+  .zen-landing .steps,
+  .zen-landing .feat {
+    grid-template-columns: 1fr;
+  }
+
+  .zen-landing .step {
+    padding: 0 0 36px;
+  }
+
+  .zen-landing .step:not(:last-child)::after {
+    display: none;
+  }
+
+  .zen-landing .feat .f.big {
+    grid-row: auto;
+  }
+
+  .zen-landing nav .links a:not(.btn) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zen-landing * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .zen-landing h1 .enso path {
+    stroke-dashoffset: 0;
+  }
+}

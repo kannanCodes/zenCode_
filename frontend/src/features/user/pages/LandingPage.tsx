@@ -1,10 +1,39 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Navbar from '../../../shared/components/Navbar';
 import { tokenService } from '../../../shared/lib/token';
+
+interface ScriptLine {
+  speaker: 'a' | 'b';
+  html: string;
+}
+
+const CODE_SCRIPT: ScriptLine[] = [
+  { speaker: 'a', html: '<b class="k">def</b> <b class="f">two_sum</b>(nums, target):' },
+  { speaker: 'b', html: '    seen = {}' },
+  { speaker: 'b', html: '    <b class="k">for</b> i, n <b class="k">in</b> <b class="f">enumerate</b>(nums):' },
+  { speaker: 'a', html: '        # can you do it in one pass?' },
+  { speaker: 'b', html: '        <b class="k">if</b> target - n <b class="k">in</b> seen:' },
+  { speaker: 'b', html: '            <b class="k">return</b> [seen[target - n], i]' },
+  { speaker: 'b', html: '        seen[n] = i' },
+];
+
+const HINT_DATA = [
+  'Think about what you need to remember as you walk through the list.',
+  'For each number, what other number would complete the target?',
+  'A dictionary lets you check for that number in one step.',
+];
+
+const HEAT_LEVELS = [0, 1, 0, 2, 3, 1, 0, 3, 2, 1, 3, 0, 2, 3, 3, 1, 0, 2, 3, 3, 2, 1, 3, 3, 3, 0, 2, 3, 1, 3];
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const preRef = useRef<HTMLPreElement>(null);
+  const statusRef = useRef<HTMLSpanElement>(null);
+  const runRef = useRef<HTMLSpanElement>(null);
+
+  const [hintIndex, setHintIndex] = useState(0);
+
+  const isAuthenticated = !!tokenService.getAccessToken();
 
   useEffect(() => {
     const token = tokenService.getAccessToken();
@@ -19,160 +48,304 @@ const LandingPage = () => {
     }
   }, [navigate]);
 
+  // Code editor typewriter simulation
+  useEffect(() => {
+    const pre = preRef.current;
+    const status = statusRef.current;
+    const run = runRef.current;
+    if (!pre || !status || !run) return;
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let isCancelled = false;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Helper to strip HTML tags for typing
+    const stripHtml = (html: string) => {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      return tmp.textContent || '';
+    };
+
+    const runSimulation = () => {
+      pre.innerHTML = '';
+      if (run) run.textContent = '';
+      if (status) status.textContent = 'Live session';
+
+      const rows = CODE_SCRIPT.map(() => {
+        const span = document.createElement('span');
+        span.className = 'ln';
+        pre.appendChild(span);
+        return span;
+      });
+
+      const finish = () => {
+        rows.forEach((r, idx) => {
+          r.className = 'ln';
+          r.innerHTML = CODE_SCRIPT[idx].html;
+        });
+        if (run) run.textContent = '✓ 2 of 2 tests passed';
+        if (status) status.textContent = 'Live session';
+
+        // Pause before looping to keep the hero lively
+        timeoutId = setTimeout(() => {
+          if (!isCancelled) runSimulation();
+        }, 7000);
+      };
+
+      if (reduceMotion) {
+        finish();
+        return;
+      }
+
+      let lineIdx = 0;
+      let charIdx = 0;
+
+      const tick = () => {
+        if (isCancelled) return;
+        if (lineIdx >= CODE_SCRIPT.length) {
+          finish();
+          return;
+        }
+
+        const currentLine = CODE_SCRIPT[lineIdx];
+        const plainText = stripHtml(currentLine.html);
+
+        rows.forEach((r) => {
+          r.className = 'ln';
+        });
+
+        if (status) {
+          status.textContent = currentLine.speaker === 'a' ? 'Mentor is typing' : 'You are typing';
+        }
+
+        charIdx++;
+        rows[lineIdx].className = 'ln ' + currentLine.speaker;
+
+        if (charIdx < plainText.length) {
+          rows[lineIdx].textContent = plainText.slice(0, charIdx);
+          timeoutId = setTimeout(tick, 28 + Math.random() * 30);
+        } else {
+          rows[lineIdx].innerHTML = currentLine.html;
+          lineIdx++;
+          charIdx = 0;
+          timeoutId = setTimeout(tick, 260);
+        }
+      };
+
+      tick();
+    };
+
+    runSimulation();
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
+  const handleHintClick = () => {
+    if (hintIndex >= HINT_DATA.length) {
+      setHintIndex(0);
+    } else {
+      setHintIndex((prev) => prev + 1);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-black">
-      <Navbar />
+    <div className="zen-landing" data-theme="light">
+      {/* Navigation */}
+      <div className="wrap">
+        <nav>
+          <a className="logo" href="#top">
+            <svg viewBox="0 0 40 40" aria-hidden="true">
+              <path
+                d="M30 9a14 14 0 1 0 5 13"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+            </svg>
+            zenCode
+          </a>
+          <div className="links">
+            <a href="#how">How it works</a>
+            <a href="#features">Features</a>
+            {isAuthenticated ? (
+              <>
+                <Link to="/problems">Problems</Link>
+                <Link to="/dashboard" className="btn">
+                  Dashboard
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/login">Sign In</Link>
+                <Link to="/register" className="btn">
+                  Start practicing
+                </Link>
+              </>
+            )}
+          </div>
+        </nav>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-[600px] h-[600px] bg-[var(--color-primary)]/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div className="max-w-5xl mx-auto px-6 flex flex-col items-center justify-center text-center relative z-10">
-          <div className="flex flex-col gap-8 items-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 w-fit">
-              <span className="w-2 h-2 rounded-full bg-[var(--color-primary)] animate-pulse"></span>
-              <span className="text-xs font-medium text-[var(--color-primary)] tracking-wide">
-                V1.0 NOW LIVE
-              </span>
-            </div>
-
-            {/* Main Heading */}
-            <h1 className="text-4xl lg:text-6xl font-bold leading-tight tracking-tight text-white">
-              Master Coding Interviews{' '}
-              <br className="hidden md:block" />
-              With{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] to-cyan-400">
-                Real-Time Practice
-              </span>
-              .
+        {/* Hero Section */}
+        <header className="hero" id="top">
+          <div>
+            <h1>
+              Practice interviews like the{' '}
+              <span className="enso">
+                real
+                <svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M262 22C220 -4 110 -6 56 30 8 62 14 100 76 108c70 9 170 -4 204 -48 14 -18 8 -34 -8 -46" />
+                </svg>
+              </span>{' '}
+              thing.
             </h1>
-
-            {/* Subtitle */}
-            <p className="text-lg text-gray-400 max-w-2xl leading-relaxed">
-              Code problems, collaborate live, and simulate real interviews in a single platform designed for developers.
+            <p className="lead">
+              Solve problems, then book a mentor for a live mock interview with video, a shared editor and chat. All
+              in one place, built for developers.
             </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap justify-center gap-4 pt-4">
-              <Link
-                to="/register"
-                className="h-12 px-8 rounded-md bg-[var(--color-primary)] text-white font-bold hover:bg-blue-600 hover:shadow-[0_0_20px_rgba(45,95,255,0.3)] transition-all flex items-center gap-2"
-              >
-                Get Started
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
+            <div className="cta">
+              <Link to={isAuthenticated ? '/problems' : '/register'} className="btn">
+                Start practicing
               </Link>
-              <button className="h-12 px-8 rounded-md border border-[var(--color-primary)]/50 text-white font-bold hover:bg-[var(--color-primary)]/10 transition-all flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
-                Try Practice Mode
-              </button>
+              <a className="btn ghost" href="#how">
+                See how it works
+              </a>
+            </div>
+            <p className="fine">Practice in JavaScript or Python 3.</p>
+          </div>
+
+          <div
+            className="editor"
+            role="img"
+            aria-label="A mentor and a candidate typing in the same code editor during a live session"
+          >
+            <div className="bar">
+              <span>two_sum.py</span>
+              <span className="who">
+                <i className="a">Mentor</i>
+                <i className="b">You</i>
+              </span>
+            </div>
+            <pre ref={preRef} id="code" aria-hidden="true"></pre>
+            <div className="ed-foot">
+              <span ref={statusRef} id="status">
+                Live session
+              </span>
+              <span ref={runRef} className="ok" id="run"></span>
+            </div>
+          </div>
+        </header>
+      </div>
+
+      {/* How it works Section */}
+      <section id="how">
+        <div className="wrap">
+          <h2>From first problem to mock interview</h2>
+          <div className="steps">
+            <div className="step">
+              <h3>Practice problems</h3>
+              <p>Work through the library, run your code against test cases, and submit when you are ready.</p>
+            </div>
+            <div className="step">
+              <h3>Book a mentor</h3>
+              <p>Browse mentor profiles and pick a slot from their available times.</p>
+            </div>
+            <div className="step">
+              <h3>Go live</h3>
+              <p>Join the session room, solve together, then leave a rating and review.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Why zenCode Section */}
-      <section className="py-24 bg-black relative">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4 text-white">
-              Why <span className="text-[var(--color-primary)]">zenCode</span>?
-            </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              Everything you need to prepare for your next technical interview in a single, integrated environment.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Real-Time Editor */}
-            <div className="group p-6 rounded-lg bg-[#0f0f0f] border border-[#272727] hover:border-[var(--color-primary)] transition-colors duration-300 flex flex-col gap-4">
-              <div className="w-12 h-12 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-[var(--color-primary)] group-hover:text-white group-hover:bg-[var(--color-primary)] transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
+      {/* Features Section */}
+      <section id="features">
+        <div className="wrap">
+          <h2>Everything you need to get interview-ready</h2>
+          <div className="feat">
+            {/* AI Hints Bento Card */}
+            <div className="f big">
+              <div>
+                <h3>Hints that don’t spoil it</h3>
+                <p>
+                  Stuck? Ask the AI for a nudge. Hints build up one at a time, so you get unblocked without seeing the
+                  full solution.
+                </p>
               </div>
-              <h3 className="text-lg font-bold text-white">Real-Time Editor</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                Collaborate live in a shared environment with syntax highlighting for 20+ languages.
-              </p>
+              <div>
+                <div className="hints" id="hints" aria-live="polite">
+                  {hintIndex === 0 ? (
+                    <div className="hints-empty" id="he">
+                      Two Sum: no hints yet. Try solving it first.
+                    </div>
+                  ) : (
+                    HINT_DATA.slice(0, hintIndex).map((hint, idx) => (
+                      <div key={idx} className="hint">
+                        {hint}
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="hint-row" style={{ marginTop: '14px' }}>
+                  <button className="btn" id="hb" type="button" onClick={handleHintClick}>
+                    {hintIndex >= HINT_DATA.length ? 'Start over' : 'Get a hint'}
+                  </button>
+                  <output id="hc">
+                    {hintIndex} of {HINT_DATA.length} hints used
+                  </output>
+                </div>
+              </div>
             </div>
 
-            {/* Video + Code */}
-            <div className="group p-6 rounded-lg bg-[#0f0f0f] border border-[#272727] hover:border-[var(--color-primary)] transition-colors duration-300 flex flex-col gap-4">
-              <div className="w-12 h-12 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-[var(--color-primary)] group-hover:text-white group-hover:bg-[var(--color-primary)] transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
+            {/* Run in browser */}
+            <div className="f sm">
+              <h3>Run it in your browser</h3>
+              <p>Write code in the same editor VS Code uses. Run it in a sandbox and see which test cases pass or fail.</p>
+              <div className="chips">
+                <span>JavaScript</span>
+                <span>Python 3</span>
               </div>
-              <h3 className="text-lg font-bold text-white">Video + Code</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                Seamless video and code integration to simulate the pressure of remote interviews.
-              </p>
             </div>
 
-            {/* AI Hints */}
-            <div className="group p-6 rounded-lg bg-[#0f0f0f] border border-[#272727] hover:border-[var(--color-primary)] transition-colors duration-300 flex flex-col gap-4">
-              <div className="w-12 h-12 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-[var(--color-primary)] group-hover:text-white group-hover:bg-[var(--color-primary)] transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
+            {/* Habit Heatmap */}
+            <div className="f sm">
+              <h3>Build a daily habit</h3>
+              <p>Keep your streak alive and watch your activity fill in over time.</p>
+              <div className="heat" id="heat" aria-label="Sample activity heatmap">
+                {HEAT_LEVELS.map((lvl, idx) => (
+                  <i key={idx} className={lvl > 0 ? `l${lvl}` : undefined} />
+                ))}
               </div>
-              <h3 className="text-lg font-bold text-white">AI Hints</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                Get intelligent, context-aware hints when you are stuck without giving away the solution.
-              </p>
             </div>
 
-            {/* Book Mentors */}
-            <div className="group p-6 rounded-lg bg-[#0f0f0f] border border-[#272727] hover:border-[var(--color-primary)] transition-colors duration-300 flex flex-col gap-4">
-              <div className="w-12 h-12 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-[var(--color-primary)] group-hover:text-white group-hover:bg-[var(--color-primary)] transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white">Book Mentors</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                Schedule mock interview practice sessions with engineers from top tech companies.
+            {/* Full width feature */}
+            <div className="f" style={{ gridColumn: '1 / -1', borderRadius: '22px 22px 80px 22px' }}>
+              <h3>A live room that feels like the real interview</h3>
+              <p style={{ maxWidth: '70ch' }}>
+                Video call, screen sharing, a code editor you both type in, and chat that keeps its history. Either of
+                you can run the code, and mentors can swap the problem mid-session.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-32 bg-black relative overflow-hidden border-t border-[#1c1c1c]">
-        {/* Grid Background */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] opacity-30"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
-
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-white">
-            Start Practising Like It's a{' '}
-            <span className="text-[var(--color-primary)]">Real Interview</span>.
-          </h2>
-          <p className="text-xl text-gray-400 mb-10">
-            Join thousands of developers leveling up their careers.
-          </p>
-          <Link
-  to="/register"
-  className="inline-flex h-14 px-10 items-center justify-center rounded-md bg-[var(--color-primary)] text-white text-lg font-bold hover:bg-blue-600 hover:scale-105 transform transition-all shadow-[0_0_30px_rgba(45,95,255,0.4)]"
->
-  Join Now
-</Link>
-
-          <p className="mt-6 text-sm text-gray-600">
-            No credit card required for basic plan.
-          </p>
+      {/* Final CTA Section */}
+      <section className="end" id="start">
+        <div className="wrap">
+          <h2>Pick a problem and start</h2>
+          <Link to={isAuthenticated ? '/problems' : '/register'} className="btn">
+            Start practicing
+          </Link>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#111111] border-t border-[#1c1c1c] pt-16 pb-8 text-sm">
+      {/* Retained Original Footer */}
+      <footer className="bg-[#111111] border-t border-[#1c1c1c] pt-16 pb-8 text-sm font-mono text-gray-400">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-16">
             {/* Logo & Description */}
@@ -191,13 +364,23 @@ const LandingPage = () => {
                   className="hover:text-[var(--color-primary)] transition-colors"
                   aria-label="zenCode GitHub Repository"
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" /></svg>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      fillRule="evenodd"
+                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
                 </a>
-                <a href="#" className="hover:text-[#1DA1F2] transition-colors">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+                <a href="#" className="hover:text-[#1DA1F2] transition-colors" aria-label="Twitter">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+                  </svg>
                 </a>
-                <a href="#" className="hover:text-[#0A66C2] transition-colors">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                <a href="#" className="hover:text-[#0A66C2] transition-colors" aria-label="LinkedIn">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                  </svg>
                 </a>
               </div>
             </div>
@@ -206,10 +389,26 @@ const LandingPage = () => {
             <div>
               <h3 className="text-white font-semibold mb-6">Platform</h3>
               <ul className="space-y-4 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Problems</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Mock Interviews</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Leaderboard</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Compiler</a></li>
+                <li>
+                  <Link to="/problems" className="hover:text-white transition-colors">
+                    Problems
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/candidate/mentors" className="hover:text-white transition-colors">
+                    Mock Interviews
+                  </Link>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Leaderboard
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Compiler
+                  </a>
+                </li>
               </ul>
             </div>
 
@@ -217,10 +416,26 @@ const LandingPage = () => {
             <div>
               <h3 className="text-white font-semibold mb-6">Company</h3>
               <ul className="space-y-4 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    About Us
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Careers
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Contact
+                  </a>
+                </li>
               </ul>
             </div>
 
@@ -228,9 +443,21 @@ const LandingPage = () => {
             <div>
               <h3 className="text-white font-semibold mb-6">Legal</h3>
               <ul className="space-y-4 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Cookie Policy</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Cookie Policy
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
